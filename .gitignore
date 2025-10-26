@@ -40,3 +40,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+.idea
+
+libs/mail-connector/impl/src/test/java/com/guslarz/invoicewatcher/mailconnector/impl/ManualITest.java
