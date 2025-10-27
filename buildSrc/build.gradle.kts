@@ -12,6 +12,8 @@ repositories {
 }
 
 dependencies {
+  implementation(projects.plugins)
+  implementation(libs.gradle.docker.plugin)
   implementation(libs.lombok.plugin)
   implementation(libs.spotbugs.gradle.plugin)
   implementation(libs.spring.boot.plugin)

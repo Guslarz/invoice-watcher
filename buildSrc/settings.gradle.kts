@@ -1,4 +1,4 @@
-rootProject.name = "geoportal-plugins"
+include("plugins")
 
 dependencyResolutionManagement {
   versionCatalogs {
@@ -7,5 +7,3 @@ dependencyResolutionManagement {
     }
   }
 }
-
-include("plugins")

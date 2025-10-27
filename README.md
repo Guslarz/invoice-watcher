@@ -1,0 +1,3 @@
+- bardziej ogarniety auth do maili
+- psd2
+- account
