@@ -35,7 +35,9 @@ tasks {
     if (imageBackendJar.dependencies.size > 1) {
       throw RuntimeException("Only one imageBackendJar allowed ${imageBackendJar.dependencies.size}")
     } else if (imageBackendJar.dependencies.size == 1) {
-      val jarTask = (imageBackendJar.dependencies.first() as ProjectDependency).dependencyProject.tasks["bootJar"]
+      // Zobaczymy, czy działa
+      // val jarTask = (imageBackendJar.dependencies.first() as ProjectDependency).dependencyProject.tasks["bootJar"]
+      val jarTask = project((imageBackendJar.dependencies.first() as ProjectDependency).path).tasks["bootJar"]
       dependsOn(jarTask)
       from(jarTask.outputs.files.singleFile)
       into(resourcesDir)
@@ -47,7 +49,9 @@ tasks {
     if (imageFrontendStatics.dependencies.size > 1) {
       throw RuntimeException("Only one imageFrontendStatics allowed ${imageBackendJar.dependencies.size}")
     } else if (imageFrontendStatics.dependencies.size == 1) {
-      val buildTask = (imageFrontendStatics.dependencies.first() as ProjectDependency).dependencyProject.tasks["build"]
+      // Zobaczymy, czy działa
+//      val buildTask = (imageFrontendStatics.dependencies.first() as ProjectDependency).dependencyProject.tasks["build"]
+      val buildTask = project((imageFrontendStatics.dependencies.first() as ProjectDependency).path).tasks["build"]
       dependsOn(buildTask)
       from(buildTask.outputs.files.singleFile)
       into(resourcesDir)

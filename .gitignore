@@ -43,5 +43,4 @@ bin/
 
 .idea
 
-libs/mail-connector/impl/src/test/java/com/guslarz/invoicewatcher/mailconnector/impl/ManualITest.java
-images/cert-generator/tmp
+application-local.yml

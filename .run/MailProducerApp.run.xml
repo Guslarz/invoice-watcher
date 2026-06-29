@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MailProducerApp" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="ACTIVE_PROFILES" value="local" />
+    <module name="invoice-watcher.apps.mail-producer.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.guslarz.invoicewatcher.mailproducer.app.MailProducerApp" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
