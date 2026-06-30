@@ -1,10 +1,17 @@
 package com.guslarz.invoicewatcher.mailconnector.impl;
 
-import com.guslarz.invoicewatcher.mailconnector.api.*;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnection;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException;
+import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
+import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
 import com.guslarz.invoicewatcher.mailconnector.impl.util.DateUtil;
 import com.guslarz.invoicewatcher.mailconnector.impl.util.binarysearch.BinarySearchConfig;
 import com.guslarz.invoicewatcher.mailconnector.impl.util.binarysearch.BinarySearchEngine;
-import jakarta.mail.*;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Store;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Date;
@@ -18,12 +25,22 @@ public class MailConnectionImpl implements MailConnection {
 
   private final MailConnectorProperties properties;
   private final Session session;
+  private final Store store;
 
   @Override
   public List<MailMessage> getEmailMessages(MailQuery query) {
     try (Store store = session.getStore(IMAP_PROTOCOL)) {
       store.connect(properties.host(), properties.username(), properties.password());
       return getEmailMessages(query, store);
+    } catch (MessagingException e) {
+      throw new MailConnectionException(e);
+    }
+  }
+
+  @Override
+  public void close() throws MailConnectionException {
+    try {
+      store.close();
     } catch (MessagingException e) {
       throw new MailConnectionException(e);
     }
