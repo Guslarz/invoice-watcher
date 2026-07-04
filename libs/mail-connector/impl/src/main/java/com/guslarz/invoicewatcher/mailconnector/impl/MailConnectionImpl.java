@@ -10,7 +10,6 @@ import com.guslarz.invoicewatcher.mailconnector.impl.util.binarysearch.BinarySea
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
-import jakarta.mail.Session;
 import jakarta.mail.Store;
 import lombok.RequiredArgsConstructor;
 
@@ -21,17 +20,12 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class MailConnectionImpl implements MailConnection {
 
-  private static final String IMAP_PROTOCOL = "imaps";
-
-  private final MailConnectorProperties properties;
-  private final Session session;
   private final Store store;
 
   @Override
   public List<MailMessage> getEmailMessages(MailQuery query) {
-    try (Store store = session.getStore(IMAP_PROTOCOL)) {
-      store.connect(properties.host(), properties.username(), properties.password());
-      return getEmailMessages(query, store);
+    try (Folder folder = store.getFolder(query.folder())) {
+      return getEmailMessagesFromFolder(query, folder);
     } catch (MessagingException e) {
       throw new MailConnectionException(e);
     }
@@ -46,16 +40,8 @@ public class MailConnectionImpl implements MailConnection {
     }
   }
 
-  private List<MailMessage> getEmailMessages(MailQuery query, Store store) {
-    try (Folder folder = store.getFolder(query.folder())) {
-      folder.open(Folder.READ_ONLY);
-      return getEmailMessages(query, folder);
-    } catch (MessagingException e) {
-      throw new MailConnectionException(e);
-    }
-  }
-
-  private List<MailMessage> getEmailMessages(MailQuery query, Folder folder) throws MessagingException {
+  private List<MailMessage> getEmailMessagesFromFolder(MailQuery query, Folder folder) throws MessagingException {
+    folder.open(Folder.READ_ONLY);
     int messageCount = folder.getMessageCount();
     int startIndex = findFirstIndexMatchingQuery(query, folder, messageCount);
     Message[] messages = folder.getMessages(startIndex, messageCount);

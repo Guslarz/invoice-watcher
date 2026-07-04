@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BinarySearchEngineTest {
 
   @ParameterizedTest
-  @MethodSource("shouldGetIndexEqualOrGreaterThan_args")
+  @MethodSource("shouldGetIndexEqualOrGreaterThanArgs")
   void shouldGetIndexEqualOrGreaterThan(int[] array, int key, int expectedIndex) {
     // given
     BinarySearchEngine uut = new BinarySearchEngine();
@@ -29,7 +29,7 @@ class BinarySearchEngineTest {
     assertThat(result).isEqualTo(expectedIndex);
   }
 
-  private static Stream<Arguments> shouldGetIndexEqualOrGreaterThan_args() {
+  private static Stream<Arguments> shouldGetIndexEqualOrGreaterThanArgs() {
     return Stream.of(
         Arguments.of(new int[]{ 1, 2, 3 }, 0, 0),
         Arguments.of(new int[]{ 1, 2, 3 }, 4, 3),

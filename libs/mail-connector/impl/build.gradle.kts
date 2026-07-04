@@ -4,9 +4,8 @@ plugins {
 
 dependencies {
   api(projects.libs.mailConnectorApi)
+  api(projects.libs.secretApi)
 
   implementation(libs.spring.boot.autoconfigure)
   implementation(libs.jakarta.mail)
-
-  testImplementation(libs.spring.boot.starter.test)
 }

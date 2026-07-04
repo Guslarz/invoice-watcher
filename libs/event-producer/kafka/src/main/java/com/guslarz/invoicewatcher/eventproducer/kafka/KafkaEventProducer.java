@@ -7,12 +7,12 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 
 @RequiredArgsConstructor
-public class KafkaEventProducer<Key, Value> implements EventProducer<Key, Value> {
+public class KafkaEventProducer<KeyT, ValueT> implements EventProducer<KeyT, ValueT> {
 
-  private final KafkaTemplate<Key, Value> kafkaTemplate;
+  private final KafkaTemplate<KeyT, ValueT> kafkaTemplate;
 
   @Override
-  public void send(String topic, Event<Key, Value> event) {
+  public void send(String topic, Event<KeyT, ValueT> event) {
     kafkaTemplate.send(new ProducerRecord<>(
         topic,
         null,

@@ -1,5 +1,7 @@
 include("plugins")
 
+rootProject.name = "buildSrc"
+
 dependencyResolutionManagement {
   versionCatalogs {
     create("libs") {

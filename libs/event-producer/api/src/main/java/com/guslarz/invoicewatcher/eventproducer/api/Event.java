@@ -1,7 +1,7 @@
 package com.guslarz.invoicewatcher.eventproducer.api;
 
-public record Event<Key, Value>(
-    Key key,
-    Value value
+public record Event<KeyT, ValueT>(
+    KeyT key,
+    ValueT value
 ) {
 }

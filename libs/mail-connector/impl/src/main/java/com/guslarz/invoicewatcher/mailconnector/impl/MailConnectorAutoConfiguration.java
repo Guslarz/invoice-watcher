@@ -1,11 +1,9 @@
 package com.guslarz.invoicewatcher.mailconnector.impl;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 
-@ComponentScan
 @AutoConfiguration
-@EnableConfigurationProperties(MailConnectorProperties.class)
+@Import(MailConnectionFactoryImpl.class)
 public class MailConnectorAutoConfiguration {
 }
