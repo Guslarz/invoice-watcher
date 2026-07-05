@@ -56,7 +56,7 @@ public class GenerateKeyCommand implements Callable<Integer> {
 
   private byte[] generateSalt() {
     byte[] bytes = new byte[16];
-    new SecureRandom().nextBytes(bytes);
+    AesUtil.RandomGenerator.nextBytes(bytes);
     return bytes;
   }
 }

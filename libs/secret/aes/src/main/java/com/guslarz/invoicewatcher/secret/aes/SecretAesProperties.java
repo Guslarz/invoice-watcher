@@ -7,6 +7,6 @@ import javax.crypto.SecretKey;
 // Only used to generate metadata file
 @ConfigurationProperties("invoice-watcher.secret.aes")
 public record SecretAesProperties(
-  SecretKey key
+    SecretKey key
 ) {
 }

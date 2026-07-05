@@ -15,7 +15,7 @@ import java.util.Random;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AesUtil {
 
-  private static final Random RandomGenerator = new SecureRandom();
+  public static final Random RandomGenerator = new SecureRandom();
 
   public static String encodeSecretKey(SecretKey secretKey) {
     return encode(secretKey.getEncoded());

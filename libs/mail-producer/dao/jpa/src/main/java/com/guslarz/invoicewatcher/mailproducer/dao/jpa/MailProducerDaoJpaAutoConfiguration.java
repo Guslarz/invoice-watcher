@@ -6,6 +6,7 @@ import com.google.cloud.spring.autoconfigure.sql.DefaultCloudSqlJdbcInfoProvider
 import com.google.cloud.spring.autoconfigure.sql.GcpCloudSqlProperties;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.MailProducerDaoProperties;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.mapper.MailCredentialsMapper;
+import com.guslarz.invoicewatcher.mailproducer.dao.jpa.mapper.MailScanConfigMapper;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.mapper.UserMapper;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.properties.GcpDataSourceProperties;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.properties.MailProducerDaoJpaProperties;
@@ -31,7 +32,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @AutoConfiguration
-@Import({UserDaoServiceJpaImpl.class, UserMapper.class, MailCredentialsMapper.class})
+@Import({UserDaoServiceJpaImpl.class, UserMapper.class, MailCredentialsMapper.class, MailScanConfigMapper.class})
 @EnableConfigurationProperties(MailProducerDaoJpaProperties.class)
 @ConditionalOnProperty(
     prefix = MailProducerDaoProperties.Constants.Prefix,

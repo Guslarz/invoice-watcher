@@ -1,8 +1,6 @@
 package com.guslarz.invoicewatcher.mailproducer.dao.jpa.mapper;
 
-import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.MailServer;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.User;
-import com.guslarz.invoicewatcher.mailproducer.dao.jpa.entity.MailServerEntity;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,35 +9,25 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserMapper {
 
-  private final MailCredentialsMapper mailCredentialsMapper;
+  private final MailScanConfigMapper mailScanConfigMapper;
 
   public User convert(UserEntity user) {
     return User.builder()
         .id(user.id())
-        .mailServer(convert(user.mailServer()))
-        .mailCredentials(mailCredentialsMapper.visit(user.mailCredentials()))
+        .name(user.name())
+        .scanConfigs(user.scanConfigs().stream()
+            .map(mailScanConfigMapper::convert)
+            .toList())
         .build();
   }
 
   public UserEntity convert(User user) {
     return UserEntity.builder()
         .id(user.id())
-        .mailServer(convert(user.mailServer()))
-        .mailCredentials(mailCredentialsMapper.visit(user.mailCredentials()))
-        .build();
-  }
-
-  private MailServer convert(MailServerEntity mailServer) {
-    return MailServer.builder()
-        .host(mailServer.host())
-        .port(mailServer.port())
-        .build();
-  }
-
-  private MailServerEntity convert(MailServer mailServer) {
-    return MailServerEntity.builder()
-        .host(mailServer.host())
-        .port(mailServer.port())
+        .name(user.name())
+        .scanConfigs(user.scanConfigs().stream()
+            .map(mailScanConfigMapper::convert)
+            .toList())
         .build();
   }
 }
