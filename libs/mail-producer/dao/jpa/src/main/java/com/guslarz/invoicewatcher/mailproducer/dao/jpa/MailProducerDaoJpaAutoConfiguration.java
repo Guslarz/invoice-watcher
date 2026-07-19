@@ -10,6 +10,7 @@ import com.guslarz.invoicewatcher.mailproducer.dao.jpa.mapper.MailScanConfigMapp
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.mapper.UserMapper;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.properties.GcpDataSourceProperties;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.properties.MailProducerDaoJpaProperties;
+import com.guslarz.invoicewatcher.mailproducer.dao.jpa.service.FolderConfigDaoServiceJpaImpl;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.service.UserDaoServiceJpaImpl;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.util.DummyCloudSqlJdbcInfoProvider;
 import lombok.experimental.UtilityClass;
@@ -32,7 +33,13 @@ import java.util.Objects;
 import java.util.Optional;
 
 @AutoConfiguration
-@Import({UserDaoServiceJpaImpl.class, UserMapper.class, MailCredentialsMapper.class, MailScanConfigMapper.class})
+@Import({
+    UserDaoServiceJpaImpl.class,
+    FolderConfigDaoServiceJpaImpl.class,
+    UserMapper.class,
+    MailCredentialsMapper.class,
+    MailScanConfigMapper.class
+})
 @EnableConfigurationProperties(MailProducerDaoJpaProperties.class)
 @ConditionalOnProperty(
     prefix = MailProducerDaoProperties.Constants.Prefix,
@@ -71,17 +78,33 @@ public class MailProducerDaoJpaAutoConfiguration {
   @Bean(Beans.DataSource)
   DataSource dataSource(MailProducerDaoJpaProperties properties) {
     // TODO more than basic
-    return DataSourceBuilder.create()
-        .url(properties.dataSource().basic().url())
-        .username(properties.dataSource().basic().username())
-        .password(properties.dataSource().basic().password())
-        .driverClassName(properties.dataSource().basic().driver())
+    return DataSourceBuilder
+        .create()
+        .url(properties
+            .dataSource()
+            .basic()
+            .url())
+        .username(properties
+            .dataSource()
+            .basic()
+            .username())
+        .password(properties
+            .dataSource()
+            .basic()
+            .password())
+        .driverClassName(properties
+            .dataSource()
+            .basic()
+            .driver())
         .build();
   }
 
   @Bean(Beans.InfoProvider)
   CloudSqlJdbcInfoProvider cloudSqlJdbcInfoProvider(MailProducerDaoJpaProperties properties) {
-    return Optional.ofNullable(properties.dataSource().gcp())
+    return Optional
+        .ofNullable(properties
+            .dataSource()
+            .gcp())
         .map(this::toCloudSqlJdbcInfoProvider)
         .orElseGet(() -> new DummyCloudSqlJdbcInfoProvider(properties));
   }

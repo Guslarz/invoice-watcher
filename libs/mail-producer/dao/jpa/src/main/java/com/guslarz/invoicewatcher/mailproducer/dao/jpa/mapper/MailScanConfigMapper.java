@@ -51,6 +51,7 @@ public class MailScanConfigMapper {
 
   private FolderConfig convert(FolderConfigEntity folder) {
     return FolderConfig.builder()
+        .id(folder.id())
         .name(folder.name())
         .scanTimestamp(folder.scanTimestamp())
         .build();
@@ -58,6 +59,7 @@ public class MailScanConfigMapper {
 
   private FolderConfigEntity convert(FolderConfig folder) {
     return FolderConfigEntity.builder()
+        .id(folder.id())
         .name(folder.name())
         .scanTimestamp(folder.scanTimestamp())
         .build();

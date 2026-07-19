@@ -1,6 +1,6 @@
 package com.guslarz.invoicewatcher.eventproducer.api;
 
-public interface EventProducer<KeyT, ValueT> {
+public interface EventProducer {
 
-  void send(String topic, Event<KeyT, ValueT> event);
+  void send(String topic, Event event);
 }

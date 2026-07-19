@@ -4,6 +4,8 @@ axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.21.2"
 [libraries]
 gradle-docker-plugin = { group = "com.bmuschko", name = "gradle-docker-plugin", version = "10.0.0" }
 h2 = { group = "com.h2database", name = "h2" }
+jackson-core = { group = "tools.jackson.core", name = "jackson-core" }
+jackson-databind = { group = "tools.jackson.core", name = "jackson-databind" }
 jakarta-annotations = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
 jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.2" }
 lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version = "9.5.0" }
@@ -12,6 +14,7 @@ spotbugs-gradle-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-
 spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version = "4.1.0" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure" }
+spring-boot-starter = { group = "org.springframework.boot", name = "spring-boot-starter" }
 spring-boot-starter-data-jpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }

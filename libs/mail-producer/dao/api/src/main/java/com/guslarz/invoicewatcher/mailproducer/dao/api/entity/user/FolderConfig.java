@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 
 @Builder
 public record FolderConfig(
+    Long id,
     String name,
     ZonedDateTime scanTimestamp
 ) {

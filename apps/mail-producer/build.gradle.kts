@@ -9,4 +9,5 @@ dependencies {
   implementation(projects.libs.mailProducerDaoJpa)
   implementation(projects.libs.mailProducerMockUser)
   implementation(projects.libs.secretAes)
+  implementation(projects.libs.eventProducerKafka)
 }
