@@ -45,3 +45,4 @@ bin/
 
 application-local.yml
 .run/tmp
+.kotlin

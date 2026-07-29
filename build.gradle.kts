@@ -3,6 +3,6 @@ plugins {
 }
 
 allprojects {
-  group = "com.skaczmarek.geoportal"
+  group = "com.guslarz.invoice-watcher"
   version = rootProject.scmVersion.version
 }

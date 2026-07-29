@@ -1,3 +1,6 @@
+import docker.DockerImageResourceType
+import docker.DockerImageResourceCategoryName
+
 plugins {
   id("java-app-conventions")
   id("dependencies.spring-conventions")
@@ -15,4 +18,15 @@ tasks {
   withType<Test> {
     useJUnitPlatform()
   }
+}
+
+configurations.consumable("dockerImageResource") {
+  attributes {
+    attribute(
+      Category.CATEGORY_ATTRIBUTE,
+      objects.named(Category::class.java, DockerImageResourceCategoryName)
+    )
+    attribute(DockerImageResourceType.Attr, DockerImageResourceType.Jar)
+  }
+  outgoing.artifact(tasks.named("bootJar"))
 }

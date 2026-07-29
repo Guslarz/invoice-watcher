@@ -1,6 +1,10 @@
 package com.guslarz.invoicewatcher.mailproducer.task;
 
-import com.guslarz.invoicewatcher.mailconnector.api.*;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnection;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionFactory;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionProperties;
+import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
+import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.FolderConfig;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.MailScanConfig;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.User;

@@ -7,7 +7,7 @@ rootProject.name = "invoice-watcher"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-registerModules("apps", "libs")
+registerModules("apps", "images", "libs")
 
 fun registerModules(vararg modules: String) {
   modules.forEach{ internalRegisterModules(arrayOf(it)) }

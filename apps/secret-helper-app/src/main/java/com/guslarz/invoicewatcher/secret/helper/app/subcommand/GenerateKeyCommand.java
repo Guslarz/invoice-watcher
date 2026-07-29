@@ -9,7 +9,6 @@ import picocli.CommandLine.Option;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
