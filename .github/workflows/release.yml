@@ -13,12 +13,18 @@ on:
           - minor
           - patch
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
+        with:
+          fetch-tags: 'true'
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -34,8 +40,9 @@ jobs:
         run: |
           ./gradlew release \
             -Prelease.versionIncrementer=${{ env.VERSION_INCREMENT }} \
-            -Prelease.username=${{ github.actor }} \
-            -Prelease.customKeyPassword=${{ secrets.GITHUB_TOKEN }}
+            -Prelease.customUsername=${{ github.actor }} \
+            -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }} \
+            --stacktrace
       - name: Build and publish artifacts
         run: |
           ./gradlew build analyze publish \
