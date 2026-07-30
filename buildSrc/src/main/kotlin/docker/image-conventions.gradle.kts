@@ -1,6 +1,7 @@
 package docker
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 import com.bmuschko.gradle.docker.tasks.image.DockerSaveImage
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.attributes.Category
@@ -13,8 +14,14 @@ plugins {
   id("com.bmuschko.docker-remote-api")
 }
 
+val propertyPrefix = "com.guslarz.invoicewatcher.docker"
+val dockerProperties = providers.gradlePropertiesPrefixedBy(propertyPrefix).map {
+  it.mapKeys { (key, _) -> key.removePrefix("$propertyPrefix.") }
+}
+val registryProperty = dockerProperties.map { it["registry"] }
+
 val resourcesDir = layout.buildDirectory.dir("resources")
-val image = "${name}:${version}"
+val image = dockerProperties.map { "${it["registry"]?.plus("/") ?: "" }${it["namespace"]?.plus("/") ?: ""}${name}:${version}" }
 val imageFile = layout.buildDirectory.file("${name}-${version}.tar.gz")
 
 val dockerImageResource = configurations.dependencyScope("dockerImageResource")
@@ -25,6 +32,16 @@ val resolvableDockerImageResource = configurations.resolvable("resolvableDockerI
       Category.CATEGORY_ATTRIBUTE,
       objects.named(Category::class.java, DockerImageResourceCategoryName)
     )
+  }
+}
+
+docker {
+  if (registryProperty.isPresent) {
+    registryCredentials {
+      url = registryProperty
+      username = dockerProperties.map { it["username"] }
+      password = dockerProperties.map { it["password"] }
+    }
   }
 }
 
@@ -43,20 +60,30 @@ tasks {
     into(resourcesDir)
   }
 
-  val buildImage = register<DockerBuildImage>("buildImage") {
+  val dockerBuildImage = register<DockerBuildImage>("dockerBuildImage") {
     dependsOn(copySources, copyDockerImageResource)
-    inputDir.set(resourcesDir)
     images.add(image)
+    inputDir.set(resourcesDir)
   }
 
-  val saveImage = register<DockerSaveImage>("saveImage") {
-    dependsOn(buildImage)
+  val dockerSaveImage = register<DockerSaveImage>("dockerSaveImage") {
+    dependsOn(dockerBuildImage)
     images.add(image)
     destFile.set(imageFile)
   }
 
+  val dockerPushImage = register<DockerPushImage>("dockerPushImage") {
+    dependsOn(dockerSaveImage)
+    images.add(image)
+  }
+
   register("build") {
-    dependsOn(saveImage)
-    outputs.file(imageFile)
+    dependsOn(dockerSaveImage)
+  }
+
+  register("publish") {
+    if (registryProperty.isPresent) {
+      dependsOn(dockerPushImage)
+    }
   }
 }

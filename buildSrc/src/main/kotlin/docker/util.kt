@@ -8,7 +8,7 @@ enum class DockerImageResourceType {
 
   companion object {
     val Attr = Attribute.of(
-      "com.guslarz.invoicewatcher.docker-image-resource",
+      "com.guslarz.invoicewatcher.DockerImageResource",
       DockerImageResourceType::class.java
     )
   }
