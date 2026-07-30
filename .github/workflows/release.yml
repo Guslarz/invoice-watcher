@@ -41,8 +41,7 @@ jobs:
           ./gradlew release \
             -Prelease.versionIncrementer=${{ env.VERSION_INCREMENT }} \
             -Prelease.customUsername=${{ github.actor }} \
-            -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }} \
-            --stacktrace
+            -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }}
       - name: Build and publish artifacts
         run: |
           ./gradlew build analyze publish \
