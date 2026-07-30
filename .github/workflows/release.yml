@@ -34,6 +34,7 @@ jobs:
         run: |
           ./gradlew release \
             -Prelease.versionIncrementer=${{ env.VERSION_INCREMENT }} \
+            -Prelease.username=${{ github.actor }} \
             -Prelease.customKeyPassword=${{ secrets.GITHUB_TOKEN }}
       - name: Build and publish artifacts
         run: |
