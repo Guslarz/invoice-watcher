@@ -1,0 +1,36 @@
+name: infrastructure.yml
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Action (up, down)
+        type: choice
+        required: true
+        default: up
+        options:
+          - up
+          - down
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        run: terraform plan -refresh-only -input=false
+
+      - name: Terraform Apply or Destroy
+        if: ${{ github.event.inputs.action == 'up' }}
+        run: terraform apply -auto-approve
+
+      - name: Terraform Destroy
+        if: ${{ github.event.inputs.action == 'down' }}
+        run: terraform destroy -auto-approve

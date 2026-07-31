@@ -19,7 +19,7 @@ public class FolderConfigDaoServiceJpaImpl implements FolderConfigDaoService {
   @Override
   @Transactional
   public void updateScanTimestamp(FolderConfig folderConfig, ZonedDateTime scanTimestamp) {
-    FolderConfigEntity entity = folderConfigRepository.findById(folderConfig.id()).orElseThrow();
+    FolderConfigEntity entity = folderConfigRepository.findById(Long.parseLong(folderConfig.id())).orElseThrow();
     entity.scanTimestamp(scanTimestamp);
     folderConfigRepository.save(entity);
   }

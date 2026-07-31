@@ -4,4 +4,7 @@ plugins {
 
 dependencies {
   api(projects.libs.mailProducerDaoApi)
+
+  implementation(libs.spring.boot.autoconfigure)
+  implementation(libs.spring.cloud.gcp.starter.firestore)
 }

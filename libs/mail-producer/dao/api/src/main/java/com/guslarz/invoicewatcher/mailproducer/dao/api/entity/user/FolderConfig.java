@@ -4,9 +4,9 @@ import lombok.Builder;
 
 import java.time.ZonedDateTime;
 
-@Builder
+@Builder(toBuilder = true)
 public record FolderConfig(
-    Long id,
+    String id,
     String name,
     ZonedDateTime scanTimestamp
 ) {

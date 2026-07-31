@@ -10,4 +10,7 @@ dependencies {
   implementation(projects.libs.mailProducerMockUser)
   implementation(projects.libs.secretAes)
   implementation(projects.libs.eventProducerKafkaImpl)
+
+  implementation(libs.spring.boot.starter.actuator)
+  implementation(libs.spring.boot.starter.web)
 }

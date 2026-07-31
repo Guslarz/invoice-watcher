@@ -5,7 +5,7 @@ import lombok.Builder;
 
 import java.util.Collection;
 
-@Builder
+@Builder(toBuilder = true)
 public record MailScanConfig(
     MailServer server,
     MailCredentials credentials,

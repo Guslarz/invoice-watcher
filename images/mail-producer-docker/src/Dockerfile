@@ -4,6 +4,5 @@ LABEL org.opencontainers.image.source="https://github.com/Guslarz/invoice-watche
 
 COPY mail-producer-app-@PROJECT_VERSION@.jar /usr/bin/app/app.jar
 WORKDIR /usr/bin/app
-EXPOSE 8080
 
 CMD java -jar app.jar

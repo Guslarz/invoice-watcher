@@ -2,7 +2,7 @@ name: Dependency Submission
 
 on:
   push:
-    branches: ['master']
+    branches: [ 'master' ]
 
 permissions:
   contents: write
@@ -13,10 +13,12 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
+
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: 25
+
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v6

@@ -6,7 +6,7 @@ import java.util.List;
 
 @Builder
 public record User(
-    Long id,
+    String id,
     String name,
     List<MailScanConfig> scanConfigs
 ) {

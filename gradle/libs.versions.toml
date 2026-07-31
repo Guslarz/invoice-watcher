@@ -18,6 +18,7 @@ spring-boot-starter = { group = "org.springframework.boot", name = "spring-boot-
 spring-boot-starter-data-jpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
+spring-cloud-gcp-starter-firestore = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-data-firestore" }
 spring-cloud-gcp-starter-sql-postgresql = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-sql-postgresql" }
 spring-dependency-management-plugin = { group = "io.spring.gradle", name = "dependency-management-plugin", version = "1.1.7" }
 spring-kafka = { group = "org.springframework.kafka", name = "spring-kafka" }

@@ -13,7 +13,7 @@ public class UserMapper {
 
   public User convert(UserEntity user) {
     return User.builder()
-        .id(user.id())
+        .id(user.id() != null ? String.valueOf(user.id()) : null)
         .name(user.name())
         .scanConfigs(user.scanConfigs().stream()
             .map(mailScanConfigMapper::convert)
@@ -23,7 +23,7 @@ public class UserMapper {
 
   public UserEntity convert(User user) {
     return UserEntity.builder()
-        .id(user.id())
+        .id(user.id() != null ? Long.parseLong(user.id()) : null)
         .name(user.name())
         .scanConfigs(user.scanConfigs().stream()
             .map(mailScanConfigMapper::convert)
