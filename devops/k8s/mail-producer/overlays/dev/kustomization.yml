@@ -13,9 +13,6 @@ patches:
   - path: image-pull-policy-patch.yml
     target:
       kind: Deployment
-  - path: application-version-patch.yml
-    target:
-      kind: Application
 configMapGenerator:
   - name: mail-producer-env-config-map
     behavior: create
