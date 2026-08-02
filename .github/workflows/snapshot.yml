@@ -1,0 +1,29 @@
+name: Snapshot
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 25
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build and publish artifacts
+        run: |
+          ./gradlew build analyze publish \
+            -Pcom.guslarz.invoicewatcher.docker.registry=ghcr.io \
+            -Pcom.guslarz.invoicewatcher.docker.namespace=guslarz/invoice-watcher \
+            -Pcom.guslarz.invoicewatcher.docker.username=${{ github.actor }} \
+            -Pcom.guslarz.invoicewatcher.docker.password=${{ secrets.GITHUB_TOKEN }} \
+            -Pcom.guslarz.invoicewatcher.docker.tag=snapshot

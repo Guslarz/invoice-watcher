@@ -1,8 +1,13 @@
+spring:
+  cloud:
+    gcp:
+      sql:
+        enabled: false
+      datastore:
+        enabled: false
+
 management:
   endpoint:
     health:
-      enabled: true
-  endpoints:
-    web:
-      exposure:
-        include: health
+      probes:
+        enabled: true

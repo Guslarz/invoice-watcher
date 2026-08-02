@@ -9,6 +9,7 @@ import java.util.List;
 
 @ConfigurationProperties("invoice-watcher.mail-producer.mock.user")
 public record MailProducerMockUserProperties(
+    Boolean enabled,
     String host,
     @DefaultValue(Defaults.Port) int port,
     String email,

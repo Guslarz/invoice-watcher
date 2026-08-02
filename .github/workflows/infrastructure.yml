@@ -1,4 +1,4 @@
-name: infrastructure.yml
+name: Infrastructure
 on:
   workflow_dispatch:
     inputs:
@@ -10,10 +10,20 @@ on:
         options:
           - up
           - down
+      environment:
+        description: Environment (dev)
+        type: choice
+        required: true
+        default: dev
+        options:
+          - dev
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./devops/infrastructure/environments/${{ github.event.inputs.environment }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -21,16 +31,34 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: Setup variables
+        run: |-
+          cat > terraform.tfvars <<EOF
+          gcp_project_id="${{ vars.GCP_PROJECT_ID }}"
+          gcp_project_number="${{ vars.GCP_PROJECT_NUMBER }}"
+          gcp_region="${{ vars.GCP_REGION }}"
+          gcp_zone="${{ vars.GCP_ZONE }}"
+          gcp_gke_cluster_name="${{ vars.GCP_GKE_CLUSTER_NAME }}"
+          EOF
+
       - name: Terraform Init
         run: terraform init -input=false
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: Terraform Plan
-        run: terraform plan -refresh-only -input=false
+        run: terraform plan -input=false
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: Terraform Apply or Destroy
         if: ${{ github.event.inputs.action == 'up' }}
         run: terraform apply -auto-approve
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: Terraform Destroy
         if: ${{ github.event.inputs.action == 'down' }}
         run: terraform destroy -auto-approve
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}

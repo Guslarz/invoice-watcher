@@ -21,8 +21,11 @@ val dockerProperties = providers.gradlePropertiesPrefixedBy(propertyPrefix).map 
 val registryProperty = dockerProperties.map { it["registry"] }
 
 val resourcesDir = layout.buildDirectory.dir("resources")
-val image = dockerProperties.map { "${it["registry"]?.plus("/") ?: "" }${it["namespace"]?.plus("/") ?: ""}${name}:${version}" }
-val imageFile = layout.buildDirectory.file("${name}-${version}.tar.gz")
+val imageVersion = dockerProperties.map { it["tag"] ?: version }
+val image = dockerProperties.map {
+  "${it["registry"]?.plus("/") ?: "" }${it["namespace"]?.plus("/") ?: ""}${name}:${imageVersion.get()}"
+}
+val imageFile = layout.buildDirectory.file("${name}-${imageVersion.get()}.tar.gz")
 
 val dockerImageResource = configurations.dependencyScope("dockerImageResource")
 val resolvableDockerImageResource = configurations.resolvable("resolvableDockerImageResource") {
