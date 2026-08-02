@@ -1,5 +1,9 @@
 # InvoiceWatcher
 
+## About
+
+TODO
+
 ## Local development
 
 For local development there are predefined IntelliJ runners in `.run` directory.
