@@ -46,6 +46,8 @@ jobs:
           gcp_region="${{ vars.GCP_REGION }}"
           gcp_zone="${{ vars.GCP_ZONE }}"
           gcp_gke_cluster_name="${{ vars.GCP_GKE_CLUSTER_NAME }}"
+          github_username="${{ vars.GITHUB_USERNAME }}"
+          github_pat="${{ secrets.GITHUB_PAT }}"
           EOF
 
       - name: Terraform Init

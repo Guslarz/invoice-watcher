@@ -5,6 +5,14 @@ resource "google_container_cluster" "cluster" {
   deletion_protection      = false
   remove_default_node_pool = true
 
+  workload_identity_config {
+    workload_pool = "${var.gcp_project_id}.svc.id.goog"
+  }
+
+  secret_manager_config {
+    enabled = true
+  }
+
   depends_on = [
     google_project_service.gke_api
   ]

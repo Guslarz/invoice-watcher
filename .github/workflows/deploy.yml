@@ -38,6 +38,5 @@ jobs:
           location: ${{ vars.GCP_ZONE }}
 
       - name: Deploy to GKE
-        run: |-
-          kubectl apply -k devops/deployments/kafka/overlays/${{ github.event.inputs.environment }}
-          kubectl apply -k devops/deployments/mail-producer/overlays/${{ github.event.inputs.environment }}
+        working-directory: ./devops/k8s
+        run: ./apply.sh ${{ github.event.inputs.environment }}

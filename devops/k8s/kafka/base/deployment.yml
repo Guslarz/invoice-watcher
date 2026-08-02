@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka
-  namespace: default
+  namespace: invoice-watcher
 spec:
   replicas: 1
   selector:
@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: kafka
+        version: 4.3.1
     spec:
       containers:
         - name: mail-producer
