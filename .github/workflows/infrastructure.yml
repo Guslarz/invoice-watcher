@@ -2,6 +2,11 @@ name: Infrastructure
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: Branch to get infrastructure from
+        type: string
+        required: true
+        default: master
       action:
         description: Action (up, down)
         type: choice
@@ -27,6 +32,8 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2

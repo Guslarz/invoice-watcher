@@ -2,7 +2,6 @@ name: Build and analyze
 
 on:
   pull_request:
-    branches: [ "master" ]
 
 jobs:
   build:
