@@ -31,7 +31,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v4
 
       - name: Setup variables
         run: |-
