@@ -26,4 +26,8 @@ module "gke" {
   gcp_region     = var.gcp_region
   gcp_zone       = var.gcp_zone
   cluster_name   = var.gcp_gke_cluster_name
+  depends_on = [
+    module.secret,
+    module.firestore
+  ]
 }

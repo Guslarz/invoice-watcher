@@ -14,7 +14,7 @@ resource "google_container_cluster" "cluster" {
   }
 
   depends_on = [
-    google_project_service.gke_api
+    google_project_service.gke_api,
   ]
 }
 
