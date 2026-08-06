@@ -57,12 +57,12 @@ jobs:
 
       - name: Terraform Apply or Destroy
         if: ${{ github.event.inputs.action == 'up' }}
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -input=false
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: Terraform Destroy
         if: ${{ github.event.inputs.action == 'down' }}
-        run: terraform destroy -auto-approve
+        run: terraform destroy -auto-approve -input=false
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}

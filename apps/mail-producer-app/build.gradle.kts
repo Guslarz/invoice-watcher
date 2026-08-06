@@ -7,6 +7,7 @@ dependencies {
   implementation(projects.libs.mailProducerSchedulerImpl)
   implementation(projects.libs.mailProducerTask)
   implementation(projects.libs.mailProducerDaoJpaImpl)
+  implementation(projects.libs.mailProducerDaoFirestoreImpl)
   implementation(projects.libs.mailProducerMockUser)
   implementation(projects.libs.secretAes)
   implementation(projects.libs.eventProducerKafkaImpl)

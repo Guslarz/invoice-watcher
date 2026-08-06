@@ -2,7 +2,11 @@
 
 BASE_DIR="$(dirname "${BASH_SOURCE[0]}")"
 ENV="$1"
-PRIORITY_DIRS=("core")
+
+if [ -z "$1" ]; then
+  echo "Użycie: $0 <environment>, np. $0 dev"
+  exit 1
+fi
 
 function apply() {
   name="$1"
@@ -17,12 +21,8 @@ function apply() {
   kubectl apply -k "$kustomize_dir"
 }
 
-for dir in "${PRIORITY_DIRS[@]}"; do
-  apply "$dir"
-done
-
 for dir in "$BASE_DIR"/*; do
-  if [ -d "$dir" ] && [[ ! " ${PRIORITY_DIRS[@]} " =~ " $(basename "$dir") " ]]; then
+  if [ -d "$dir" ]; then
     apply "$(basename "$dir")"
   fi
 done

@@ -13,6 +13,10 @@ resource "google_container_cluster" "cluster" {
     enabled = true
   }
 
+  secret_sync_config {
+    enabled = true
+  }
+
   depends_on = [
     google_project_service.gke_api,
   ]
@@ -28,4 +32,7 @@ resource "google_container_node_pool" "default" {
     preemptible     = true
     service_account = google_service_account.gke_sa.email
   }
+}
+
+data "google_client_config" "default" {
 }

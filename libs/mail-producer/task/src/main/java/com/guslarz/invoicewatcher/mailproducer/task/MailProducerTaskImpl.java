@@ -29,7 +29,9 @@ public class MailProducerTaskImpl implements MailProducerTask {
 
   @Override
   public void execute() {
+    log.info("> Start mail producer task");
     userDaoService.findAll().forEach(this::processUser);
+    log.info("< Finished mail producer task");
   }
 
   private void processUser(User user) {

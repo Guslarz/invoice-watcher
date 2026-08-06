@@ -3,7 +3,8 @@ kind: Kustomization
 resources:
   - ../../base
 configMapGenerator:
-  - name: mail-producer-env-config-map
+  - name: kafka-env-config-map
+    namespace: invoice-watcher
     behavior: create
     envs:
       - config/.env

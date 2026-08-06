@@ -16,8 +16,12 @@ patches:
   - path: image-pull-secret-patch.yml
     target:
       kind: Deployment
+  - path: service-account-patch.yml
+    target:
+      kind: Deployment
 configMapGenerator:
   - name: mail-producer-env-config-map
+    namespace: invoice-watcher
     behavior: create
     envs:
       - config/.env
