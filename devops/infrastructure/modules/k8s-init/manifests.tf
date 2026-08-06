@@ -1,6 +1,6 @@
 locals {
   manifest_names = [
-    "namespace.yml",
+    "app-namespace.yml",
     "pod-sa.yml",
     "image-pull-secret.yml"
   ]
