@@ -32,8 +32,14 @@ resource "google_service_account_iam_member" "workload_identity" {
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repository}"
 }
 
-resource "google_project_iam_member" "sa_roles" {
+resource "google_project_iam_member" "sa_role_editor" {
   project = data.google_project.current.id
   role    = "roles/editor"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
+
+resource "google_project_iam_member" "sa_role_firestore_develop_admin" {
+  project = data.google_project.current.id
+  role    = "roles/firebase.developAdmin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
