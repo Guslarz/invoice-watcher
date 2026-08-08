@@ -33,6 +33,3 @@ resource "google_container_node_pool" "default" {
     service_account = google_service_account.gke_sa.email
   }
 }
-
-data "google_client_config" "default" {
-}
