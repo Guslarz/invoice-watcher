@@ -19,7 +19,10 @@ on:
           - dev
 
 jobs:
-  terraform:
+  opentofu:
+    permissions:
+      id-token: write
+      contents: read
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -30,39 +33,33 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_version: '1.12.5'
 
       - name: Setup variables
         run: |-
           cat > terraform.tfvars <<EOF
           gcp_project_id="${{ vars.GCP_PROJECT_ID }}"
-          gcp_project_number="${{ vars.GCP_PROJECT_NUMBER }}"
-          gcp_region="${{ vars.GCP_REGION }}"
-          gcp_zone="${{ vars.GCP_ZONE }}"
-          gcp_gke_cluster_name="${{ vars.GCP_GKE_CLUSTER_NAME }}"
-          github_username="${{ vars.GITHUB_USERNAME }}"
           github_pat="${{ secrets.GITHUB_PAT }}"
           EOF
 
-      - name: Terraform Init
-        run: terraform init -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+          service_account: "github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
 
-      - name: Terraform Plan
-        run: terraform plan -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      - name: Tofu Init
+        run: tofu init -input=false
 
-      - name: Terraform Apply or Destroy
+      - name: Tofu Plan
+        run: tofu plan -input=false
+
+      - name: Tofu Apply or Destroy
         if: ${{ github.event.inputs.action == 'up' }}
-        run: terraform apply -auto-approve -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: tofu apply -auto-approve -input=false
 
-      - name: Terraform Destroy
+      - name: Tofu Destroy
         if: ${{ github.event.inputs.action == 'down' }}
-        run: terraform destroy -auto-approve -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: tofu destroy -auto-approve -input=false

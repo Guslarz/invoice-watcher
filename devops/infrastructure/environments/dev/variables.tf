@@ -1,23 +1,28 @@
 variable "gcp_project_id" {
 }
 
-variable "gcp_project_number" {
-}
-
 variable "gcp_region" {
+  default = "europe-west1"
 }
 
 variable "gcp_zone" {
+  default = "europe-west1-b"
 }
 
 variable "gcp_gke_cluster_name" {
+  default = "invoice-watcher-cluster"
 }
 
 variable "github_registry" {
   default = "ghcr.io"
 }
 
+variable "github_repository" {
+  default = "Guslarz/invoice-watcher"
+}
+
 variable "github_username" {
+  default = "Guslarz"
 }
 
 variable "github_pat" {
