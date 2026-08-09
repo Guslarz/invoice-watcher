@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./devops/infrastructure/environments/${{ github.event.inputs.environment }}
+        working-directory: ./devops/infrastructure/environments/${{ inputs.environment }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -49,9 +49,9 @@ jobs:
         run: tofu plan -input=false
 
       - name: Tofu Apply or Destroy
-        if: ${{ github.event.inputs.action == 'up' }}
+        if: ${{ inputs.action == 'up' }}
         run: tofu apply -auto-approve -input=false
 
       - name: Tofu Destroy
-        if: ${{ github.event.inputs.action == 'down' }}
+        if: ${{ inputs.action == 'down' }}
         run: tofu destroy -auto-approve -input=false
