@@ -33,6 +33,7 @@ jobs:
         run: |-
           cat > terraform.tfvars <<EOF
           gcp_project_id="${{ vars.GCP_PROJECT_ID }}"
+          gcp_project_number="${{ vars.GCP_PROJECT_NUMBER }}"
           github_pat="${{ secrets.GITHUB_PAT }}"
           EOF
 
