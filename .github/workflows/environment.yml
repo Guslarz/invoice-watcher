@@ -1,4 +1,4 @@
-name: environment.yml
+name: Environment
 on:
   workflow_dispatch:
     inputs:
@@ -22,6 +22,9 @@ jobs:
   infrastructure:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
       - name: Persistent up
         if: ${{ github.event.inputs.action == 'up' }}
         uses: ./.github/workflows/infrastructure.yml

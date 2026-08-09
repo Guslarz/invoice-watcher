@@ -23,8 +23,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref }}
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v2
