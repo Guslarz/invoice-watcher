@@ -1,6 +1,9 @@
 variable "gcp_project_id" {
 }
 
+variable "gcp_project_number" {
+}
+
 variable "gcp_region" {
   default = "europe-west1"
 }

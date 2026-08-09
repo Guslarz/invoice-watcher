@@ -28,11 +28,13 @@ module "firestore" {
 }
 
 module "gke" {
-  source        = "../../modules/gke"
-  gcp_zone      = var.gcp_zone
-  cluster_name  = var.gcp_gke_cluster_name
-  k8s-namespace = var.k8s-namespace
-  k8s-sa-name   = var.k8s-sa-name
+  source             = "../../modules/gke"
+  gcp_project_id     = var.gcp_project_id
+  gcp_project_number = var.gcp_project_number
+  gcp_zone           = var.gcp_zone
+  cluster_name       = var.gcp_gke_cluster_name
+  k8s-namespace      = var.k8s-namespace
+  k8s-sa-name        = var.k8s-sa-name
 
   depends_on = [
     module.secret,
