@@ -1,0 +1,44 @@
+name: K8s install
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment (dev)
+        type: choice
+        required: true
+        default: dev
+        options:
+          - dev
+  workflow_call:
+    inputs:
+      environment:
+        description: Environment (dev)
+        type: string
+        required: true
+
+jobs:
+  k8s-install:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: "projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+          service_account: "github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ vars.GCP_GKE_CLUSTER_NAME }}
+          location: ${{ vars.GCP_ZONE }}
+

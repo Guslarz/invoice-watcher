@@ -5,20 +5,13 @@ locals {
 terraform {
   backend "gcs" {
     bucket = local.tfstate_bucket_name
-    prefix = "dev"
+    prefix = "infrastructure/dev-ephemereal"
   }
 }
 
 provider "google" {
   project = var.gcp_project_id
   region  = var.gcp_region
-}
-
-module "project_init" {
-  source              = "../../modules/project-init"
-  gcs_location        = upper(var.gcp_region)
-  tfstate_bucket_name = local.tfstate_bucket_name
-  github_repository   = var.github_repository
 }
 
 module "secret" {
@@ -35,11 +28,11 @@ module "firestore" {
 }
 
 module "gke" {
-  source             = "../../modules/gke"
-  gcp_zone           = var.gcp_zone
-  cluster_name       = var.gcp_gke_cluster_name
-  k8s-namespace      = var.k8s-namespace
-  k8s-sa-name        = var.k8s-sa-name
+  source        = "../../modules/gke"
+  gcp_zone      = var.gcp_zone
+  cluster_name  = var.gcp_gke_cluster_name
+  k8s-namespace = var.k8s-namespace
+  k8s-sa-name   = var.k8s-sa-name
 
   depends_on = [
     module.secret,

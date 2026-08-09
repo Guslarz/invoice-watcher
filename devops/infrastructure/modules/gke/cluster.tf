@@ -6,7 +6,7 @@ resource "google_container_cluster" "cluster" {
   remove_default_node_pool = true
 
   workload_identity_config {
-    workload_pool = "${data.google_project.current.id}.svc.id.goog"
+    workload_pool = "${data.google_project.current.project_id}.svc.id.goog"
   }
 
   secret_manager_config {

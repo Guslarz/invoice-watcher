@@ -1,0 +1,44 @@
+name: environment.yml
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Action (up, down)
+        type: choice
+        required: true
+        default: up
+        options:
+          - up
+          - down
+      environment:
+        description: Environment
+        type: choice
+        required: true
+        default: dev
+        options:
+          - dev
+
+jobs:
+  infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Persistent up
+        if: ${{ github.event.inputs.action == 'up' }}
+        uses: ./.github/workflows/infrastructure.yml
+        with:
+          action: ${{ github.event.inputs.action }}
+          environment: "${{ github.event.inputs.environment }}-persistent"
+
+      - name: Ephemereal up
+        if: ${{ github.event.inputs.action == 'up' }}
+        uses: ./.github/workflows/infrastructure.yml
+        with:
+          action: ${{ github.event.inputs.action }}
+          environment: "${{ github.event.inputs.environment }}-ephemereal"
+
+      - name: Ephemereal down
+        if: ${{ github.event.inputs.action == 'down' }}
+        uses: ./.github/workflows/infrastructure.yml
+        with:
+          action: ${{ github.event.inputs.action }}
+          environment: "${{ github.event.inputs.environment }}-ephemereal"

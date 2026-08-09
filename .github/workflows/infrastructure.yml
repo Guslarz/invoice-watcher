@@ -1,22 +1,15 @@
 name: Infrastructure
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       action:
         description: Action (up, down)
-        type: choice
+        type: string
         required: true
-        default: up
-        options:
-          - up
-          - down
       environment:
-        description: Environment (dev)
-        type: choice
+        description: Environment
+        type: string
         required: true
-        default: dev
-        options:
-          - dev
 
 jobs:
   opentofu:
@@ -45,7 +38,8 @@ jobs:
           github_pat="${{ secrets.GITHUB_PAT }}"
           EOF
 
-      - uses: google-github-actions/auth@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: "projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
           service_account: "github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
