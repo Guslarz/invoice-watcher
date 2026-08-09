@@ -1,3 +1,6 @@
+variable "gcp_project_id" {
+}
+
 variable "gcs_location" {
 }
 
