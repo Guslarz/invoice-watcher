@@ -34,6 +34,7 @@ jobs:
     with:
       action: ${{ matrix.action }}
       environment: "${{ github.event.inputs.environment }}-${{ matrix.environment-suffix }}"
+
   infrastructure-down:
     if: ${{ github.event.inputs.action == 'down' }}
     uses: ./.github/workflows/infrastructure.yml
