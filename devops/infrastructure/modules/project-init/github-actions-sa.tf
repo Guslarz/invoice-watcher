@@ -43,3 +43,9 @@ resource "google_project_iam_member" "sa_role_firestore_develop_admin" {
   role    = "roles/firebase.developAdmin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
+
+resource "google_project_iam_member" "sa_role_iam_admin" {
+  project = var.gcp_project_id
+  role    = "roles/iam.admin"
+  member  = "serviceAccount:${google_service_account.github_actions.email}"
+}
