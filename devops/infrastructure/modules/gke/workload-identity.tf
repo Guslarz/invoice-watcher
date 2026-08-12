@@ -17,3 +17,13 @@ resource "google_project_iam_member" "gke_sa_secret_manager_secret_accessor" {
     google_container_cluster.cluster,
   ]
 }
+
+resource "google_project_iam_member" "gke_default_secret_sync_sa_secret_manager_secret_accessor" {
+  project = var.gcp_project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "principal://iam.googleapis.com/projects/${var.gcp_project_number}/locations/global/workloadIdentityPools/${var.gcp_project_id}.svc.id.goog/subject/ns/cluster-init/sa/secret-sync-sa"
+
+  depends_on = [
+    google_container_cluster.cluster,
+  ]
+}

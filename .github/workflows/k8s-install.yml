@@ -1,14 +1,5 @@
 name: K8s install
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: Environment (dev)
-        type: choice
-        required: true
-        default: dev
-        options:
-          - dev
   workflow_call:
     inputs:
       environment:
@@ -41,3 +32,12 @@ jobs:
           cluster_name: ${{ vars.GCP_GKE_CLUSTER_NAME }}
           location: ${{ vars.GCP_ZONE }}
 
+      - uses: helmfile/helmfile-action@v2.4.7
+        with:
+          helmfile-version: 'v1.7.3'
+          helm-version: 'v4.2.3'
+          helm-plugins: >
+            https://github.com/databus23/helm-diff@v3.15.11
+          helmfile-args: apply --environment ${{ inputs.environment }}
+        env:
+          GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}

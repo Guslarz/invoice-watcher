@@ -7,6 +7,13 @@ terraform {
     bucket = local.tfstate_bucket_name
     prefix = "infrastructure/dev-ephemereal"
   }
+
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "5.23.0"
+    }
+  }
 }
 
 provider "google" {
@@ -14,12 +21,17 @@ provider "google" {
   region  = var.gcp_region
 }
 
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
 module "secret" {
-  source          = "../../modules/secret"
-  gcp_region      = var.gcp_region
-  github_registry = var.github_registry
-  github_username = var.github_username
-  github_pat      = var.github_pat
+  source               = "../../modules/secret"
+  gcp_region           = var.gcp_region
+  github_registry      = var.github_registry
+  github_username      = var.github_username
+  github_pat           = var.github_pat
+  cloudflare_api_token = var.cloudflare_api_token
 }
 
 module "firestore" {
@@ -40,4 +52,11 @@ module "gke" {
     module.secret,
     module.firestore
   ]
+}
+
+module "cloudflare_domain" {
+  source             = "../../modules/cloudflare-domain"
+  cloudflare_zone_id = var.cloudflare_zone_id
+  domain_name        = var.domain_name
+  ip_address         = module.gke.gke_gateway_ip
 }

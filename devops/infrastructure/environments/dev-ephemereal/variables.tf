@@ -20,20 +20,12 @@ variable "github_registry" {
   default = "ghcr.io"
 }
 
-variable "github_repository" {
-  default = "Guslarz/invoice-watcher"
-}
-
 variable "github_username" {
   default = "Guslarz"
 }
 
 variable "github_pat" {
   sensitive = true
-}
-
-variable "ghcr_docker_config_json_secret_name" {
-  default = "ghcr_docker_config_json"
 }
 
 variable "k8s-namespace" {
@@ -44,3 +36,13 @@ variable "k8s-sa-name" {
   default = "pod-sa"
 }
 
+variable "cloudflare_api_token" {
+  sensitive = true
+}
+
+variable "cloudflare_zone_id" {
+}
+
+variable "domain_name" {
+  default = "guslarz.com"
+}

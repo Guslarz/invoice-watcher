@@ -17,6 +17,10 @@ resource "google_container_cluster" "cluster" {
     enabled = true
   }
 
+  gateway_api_config {
+    channel = "CHANNEL_STANDARD"
+  }
+
   depends_on = [
     google_project_service.gke_api,
   ]
@@ -29,7 +33,12 @@ resource "google_container_node_pool" "default" {
   node_count = 1
 
   node_config {
+    machine_type    = "e2-standard-2"
     preemptible     = true
     service_account = google_service_account.gke_sa.email
   }
+}
+
+resource "google_compute_global_address" "gateway_ip" {
+  name = "gke-gateway-ip"
 }

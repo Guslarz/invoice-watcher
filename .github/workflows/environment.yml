@@ -29,8 +29,8 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        action: [up]
-        environment-suffix: [persistent, ephemereal]
+        action: [ up ]
+        environment-suffix: [ persistent, ephemereal ]
     with:
       action: ${{ matrix.action }}
       environment: "${{ github.event.inputs.environment }}-${{ matrix.environment-suffix }}"
@@ -41,3 +41,9 @@ jobs:
     with:
       action: down
       environment: "${{ github.event.inputs.environment }}-ephemereal"
+
+  k8s-install:
+    if: ${{ github.event.inputs.action == 'up' }}
+    uses: ./.github/workflows/k8s-install.yml
+    with:
+      environment: ${{ github.event.inputs.environment }}

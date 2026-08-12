@@ -1,0 +1,49 @@
+helmDefaults:
+  wait: true
+  timeout: 300
+
+environments:
+  dev:
+    values:
+      - environments/dev.yml.gotmpl
+---
+releases:
+  - name: cluster-init
+    namespace: cluster-init
+    chart: ./cluster-init
+    version: 0.1.0
+    values:
+      - values/cluster-init.yml.gotmpl
+    needs:
+      - origin-ca-issuer/origin-ca-issuer
+  - name: argo-cd
+    namespace: {{ .Values.argocd.namespace }}
+    createNamespace: true
+    chart: oci://ghcr.io/argoproj/argo-helm/argo-cd
+    version: 10.3.0
+    values:
+      - values/argocd.yml.gotmpl
+  - name: cert-manager
+    namespace: cert-manager
+    chart: oci://quay.io/jetstack/charts/cert-manager
+    version: 1.21.1
+    values:
+      - crds:
+          enabled: true
+  - name: origin-ca-issuer
+    namespace: origin-ca-issuer
+    chart: oci://ghcr.io/cloudflare/origin-ca-issuer-charts/origin-ca-issuer
+    version: 0.6.9
+    needs:
+      - cert-manager/cert-manager
+    values:
+        - values/origin-ca-issuer.yml
+    hooks:
+      - events: [ "preapply" ]
+        showlogs: true
+        kubectlApply:
+          filename: "https://raw.githubusercontent.com/cloudflare/origin-ca-issuer/v0.14.4/deploy/crds/cert-manager.k8s.cloudflare.com_originissuers.yaml"
+      - events: [ "preapply" ]
+        showlogs: true
+        kubectlApply:
+          filename: "https://raw.githubusercontent.com/cloudflare/origin-ca-issuer/v0.14.4/deploy/crds/cert-manager.k8s.cloudflare.com_clusteroriginissuers.yaml"

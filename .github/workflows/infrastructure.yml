@@ -24,6 +24,11 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v6
 
+      - name: Set environmental variables
+        run: |
+          declare -A ACTION_MAP=( ["up"]="apply" ["down"]="destroy" )
+          echo "ACTION=${ACTION_MAP[${{ github.event.inputs.action }}]}" >> $GITHUB_ENV
+
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v2
         with:
@@ -35,6 +40,8 @@ jobs:
           gcp_project_id="${{ vars.GCP_PROJECT_ID }}"
           gcp_project_number="${{ vars.GCP_PROJECT_NUMBER }}"
           github_pat="${{ secrets.GITHUB_PAT }}"
+          cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          cloudflare_zone_id="${{ vars.CLOUDFLARE_ZONE_ID }}"
           EOF
 
       - name: Authenticate to Google Cloud
@@ -49,10 +56,5 @@ jobs:
       - name: Tofu Plan
         run: tofu plan -input=false
 
-      - name: Tofu Apply or Destroy
-        if: ${{ inputs.action == 'up' }}
-        run: tofu apply -auto-approve -input=false
-
-      - name: Tofu Destroy
-        if: ${{ inputs.action == 'down' }}
-        run: tofu destroy -auto-approve -input=false
+      - name: Tofu action
+        run: tofu ${{ env.ACTION }} -auto-approve -input=false
