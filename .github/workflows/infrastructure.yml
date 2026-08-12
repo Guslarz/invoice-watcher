@@ -10,6 +10,13 @@ on:
         description: Environment
         type: string
         required: true
+    secrets:
+      PAT:
+        description: GitHub Personal Access Token
+        required: true
+      CLOUDFLARE_API_TOKEN:
+        description: Cloudflare API Token
+        required: true
 
 jobs:
   opentofu:
