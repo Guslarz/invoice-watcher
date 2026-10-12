@@ -11,14 +11,16 @@ releases:
   - name: cluster-init
     namespace: cluster-init
     chart: ./cluster-init
-    version: 0.1.0
+    version: 0.2.0
     values:
       - values/cluster-init.yml.gotmpl
     needs:
       - cert-manager/cert-manager
       - origin-ca-issuer/origin-ca-issuer
-  - name: argo-cd
-    namespace: {{ .Values.argocd.namespace }}
+      - argocd/argocd
+      - external-secrets/external-secrets
+  - name: argocd
+    namespace: argocd
     createNamespace: true
     chart: oci://ghcr.io/argoproj/argo-helm/argo-cd
     version: 10.3.0
@@ -48,3 +50,9 @@ releases:
         showlogs: true
         kubectlApply:
           filename: "https://raw.githubusercontent.com/cloudflare/origin-ca-issuer/v0.14.4/deploy/crds/cert-manager.k8s.cloudflare.com_clusteroriginissuers.yaml"
+  - name: external-secrets
+    namespace: external-secrets
+    chart: oci://ghcr.io/external-secrets/charts/external-secrets
+    version: 2.12.0
+    values:
+      - installCRDs: true

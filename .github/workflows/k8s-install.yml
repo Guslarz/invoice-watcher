@@ -20,8 +20,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: "projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
-          service_account: "github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
+          workload_identity_provider: 'projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
+          service_account: 'github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
@@ -34,10 +34,11 @@ jobs:
 
       - uses: helmfile/helmfile-action@v2.4.7
         with:
-          helmfile-version: 'v1.7.3'
-          helm-version: 'v4.2.3'
+          helmfile-version: v1.7.3
+          helm-version: v4.2.3
           helm-plugins: >
             https://github.com/databus23/helm-diff@v3.15.11
-          helmfile-args: apply --environment ${{ inputs.environment }}
+          helmfile-args: --environment ${{ inputs.environment }} apply
+          helmfile-workdirectory: ./devops/k8s
         env:
           GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}

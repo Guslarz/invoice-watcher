@@ -2,13 +2,13 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: invoice-watcher-dev
-  namespace: argo-cd
+  namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: git@github.com:Guslarz/invoice-watcher.git
+    repoURL: '{{ .Values.github.orgUrl }}/invoice-watcher.git'
     path: devops/k8s-apps
     directory:
       recurse: true
