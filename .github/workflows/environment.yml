@@ -53,5 +53,6 @@ jobs:
   k8s-install:
     if: ${{ github.event.inputs.action == 'up' }}
     uses: ./.github/workflows/k8s-install.yml
+    needs: infrastructure-up
     with:
       environment: ${{ github.event.inputs.environment }}

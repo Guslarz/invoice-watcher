@@ -9,3 +9,6 @@ variable "gcp_zone" {
 
 variable "cluster_name" {
 }
+
+variable "app_namespace" {
+}

@@ -4,7 +4,6 @@ resources:
   - ../../base
 configMapGenerator:
   - name: kafka-env-config-map
-    namespace: invoice-watcher
     behavior: create
     envs:
       - config/.env

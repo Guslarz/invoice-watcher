@@ -45,6 +45,7 @@ module "gke" {
   gcp_project_number = var.gcp_project_number
   gcp_zone           = var.gcp_zone
   cluster_name       = var.gcp_gke_cluster_name
+  app_namespace      = "invoice-watcher-dev"
 
   depends_on = [
     module.secret,
