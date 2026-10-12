@@ -5,7 +5,7 @@ locals {
 terraform {
   backend "gcs" {
     bucket = local.tfstate_bucket_name
-    prefix = "infrastructure/dev-ephemereal"
+    prefix = "infrastructure/dev/ephemereal"
   }
 
   required_providers {
@@ -26,7 +26,7 @@ provider "cloudflare" {
 }
 
 module "secret" {
-  source               = "../../modules/secret"
+  source               = "../../../modules/secret"
   gcp_region           = var.gcp_region
   github_registry      = var.github_registry
   github_username      = var.github_username
@@ -35,18 +35,16 @@ module "secret" {
 }
 
 module "firestore" {
-  source     = "../../modules/firestore"
+  source     = "../../../modules/firestore"
   gcp_region = var.gcp_region
 }
 
 module "gke" {
-  source             = "../../modules/gke"
+  source             = "../../../modules/gke"
   gcp_project_id     = var.gcp_project_id
   gcp_project_number = var.gcp_project_number
   gcp_zone           = var.gcp_zone
   cluster_name       = var.gcp_gke_cluster_name
-  k8s-namespace      = var.k8s-namespace
-  k8s-sa-name        = var.k8s-sa-name
 
   depends_on = [
     module.secret,
@@ -55,7 +53,7 @@ module "gke" {
 }
 
 module "cloudflare_domain" {
-  source             = "../../modules/cloudflare-domain"
+  source             = "../../../modules/cloudflare-domain"
   cloudflare_zone_id = var.cloudflare_zone_id
   domain_name        = var.domain_name
   ip_address         = module.gke.gke_gateway_ip

@@ -10,6 +10,10 @@ on:
         description: Environment
         type: string
         required: true
+      module:
+        description: Module
+        type: string
+        required: true
     secrets:
       PAT:
         description: GitHub Personal Access Token
@@ -23,10 +27,10 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     defaults:
       run:
-        working-directory: ./devops/infrastructure/environments/${{ inputs.environment }}
+        working-directory: ./devops/infrastructure/environments/${{ inputs.environment }}/${{ inputs.module }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6

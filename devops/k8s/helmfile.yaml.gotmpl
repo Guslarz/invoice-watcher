@@ -15,6 +15,7 @@ releases:
     values:
       - values/cluster-init.yml.gotmpl
     needs:
+      - cert-manager/cert-manager
       - origin-ca-issuer/origin-ca-issuer
   - name: argo-cd
     namespace: {{ .Values.argocd.namespace }}
@@ -26,7 +27,7 @@ releases:
   - name: cert-manager
     namespace: cert-manager
     chart: oci://quay.io/jetstack/charts/cert-manager
-    version: 1.21.1
+    version: 1.21.2
     values:
       - crds:
           enabled: true

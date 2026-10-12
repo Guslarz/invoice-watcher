@@ -28,14 +28,6 @@ variable "github_pat" {
   sensitive = true
 }
 
-variable "k8s-namespace" {
-  default = "invoice-watcher"
-}
-
-variable "k8s-sa-name" {
-  default = "pod-sa"
-}
-
 variable "cloudflare_api_token" {
   sensitive = true
 }

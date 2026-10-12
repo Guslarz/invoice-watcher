@@ -30,10 +30,11 @@ jobs:
       max-parallel: 1
       matrix:
         action: [ up ]
-        environment-suffix: [ persistent, ephemereal ]
+        module: [ persistent, ephemereal ]
     with:
       action: ${{ matrix.action }}
-      environment: "${{ github.event.inputs.environment }}-${{ matrix.environment-suffix }}"
+      environment: ${{ github.event.inputs.environment }}
+      module: ${{ matrix.module }}
     secrets:
       PAT: ${{ secrets.PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -43,7 +44,8 @@ jobs:
     uses: ./.github/workflows/infrastructure.yml
     with:
       action: down
-      environment: "${{ github.event.inputs.environment }}-ephemereal"
+      environment: ${{ github.event.inputs.environment }}
+      module: ephemereal
     secrets:
       PAT: ${{ secrets.PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

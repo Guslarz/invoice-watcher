@@ -1,0 +1,23 @@
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: github-pat-secret-provider
+spec:
+  provider: gke
+  parameters:
+    secrets: |
+      - resourceName: "projects/{{ .Values.gcpProjectNumber }}/secrets/github_pat/versions/latest"
+        path: "pat"
+---
+apiVersion: secret-sync.gke.io/v1
+kind: SecretSync
+metadata:
+  name: github-pat-pull-secret
+spec:
+  serviceAccountName: pod-sa
+  secretProviderClassName: github-pat-secret-provider
+  secretObject:
+    type: Opaque
+    data:
+      - sourcePath: "pat"
+        targetKey: pat

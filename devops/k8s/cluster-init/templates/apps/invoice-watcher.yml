@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: invoice-watcher-dev
+  namespace: argo-cd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:Guslarz/invoice-watcher.git
+    path: devops/k8s-apps
+    directory:
+      recurse: true
+      include: '**/overlays/{{ .Values.environment }}/kustomization.yml'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: invoice-watcher-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=true

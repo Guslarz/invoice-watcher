@@ -5,7 +5,7 @@ locals {
 terraform {
   backend "gcs" {
     bucket = local.tfstate_bucket_name
-    prefix = "infrastructure/dev-persistent"
+    prefix = "infrastructure/dev/persistent"
   }
 }
 
@@ -15,7 +15,7 @@ provider "google" {
 }
 
 module "project_init" {
-  source              = "../../modules/project-init"
+  source              = "../../../modules/project-init"
   gcp_project_id      = var.gcp_project_id
   gcs_location        = upper(var.gcp_region)
   tfstate_bucket_name = local.tfstate_bucket_name
