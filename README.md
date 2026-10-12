@@ -20,4 +20,6 @@ TODO przykład
 - wolumen dla kafki
 - terraform fmt
 - ograniczenia zasobow w manifestach
+- proby
 - firewall
+- doksy dla ai
