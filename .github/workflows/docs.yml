@@ -36,13 +36,14 @@ jobs:
         run: mkdocs build --strict
 
       - name: Upload site
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request' }}
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
 
   deploy:
-    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
+    # Pages is enabled later (docs/agents/inbox/make-repo-public-and-enable-pages.md)
+    if: ${{ vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
     needs: build
     runs-on: ubuntu-26.04
     permissions:
