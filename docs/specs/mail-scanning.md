@@ -88,9 +88,9 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 
 ## Configuration
 
-| Property | Default | Meaning |
-|----------|---------|---------|
-| `invoice-watcher.mail-producer.scheduler.rate` | `1h` | Time between scans (ISO-8601 or `10s`, `5m`, `1h`) |
+Properties, their types, defaults and meaning are listed in the generated reference:
+
+- [`invoice-watcher.mail-producer.scheduler`](../reference/configuration.md#invoice-watcher-mail-producer-scheduler)
 
 ## Out of scope
 

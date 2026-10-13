@@ -13,13 +13,22 @@ import java.security.spec.KeySpec;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
-@Command(name = "generate-key")
+@Command(
+    name = "generate-key",
+    description = "Prints a new Base64-encoded AES-256 key.",
+    mixinStandardHelpOptions = true
+)
 public class GenerateKeyCommand implements Callable<Integer> {
 
   private static final String PasswordMode = "password";
   private static final String RandomMode = "random";
 
-  @Option(names = {"-m", "--mode"})
+  @Option(
+      names = {"-m", "--mode"},
+      description = "How the key is made: password derives it from a password read from "
+          + "standard input (PBKDF2, random salt); random is not implemented yet. "
+          + "Default: ${DEFAULT-VALUE}."
+  )
   private String mode = PasswordMode;
 
   @Override

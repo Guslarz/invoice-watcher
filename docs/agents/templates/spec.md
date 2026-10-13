@@ -34,7 +34,8 @@ One paragraph: what problem this capability solves and for whom.
 
 ## Configuration
 
-Properties are listed in the [configuration reference](../reference/configuration.md).
+Link each properties group (prefix) to its section of the generated
+[configuration reference](../reference/configuration.md); do not copy defaults or meanings here.
 
 ## Out of scope
 

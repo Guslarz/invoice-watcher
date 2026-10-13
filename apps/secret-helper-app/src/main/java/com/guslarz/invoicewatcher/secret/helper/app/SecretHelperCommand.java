@@ -9,6 +9,10 @@ import java.util.concurrent.Callable;
 
 @Command(
     name = "secret-helper",
+    description = "Generates the AES key for InvoiceWatcher and encrypts and decrypts secrets "
+        + "with it. All values are read interactively from standard input.",
+    mixinStandardHelpOptions = true,
+    versionProvider = ManifestVersionProvider.class,
     subcommands = {
         DecryptCommand.class,
         EncryptCommand.class,

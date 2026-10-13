@@ -59,9 +59,9 @@ encrypted values.
 
 ## Configuration
 
-| Property | Default | Meaning |
-|----------|---------|---------|
-| `invoice-watcher.secret.aes.key` | — | Base64 AES-256 key (from `secret-helper generate-key`) |
+Properties, their types, defaults and meaning are listed in the generated reference:
+
+- [`invoice-watcher.secret.aes`](../reference/configuration.md#invoice-watcher-secret-aes)
 
 ## Out of scope
 

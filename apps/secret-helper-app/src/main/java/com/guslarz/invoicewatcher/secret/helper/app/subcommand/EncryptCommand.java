@@ -8,7 +8,11 @@ import javax.crypto.SecretKey;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
-@Command(name = "encrypt")
+@Command(
+    name = "encrypt",
+    description = "Asks for the key and a value and prints the value encrypted with AES-GCM.",
+    mixinStandardHelpOptions = true
+)
 public class EncryptCommand implements Callable<Integer> {
 
   @Override
@@ -18,7 +22,7 @@ public class EncryptCommand implements Callable<Integer> {
       String input = CommandUtil.promptForLine(scanner, "Enter input for encryption");
       SecretKey secretKey = AesUtil.decodeSecretKey(encodedKey);
       String result = AesUtil.encrypt(input, secretKey);
-      System.out.println(result);
+      IO.println(result);
       return 0;
     }
   }

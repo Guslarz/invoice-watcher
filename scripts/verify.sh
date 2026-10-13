@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Single verification entry point: documentation checks, documentation site build, Gradle build.
+# Single verification entry point: documentation checks, generated reference, documentation site
+# build, Gradle build. The regenerated docs/reference/ pages are part of the change - commit them.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -11,6 +12,10 @@ fi
 
 echo "==> Documentation structure"
 scripts/check-docs.sh
+
+echo "==> Generated reference"
+./gradlew --quiet docsReference
+python3 scripts/gen-reference.py
 
 echo "==> Documentation site"
 if command -v mkdocs >/dev/null 2>&1; then

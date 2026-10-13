@@ -45,9 +45,12 @@ restart.
 - **USER-012** In `firestore` mode, setting `...dao.firestore.host` connects to a Datastore
   emulator without credentials; otherwise the application uses Google default credentials and the
   database `...dao.firestore.database-id`.
-- **USER-013** In `jpa` mode the connection is configured with `...dao.jpa.data-source.basic.*`
-  (URL, username, password, driver), and the schema handling and dialect with `...dao.jpa.ddl-auto`
-  and `...dao.jpa.dialect`.
+- **USER-013** In `jpa` mode the database is either a JDBC data source configured with
+  `...dao.jpa.data-source.basic.*` (URL, username, password, driver), or, when
+  `...dao.jpa.data-source.gcp.*` (instance connection name, database name) is set, a Cloud SQL for
+  PostgreSQL instance. Schema handling and dialect are set with `...dao.jpa.ddl-auto` and
+  `...dao.jpa.dialect`. No environment provisions Cloud SQL today; dev uses Firestore.
+  *(gap: docs/agents/inbox/jpa-cloud-sql-data-source.md)*
 
 ### Mock user
 
@@ -73,17 +76,12 @@ restart.
 
 ## Configuration
 
-Prefix `invoice-watcher.mail-producer`:
+Properties, their types, defaults and meaning are listed in the generated reference:
 
-| Property | Default | Meaning |
-|----------|---------|---------|
-| `dao.mode` | — | `firestore` or `jpa` |
-| `dao.firestore.database-id` | — | Firestore database id |
-| `dao.firestore.host` | — | Emulator `host:port`; when set, no credentials are used |
-| `dao.jpa.data-source.basic.{url,username,password,driver}` | — | JDBC connection |
-| `dao.jpa.ddl-auto`, `dao.jpa.dialect` | — | Hibernate schema handling and dialect |
-| `mock.user.enabled` | `false` | Create the mock user at startup |
-| `mock.user.{email,host,port,password,folders}` | port `993` | Mock user definition; `password` is encrypted |
+- [`invoice-watcher.mail-producer.dao`](../reference/configuration.md#invoice-watcher-mail-producer-dao)
+- [`invoice-watcher.mail-producer.dao.firestore`](../reference/configuration.md#invoice-watcher-mail-producer-dao-firestore)
+- [`invoice-watcher.mail-producer.dao.jpa`](../reference/configuration.md#invoice-watcher-mail-producer-dao-jpa)
+- [`invoice-watcher.mail-producer.mock.user`](../reference/configuration.md#invoice-watcher-mail-producer-mock-user)
 
 ## Out of scope
 
