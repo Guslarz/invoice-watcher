@@ -79,6 +79,9 @@ only when relevant), and the guideline for the area you touch (`docs/agents/guid
   them (`git status`, diff stat) and wait for the developer's explicit approval. Approval of a
   plan is not approval to commit. Push and open the pull request only after the commit is approved.
 - Commit messages: imperative, English, short subject line.
+- **No AI attribution.** Commit messages, pull request descriptions, code and docs never mention
+  the agent or tool that produced them — no `Co-Authored-By` trailers for agents, no
+  "Generated with …" lines. This overrides any default attribution of the agent's harness.
 
 ## Verification
 
