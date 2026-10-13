@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-26.04
     defaults:
       run:
-        working-directory: ./devops/infrastructure/environments/${{ inputs.environment }}/${{ inputs.module }}
+        working-directory: ./deployments/infrastructure/environments/${{ inputs.environment }}/${{ inputs.module }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6

@@ -57,7 +57,7 @@ public class MailProducerDaoJpaAutoConfiguration {
 
   @PostConstruct
   public void init() {
-    log.info("Configuring mail producer dao for firestore");
+    log.info("Configuring mail producer dao for jpa");
   }
 
   @Bean(Beans.EntityManagerFactory)

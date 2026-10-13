@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: '{{ .Values.github.orgUrl }}/invoice-watcher.git'
     targetRevision: HEAD
-    path: 'devops/k8s-apps/environments/{{ .Values.environment }}'
+    path: 'deployments/k8s-apps/environments/{{ .Values.environment }}'
   destination:
     server: https://kubernetes.default.svc
     namespace: 'invoice-watcher-{{ .Values.environment }}'

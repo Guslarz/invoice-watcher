@@ -23,27 +23,10 @@ permissions:
   contents: read
 
 jobs:
-  infrastructure-up:
-    if: ${{ github.event.inputs.action == 'up' }}
-    uses: ./.github/workflows/infrastructure.yml
-    strategy:
-      max-parallel: 1
-      matrix:
-        action: [ up ]
-        module: [ persistent, ephemereal ]
-    with:
-      action: ${{ matrix.action }}
-      environment: ${{ github.event.inputs.environment }}
-      module: ${{ matrix.module }}
-    secrets:
-      PAT: ${{ secrets.PAT }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-  infrastructure-down:
-    if: ${{ github.event.inputs.action == 'down' }}
+  infrastructure:
     uses: ./.github/workflows/infrastructure.yml
     with:
-      action: down
+      action: ${{ github.event.inputs.action }}
       environment: ${{ github.event.inputs.environment }}
       module: ephemereal
     secrets:
@@ -53,6 +36,6 @@ jobs:
   k8s-install:
     if: ${{ github.event.inputs.action == 'up' }}
     uses: ./.github/workflows/k8s-install.yml
-    needs: infrastructure-up
+    needs: infrastructure
     with:
       environment: ${{ github.event.inputs.environment }}
