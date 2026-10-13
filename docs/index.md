@@ -15,9 +15,10 @@ flowchart LR
 
 | You want to… | Go to |
 |--------------|-------|
-| Connect a mailbox and choose folders to watch | [User guide](guide/index.md) |
-| Deploy and run InvoiceWatcher | [Operations](operate/index.md) |
-| Build, run locally and contribute | [Development](develop/index.md) |
+| Understand how it works and how it is built | [System](system/index.md) |
+| Set it up yourself, from cloud accounts to a running environment | [Setup](setup/index.md) |
+| Run it on your machine and contribute | [Local development](setup/local.md) |
+| See what it produces | [In action](results/index.md) |
 | Know exactly how a feature behaves | [Specifications](specs/index.md) |
 | Understand why it is built this way | [Decisions](adr/index.md) |
-| Look up a property or command | [Reference](reference/index.md) |
+| Look up a property, command or module | [Reference](reference/index.md) |

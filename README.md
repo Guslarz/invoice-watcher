@@ -5,9 +5,9 @@ so invoices can be picked up and processed automatically.
 
 📖 **Documentation: https://guslarz.github.io/invoice-watcher/**
 
-- [User guide](docs/guide/index.md) · [Operations](docs/operate/index.md) ·
-  [Development](docs/develop/index.md) · [Specifications](docs/specs/index.md) ·
-  [Decisions](docs/adr/index.md)
+- [System](docs/system/index.md) · [Setup](docs/setup/index.md) ·
+  [In action](docs/results/index.md) · [Specifications](docs/specs/index.md) ·
+  [Decisions](docs/adr/index.md) · [Reference](docs/reference/index.md)
 
 ## Quick start
 
@@ -15,7 +15,8 @@ so invoices can be picked up and processed automatically.
 ./gradlew build analyze
 ```
 
-Local run configurations for IntelliJ are in `.run/` — see [Development](docs/develop/index.md).
+Local run configurations for IntelliJ are in `.run/` — see
+[Local development](docs/setup/local.md).
 
 ## Contributing
 

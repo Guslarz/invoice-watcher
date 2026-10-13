@@ -95,6 +95,7 @@ while it is not needed. After it is up, application changes are deployed automat
 
 GitHub repository settings used by the workflows:
 
+<!-- --8<-- [start:github-settings] -->
 | Name | Kind | Meaning |
 |------|------|---------|
 | `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER` | variable | Google Cloud project |
@@ -102,6 +103,7 @@ GitHub repository settings used by the workflows:
 | `CLOUDFLARE_ZONE_ID` | variable | Cloudflare zone of the domain |
 | `PAT` | secret | GitHub token used to pull images and read the repository |
 | `CLOUDFLARE_API_TOKEN` | secret | Cloudflare token for DNS and origin certificates |
+<!-- --8<-- [end:github-settings] -->
 
 ## Out of scope
 

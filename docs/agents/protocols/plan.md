@@ -15,7 +15,7 @@ Output: one plan file in `docs/agents/projects/`. **No production code.**
      `docs/agents/templates/spec.md`.
    - **Acceptance** — Given/When/Then per changed clause.
    - **Docs impact** — `BEHAVIOR` (end-user visible), `OPERATIONS` (deploy/config/infra),
-     `INTERNAL` (neither). List the `guide/` / `operate/` / `develop/` pages to update.
+     `INTERNAL` (neither). List the `system/` / `setup/` / `results/` pages to update.
    - **Design** — modules touched, new properties, contracts; enough for review, not code.
    - **ADR** — only when the reasoning must survive the change; draft title as an instruction.
    - **Open questions** — everything you would otherwise guess.

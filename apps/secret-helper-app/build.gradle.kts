@@ -10,6 +10,11 @@ dependencies {
   implementation(libs.picocli)
 }
 
+// Stable name, so the tool can be run as `java -jar apps/secret-helper-app/build/libs/secret-helper.jar`
+tasks.bootJar {
+  archiveFileName = "secret-helper.jar"
+}
+
 // Usage texts for the generated documentation reference (scripts/gen-reference.py).
 // Every command printed under "Commands:" by `secret-helper --help` must be listed here.
 val cliCommands = listOf("", "generate-key", "encrypt", "decrypt")
@@ -27,7 +32,6 @@ cliCommands.forEach { command ->
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass = "com.guslarz.invoicewatcher.secret.helper.app.SecretHelperApp"
     args = listOf(command, "--help").filter { it.isNotEmpty() }
-    jvmArgs("-Dspring.main.banner-mode=off", "-Dlogging.level.root=OFF")
     val output = rootProject.layout.buildDirectory.file("docs-reference/cli/$name.txt")
     outputs.file(output)
     doFirst {

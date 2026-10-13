@@ -16,7 +16,7 @@ One paragraph: what problem this capability solves and for whom.
 ## Behavior
 
 <!-- Numbered, normative, present tense. One observable fact per clause.
-     Wrap clauses reused by guide/operate pages in snippet markers. -->
+     Wrap clauses reused by system/setup pages in snippet markers. -->
 
 <!-- --8<-- [start:example-section] -->
 - **XXXX-001** The system does X when Y.

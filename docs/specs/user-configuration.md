@@ -26,7 +26,7 @@ restart.
 - **USER-001** A **user** has a unique name — their e-mail address — and one or more **mailbox
   configurations**.
 - **USER-002** A mailbox configuration has a server (IMAP host and port), credentials (username and
-  encrypted password, see [secret encryption](secret-encryption.md)) and one or more **folders**.
+  encrypted password, see [secret encryption](../specs/secret-encryption.md)) and one or more **folders**.
 - **USER-003** A folder has a name as seen by the mail server (e.g. `INBOX`, `Invoices`,
   `INBOX/Bills`) and a scan timestamp (see MAIL-020).
 <!-- --8<-- [end:model] -->

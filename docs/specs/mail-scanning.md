@@ -38,7 +38,7 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
   the host and port from the mailbox configuration (port 993 is the usual one).
 - **MAIL-011** It authenticates with a username and password (basic authentication). The password
   is stored encrypted and decrypted only for the moment of connecting
-  (see [secret encryption](secret-encryption.md)).
+  (see [secret encryption](../specs/secret-encryption.md)).
 - **MAIL-012** Folders are opened read-only. InvoiceWatcher never marks, moves or deletes
   messages.
 <!-- --8<-- [end:connection] -->

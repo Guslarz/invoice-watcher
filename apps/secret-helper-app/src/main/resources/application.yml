@@ -1,0 +1,7 @@
+# A command-line tool: keep standard output for prompts and results only.
+spring:
+  main:
+    banner-mode: off
+logging:
+  level:
+    root: warn
