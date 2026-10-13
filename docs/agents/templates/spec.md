@@ -21,6 +21,8 @@ One paragraph: what problem this capability solves and for whom.
 <!-- --8<-- [start:example-section] -->
 - **XXXX-001** The system does X when Y.
 - **XXXX-002** ...
+- **XXXX-003** Intended behavior the code does not meet yet. *(gap:
+  `docs/agents/inbox/<note>.md`)*
 <!-- --8<-- [end:example-section] -->
 
 ## Acceptance

@@ -8,7 +8,7 @@
 - Logging: `log.info("> Start ...")` / `log.info("< Finished ...")` brackets around units of work;
   never log credentials or decrypted secrets.
 - Secrets (passwords, tokens) are held as `Secret` from `libs/secret/api`, never as plain `String`
-  outside the moment of use.
+  outside the moment of use. Their values never go into the repository (ADR-0006).
 
 ## Tests
 

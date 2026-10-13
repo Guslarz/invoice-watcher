@@ -17,6 +17,6 @@ Three layers, applied in this order by the `Environment` workflow (`.github/work
 
 Rules:
 - Pin every chart, provider and action version.
-- Secrets never go into the repository — Secret Manager + external-secrets.
+- Secrets never go into the repository — Secret Manager + external-secrets (ADR-0006).
 - Changes under `deployments/` are a planning trigger (`AGENTS.md`) and impact `OPERATIONS`.
 - Validate locally when possible: `tofu validate`, `helmfile template`, `kubectl kustomize`.
