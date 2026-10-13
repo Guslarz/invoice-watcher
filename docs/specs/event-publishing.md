@@ -56,11 +56,11 @@ or care who consumes the events.
 
 ## Configuration
 
-| Property | Default | Meaning |
-|----------|---------|---------|
-| `invoice-watcher.mail-producer.task.topic` | — | Topic for mail events |
-| `invoice-watcher.event-producer.mode` | — | Event backend: `kafka` |
-| `invoice-watcher.event-producer.kafka.bootstrap-servers` | — | Kafka brokers, e.g. `kafka:9092` |
+Properties, their types, defaults and meaning are listed in the generated reference:
+
+- [`invoice-watcher.mail-producer.task`](../reference/configuration.md#invoice-watcher-mail-producer-task)
+- [`invoice-watcher.event-producer`](../reference/configuration.md#invoice-watcher-event-producer)
+- [`invoice-watcher.event-producer.kafka`](../reference/configuration.md#invoice-watcher-event-producer-kafka)
 
 ## Out of scope
 

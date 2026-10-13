@@ -21,3 +21,15 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build analyze
+
+      # docs/reference/ is generated from code and committed with the change (scripts/verify.sh)
+      - name: Check generated reference is up to date
+        run: |
+          ./gradlew docsReference
+          python3 scripts/gen-reference.py
+          if [ -n "$(git status --porcelain -- docs/reference)" ]; then
+            git status --short -- docs/reference
+            git diff -- docs/reference
+            echo "::error::docs/reference is out of date - run scripts/verify.sh and commit the result"
+            exit 1
+          fi

@@ -6,6 +6,8 @@
   `images/`, `libs/` containing a `build.gradle.kts` becomes a project. Path
   `libs/mail-producer/dao/api` → project `:libs:mail-producer-dao-api` → type-safe accessor
   `projects.libs.mailProducerDaoApi`. Never edit `settings.gradle.kts` to add a module.
+- Every `build.gradle.kts` sets a one-line `description`; it is published in the generated module
+  reference, and a module without one fails the docs build.
 - A library area has an `api` module and one or more implementations:
   - `api` — interfaces, records, `@ConfigurationProperties`, exceptions. No Spring beans except an
     optional `@AutoConfiguration` that only enables properties.
@@ -32,7 +34,8 @@
 - `@ConfigurationProperties` **records**, prefix `invoice-watcher.<area>[.<sub>]`.
 - Defaults via `@DefaultValue` with constants in a nested `Defaults` class.
 - The configuration processor (enabled in `spring-boot-{app,lib}-conventions`) generates metadata
-  that feeds the published configuration reference — add Javadoc to record components, it becomes
-  the property description.
+  that feeds the published configuration reference. Every record (also nested ones) needs Javadoc
+  with a `@param` per component — it becomes the property description, and a property without
+  one fails the docs build (`scripts/gen-reference.py`).
 - In k8s, properties are set as env vars in `overlays/<env>/config/.env` of the app
   (`invoice-watcher.mail-producer.task.topic` → `INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC`).

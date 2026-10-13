@@ -2,6 +2,8 @@ plugins {
   id("spring-boot-lib-conventions")
 }
 
+description = "Event producer that sends events to Kafka."
+
 dependencies {
   api(projects.libs.eventProducerApi)
 

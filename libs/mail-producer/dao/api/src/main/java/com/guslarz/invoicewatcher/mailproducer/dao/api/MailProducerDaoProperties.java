@@ -3,6 +3,11 @@ package com.guslarz.invoicewatcher.mailproducer.dao.api;
 import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * Storage of users and their mailbox configuration.
+ *
+ * @param mode Storage backend: `firestore` or `jpa`.
+ */
 @ConfigurationProperties(prefix = MailProducerDaoProperties.Constants.Prefix)
 public record MailProducerDaoProperties(
     String mode

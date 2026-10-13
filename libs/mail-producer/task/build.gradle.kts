@@ -2,6 +2,8 @@ plugins {
   id("spring-boot-lib-conventions")
 }
 
+description = "Scan task: reads users, scans their folders and publishes new messages."
+
 dependencies {
   api(projects.libs.mailConnectorApi)
   api(projects.libs.mailProducerSchedulerApi)

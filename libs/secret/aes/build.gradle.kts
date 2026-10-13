@@ -2,6 +2,8 @@ plugins {
   id("spring-boot-lib-conventions")
 }
 
+description = "AES-GCM implementation of secrets, decrypted only when used."
+
 dependencies {
   api(projects.libs.secretApi)
   implementation(projects.libs.utilAes)

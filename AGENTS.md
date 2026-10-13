@@ -32,7 +32,7 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `docs/specs/` | Canonical behavior per capability. Normative, present tense, numbered clauses, Given/When/Then. **Code must match the spec.** | yes |
 | `docs/adr/` | Decisions whose reasoning must survive. Title is the instruction. | yes |
 | `docs/guide/`, `docs/operate/`, `docs/develop/` | Narrative pages for end users, operators, developers. Reuse spec clauses via snippets instead of restating them. | yes |
-| `docs/reference/` | Generated at build time — never edit by hand. | yes |
+| `docs/reference/` | Generated from code by `scripts/verify.sh` and committed with the change — never edit by hand. | yes |
 | `docs/agents/protocols/` | How to plan / implement / do lightweight changes. | no |
 | `docs/agents/guidelines/` | Coding, module, build and k8s conventions. | no |
 | `docs/agents/projects/` | Temporary plans, one per change; deleted by the PR that implements them. | no |
@@ -90,9 +90,11 @@ only when relevant), and the guideline for the area you touch (`docs/agents/guid
 
 ## Verification
 
-- `scripts/verify.sh` is the single entry point: documentation checks + `./gradlew build analyze`.
-- Run it before opening a pull request and report the result faithfully.
-- Docs only: `scripts/check-docs.sh` and `mkdocs build --strict`.
+- `scripts/verify.sh` is the single entry point: documentation checks, regeneration of
+  `docs/reference/`, `mkdocs build --strict` and `./gradlew build analyze`.
+- Run it before opening a pull request and report the result faithfully. Regenerated
+  `docs/reference/` pages belong to the same change and pull request; CI fails when they are
+  out of date.
 
 ## Coding essentials
 

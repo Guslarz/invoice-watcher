@@ -1,9 +1,0 @@
-{
-  "properties": [
-    {
-      "name": "invoice-watcher.mail-producer.mock.user.password",
-      "type": "java.lang.String",
-      "description": "Encrypted password (decrypted at runtime via SecretFactory)."
-    }
-  ]
-}
