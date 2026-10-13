@@ -11,8 +11,8 @@ Output: a pull request to `master` containing spec, code, tests and docs — and
    only at the end, when tests pass.
 3. **Code and tests.** Every changed clause gets at least one test that names it, e.g.
    `@DisplayName("MAIL-004: skips folders that do not exist")`.
-4. **Docs.** For impact `BEHAVIOR` / `OPERATIONS` update the listed `guide/` / `operate/` /
-   `develop/` pages. Reuse spec clauses via snippets; do not restate them. Add the ADR if planned.
+4. **Docs.** For impact `BEHAVIOR` / `OPERATIONS` update the listed `system/` / `setup/` /
+   `results/` pages. Reuse spec clauses via snippets; do not restate them. Add the ADR if planned.
 5. **Verify.** Run `scripts/verify.sh`. Fix failures; do not weaken checks.
 6. **Delete the plan file** `docs/agents/projects/<slug>.md` and the inbox note it came from,
    if any. Git history keeps both.

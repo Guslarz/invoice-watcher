@@ -63,12 +63,17 @@ validation:
 
 nav:
   - Home: index.md
-  - User guide:
-      - guide/index.md
-  - Operations:
-      - operate/index.md
-  - Development:
-      - develop/index.md
+  - System:
+      - system/index.md
+      - system/architecture.md
+  - Setup:
+      - setup/index.md
+      - setup/one-time.md
+      - setup/environment.md
+      - setup/keys-and-users.md
+      - setup/local.md
+  - In action:
+      - results/index.md
   - Specifications:
       - specs/index.md
       - specs/mail-scanning.md

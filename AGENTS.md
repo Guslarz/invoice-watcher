@@ -31,7 +31,7 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 |-----------|---------------|-----------|
 | `docs/specs/` | Canonical behavior per capability. Normative, present tense, numbered clauses, Given/When/Then. **Code must match the spec.** | yes |
 | `docs/adr/` | Decisions whose reasoning must survive. Title is the instruction. | yes |
-| `docs/guide/`, `docs/operate/`, `docs/develop/` | Narrative pages for end users, operators, developers. Reuse spec clauses via snippets instead of restating them. | yes |
+| `docs/system/`, `docs/setup/`, `docs/results/` | Narrative pages: how the system works, how to reproduce its setup (every manual step), what it produces. Reuse spec clauses via snippets instead of restating them. | yes |
 | `docs/reference/` | Generated from code by `scripts/verify.sh` and committed with the change — never edit by hand. | yes |
 | `docs/agents/protocols/` | How to plan / implement / do lightweight changes. | no |
 | `docs/agents/guidelines/` | Coding, module, build and k8s conventions. | no |

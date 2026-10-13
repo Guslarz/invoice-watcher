@@ -22,7 +22,7 @@ source: none             # or docs/agents/inbox/<slug>.md
 
 ## Docs impact
 
-- `docs/guide/...`
+- `docs/setup/...`
 
 ## Design
 
