@@ -9,6 +9,8 @@ import org.gradle.api.tasks.Copy
 import org.gradle.kotlin.dsl.filter
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.register
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 plugins {
   id("com.bmuschko.docker-remote-api")
@@ -52,7 +54,8 @@ tasks {
   val copySources = register<Copy>("copySources") {
     from("src") {
       filter<ReplaceTokens>("tokens" to mapOf(
-        "PROJECT_VERSION" to version
+        "PROJECT_VERSION" to version,
+        "DATE_NOW" to ZonedDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
       ))
     }
     into(resourcesDir)

@@ -19,7 +19,9 @@ import com.guslarz.invoicewatcher.mailproducer.dao.firestore.mapper.FirestoreMap
 import com.guslarz.invoicewatcher.mailproducer.dao.firestore.properties.MailProducerDaoFirestoreProperties;
 import com.guslarz.invoicewatcher.mailproducer.dao.firestore.service.FolderConfigDaoServiceFirestoreImpl;
 import com.guslarz.invoicewatcher.mailproducer.dao.firestore.service.UserDaoServiceFirestoreImpl;
+import jakarta.annotation.PostConstruct;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -30,6 +32,7 @@ import org.springframework.context.annotation.Import;
 
 import java.io.IOException;
 
+@Slf4j
 @AutoConfiguration
 @Import({
         UserDaoServiceFirestoreImpl.class,
@@ -47,6 +50,11 @@ import java.io.IOException;
 )
 @EnableConfigurationProperties(MailProducerDaoFirestoreProperties.class)
 public class MailProducerDaoFirestoreAutoConfiguration {
+
+    @PostConstruct
+    public void init() {
+        log.info("Configuring mail producer dao for firestore");
+    }
 
     @Bean(Beans.ProjectIdProvider)
     GcpProjectIdProvider projectIdProvider() {

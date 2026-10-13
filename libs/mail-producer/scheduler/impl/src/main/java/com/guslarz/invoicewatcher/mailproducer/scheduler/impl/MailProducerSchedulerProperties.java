@@ -13,6 +13,6 @@ public record MailProducerSchedulerProperties(
 
   @UtilityClass
   static class Defaults {
-    static final String Rate = "10s";
+    static final String Rate = "1h";
   }
 }

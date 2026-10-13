@@ -13,7 +13,9 @@ import com.guslarz.invoicewatcher.mailproducer.dao.jpa.properties.MailProducerDa
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.service.FolderConfigDaoServiceJpaImpl;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.service.UserDaoServiceJpaImpl;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.util.DummyCloudSqlJdbcInfoProvider;
+import jakarta.annotation.PostConstruct;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 @AutoConfiguration
 @Import({
     UserDaoServiceJpaImpl.class,
@@ -51,6 +54,11 @@ import java.util.Optional;
     transactionManagerRef = MailProducerDaoJpaAutoConfiguration.Beans.TransactionManager
 )
 public class MailProducerDaoJpaAutoConfiguration {
+
+  @PostConstruct
+  public void init() {
+    log.info("Configuring mail producer dao for jpa");
+  }
 
   @Bean(Beans.EntityManagerFactory)
   LocalContainerEntityManagerFactoryBean entityManager(

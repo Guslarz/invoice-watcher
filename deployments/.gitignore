@@ -1,0 +1,8 @@
+*.tfvars
+build
+.terraform
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+k8s/cluster-init/charts/argo-cd-*.tgz

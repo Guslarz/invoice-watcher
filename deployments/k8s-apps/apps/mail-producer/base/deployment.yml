@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mail-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mail-producer
+  template:
+    metadata:
+      labels:
+        app: mail-producer
+    spec:
+      containers:
+        - name: mail-producer
+          image: invoice-watcher/mail-producer
+          envFrom:
+            - configMapRef:
+                name: mail-producer-env-config-map

@@ -1,71 +1,71 @@
 name: Infrastructure
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      branch:
-        description: Branch to get infrastructure from
-        type: string
-        required: true
-        default: master
       action:
         description: Action (up, down)
-        type: choice
+        type: string
         required: true
-        default: up
-        options:
-          - up
-          - down
       environment:
-        description: Environment (dev)
-        type: choice
+        description: Environment
+        type: string
         required: true
-        default: dev
-        options:
-          - dev
+      module:
+        description: Module
+        type: string
+        required: true
+    secrets:
+      PAT:
+        description: GitHub Personal Access Token
+        required: true
+      CLOUDFLARE_API_TOKEN:
+        description: Cloudflare API Token
+        required: true
 
 jobs:
-  terraform:
-    runs-on: ubuntu-latest
+  opentofu:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-26.04
     defaults:
       run:
-        working-directory: ./devops/infrastructure/environments/${{ github.event.inputs.environment }}
+        working-directory: ./deployments/infrastructure/environments/${{ inputs.environment }}/${{ inputs.module }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.inputs.branch }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - name: Set environmental variables
+        run: |
+          declare -A ACTION_MAP=( ["up"]="apply" ["down"]="destroy" )
+          echo "ACTION=${ACTION_MAP[${{ inputs.action }}]}" >> $GITHUB_ENV
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_version: '1.12.5'
 
       - name: Setup variables
         run: |-
           cat > terraform.tfvars <<EOF
           gcp_project_id="${{ vars.GCP_PROJECT_ID }}"
           gcp_project_number="${{ vars.GCP_PROJECT_NUMBER }}"
-          gcp_region="${{ vars.GCP_REGION }}"
-          gcp_zone="${{ vars.GCP_ZONE }}"
-          gcp_gke_cluster_name="${{ vars.GCP_GKE_CLUSTER_NAME }}"
+          github_pat="${{ secrets.PAT }}"
+          cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          cloudflare_zone_id="${{ vars.CLOUDFLARE_ZONE_ID }}"
           EOF
 
-      - name: Terraform Init
-        run: terraform init -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: "projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+          service_account: "github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
 
-      - name: Terraform Plan
-        run: terraform plan -input=false
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      - name: Tofu Init
+        run: tofu init -input=false
 
-      - name: Terraform Apply or Destroy
-        if: ${{ github.event.inputs.action == 'up' }}
-        run: terraform apply -auto-approve
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      - name: Tofu Plan
+        run: tofu plan -input=false
 
-      - name: Terraform Destroy
-        if: ${{ github.event.inputs.action == 'down' }}
-        run: terraform destroy -auto-approve
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      - name: Tofu action
+        run: tofu ${{ env.ACTION }} -auto-approve -input=false

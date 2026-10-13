@@ -1,0 +1,25 @@
+apiVersion: cert-manager.k8s.cloudflare.com/v1
+kind: OriginIssuer
+metadata:
+  name: domain-cert-issuer
+spec:
+  requestType: OriginECC
+  auth:
+    tokenRef:
+      name: cloudflare-api-token
+      key: key
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: domain-cert
+spec:
+  secretName: domain-cert-secret
+  dnsNames:
+    - "*.{{ .Values.domain }}"
+  duration: 168h
+  renewBefore: 24h
+  issuerRef:
+    group: cert-manager.k8s.cloudflare.com
+    kind: OriginIssuer
+    name: domain-cert-issuer

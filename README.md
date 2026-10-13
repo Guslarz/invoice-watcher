@@ -1,5 +1,9 @@
 # InvoiceWatcher
 
+## About
+
+TODO
+
 ## Local development
 
 For local development there are predefined IntelliJ runners in `.run` directory.
@@ -9,3 +13,13 @@ For them to work `application.local.yml` file must be created in `apps/mail-prod
 ```yaml
 TODO przykład
 ```
+
+## TODOsy
+
+- error `WARNING: sun.misc.Unsafe::allocateMemory has been called by io.grpc.netty.shaded.io.netty.util.internal.PlatformDependent0$2 (jar:nested:/usr/bin/app/app.jar/!BOOT-INF/lib/grpc-netty-shaded-1.80.0.jar!/)`
+- wolumen dla kafki
+- terraform fmt
+- ograniczenia zasobow w manifestach
+- proby
+- firewall
+- doksy dla ai

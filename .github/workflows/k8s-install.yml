@@ -1,0 +1,56 @@
+name: K8s install
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Environment (dev)
+        type: string
+        required: true
+
+jobs:
+  k8s-install:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: 'projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
+          service_account: 'github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Wait for GKE cluster
+        timeout-minutes: 5
+        run: |
+          until [ "$(gcloud container clusters describe "$CLUSTER" --location "$LOCATION" \
+                      --format='value(status)' 2>/dev/null)" = "RUNNING" ]; do
+            echo "Cluster not ready yet, retrying in 30s..."
+            sleep 30
+          done
+        env:
+          CLUSTER: ${{ vars.GCP_GKE_CLUSTER_NAME }}
+          LOCATION: ${{ vars.GCP_ZONE }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ vars.GCP_GKE_CLUSTER_NAME }}
+          location: ${{ vars.GCP_ZONE }}
+
+      - uses: helmfile/helmfile-action@v2.4.7
+        with:
+          helmfile-version: v1.7.3
+          helm-version: v4.2.3
+          helm-plugins: >
+            https://github.com/databus23/helm-diff@v3.15.11
+          helmfile-args: --environment ${{ inputs.environment }} sync
+          helmfile-workdirectory: ./deployments/k8s
+        env:
+          GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}

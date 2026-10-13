@@ -18,27 +18,24 @@ on:
         options:
           - dev
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   infrastructure:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Persistent up
-        if: ${{ github.event.inputs.action == 'up' }}
-        uses: ./.github/workflows/infrastructure.yml
-        with:
-          action: ${{ github.event.inputs.action }}
-          environment: "${{ github.event.inputs.environment }}-persistent"
+    uses: ./.github/workflows/infrastructure.yml
+    with:
+      action: ${{ github.event.inputs.action }}
+      environment: ${{ github.event.inputs.environment }}
+      module: ephemereal
+    secrets:
+      PAT: ${{ secrets.PAT }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - name: Ephemereal up
-        if: ${{ github.event.inputs.action == 'up' }}
-        uses: ./.github/workflows/infrastructure.yml
-        with:
-          action: ${{ github.event.inputs.action }}
-          environment: "${{ github.event.inputs.environment }}-ephemereal"
-
-      - name: Ephemereal down
-        if: ${{ github.event.inputs.action == 'down' }}
-        uses: ./.github/workflows/infrastructure.yml
-        with:
-          action: ${{ github.event.inputs.action }}
-          environment: "${{ github.event.inputs.environment }}-ephemereal"
+  k8s-install:
+    if: ${{ github.event.inputs.action == 'up' }}
+    uses: ./.github/workflows/k8s-install.yml
+    needs: infrastructure
+    with:
+      environment: ${{ github.event.inputs.environment }}
