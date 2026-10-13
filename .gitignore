@@ -46,3 +46,7 @@ bin/
 application-local.yml
 .run/tmp
 .kotlin
+
+### Documentation ###
+site/
+.venv/

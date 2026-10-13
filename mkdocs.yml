@@ -1,0 +1,79 @@
+site_name: InvoiceWatcher
+site_description: Watches mailboxes and turns incoming e-mails into events for invoice processing.
+site_url: https://guslarz.github.io/invoice-watcher/
+repo_url: https://github.com/Guslarz/invoice-watcher
+repo_name: Guslarz/invoice-watcher
+edit_uri: edit/master/docs/
+
+# Agent-only material lives in docs/agents and is not published.
+exclude_docs: |
+  agents/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      # Guides include spec fragments: --8<-- "docs/specs/<spec>.md:<section>"
+      base_path: [.]
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+nav:
+  - Home: index.md
+  - User guide:
+      - guide/index.md
+  - Operations:
+      - operate/index.md
+  - Development:
+      - develop/index.md
+  - Specifications:
+      - specs/index.md
+  - Decisions:
+      - adr/index.md
+      - adr/0001-describe-behavior-in-published-specs.md
+      - adr/0002-change-master-only-through-pull-requests.md
+  - Reference:
+      - reference/index.md
