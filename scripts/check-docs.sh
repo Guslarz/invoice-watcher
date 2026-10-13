@@ -73,7 +73,7 @@ done
 while IFS=: read -r file path; do
   [[ -e "$path" ]] || fail "$file: referenced path '$path' does not exist"
 done < <(grep -oE '`(docs|scripts|apps|libs|images|buildSrc|config|deployments|\.github)/[^`<>* ]*`' \
-  --with-filename AGENTS.md docs/agents/protocols/*.md docs/agents/guidelines/*.md \
+  --with-filename AGENTS.md docs/agents/protocols/*.md docs/agents/guidelines/*.md docs/specs/*.md docs/adr/*.md \
   | tr -d '`' | sed -E 's#/$##' | sort -u)
 
 if ((errors > 0)); then

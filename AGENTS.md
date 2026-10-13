@@ -42,6 +42,8 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 Rules:
 - One fact has one place. Link or include (`--8<--`), do not copy.
 - Specs describe *what* the system does, not *how* the code is structured.
+- A spec clause the code does not meet yet is marked `*(gap: docs/agents/inbox/<note>.md)*`;
+  the change that fixes it removes the marker and the note.
 - Do not write counts or inventories of modules/files into docs by hand — they go stale; generate them.
 
 ## Workflow selection
@@ -76,9 +78,12 @@ only when relevant), and the guideline for the area you touch (`docs/agents/guid
 - Every change ends with a pushed branch and a pull request to `master`
   (`gh pr create --base master`). Agents never merge pull requests.
 - **Ask before every commit.** Stop with the changes uncommitted in the working tree, summarize
-  them (`git status`, diff stat) and wait for the developer's explicit approval. Approval of a
-  plan is not approval to commit. Push and open the pull request only after the commit is approved.
-- Commit messages: imperative, English, short subject line.
+  them (`git status`, diff stat), write the proposed commit message to `.gitmessage` in the
+  repository root (git-ignored) and wait for the developer's explicit approval. Approval of a
+  plan is not approval to commit. Commit with `git commit -F .gitmessage`, so edits the developer
+  made to the file are kept. Push and open the pull request only after the commit is approved.
+- Commit messages: imperative, English, short subject line. The body explains the intention
+  behind the change, not a list of what was changed — the diff shows that.
 - **No AI attribution.** Commit messages, pull request descriptions, code and docs never mention
   the agent or tool that produced them — no `Co-Authored-By` trailers for agents, no
   "Generated with …" lines. This overrides any default attribution of the agent's harness.

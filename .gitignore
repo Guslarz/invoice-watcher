@@ -50,3 +50,6 @@ application-local.yml
 ### Documentation ###
 site/
 .venv/
+
+### Proposed commit message (AGENTS.md, Git workflow) ###
+.gitmessage
