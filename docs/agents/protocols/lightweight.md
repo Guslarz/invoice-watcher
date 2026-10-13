@@ -10,4 +10,5 @@ switch to Protocol plan.
 2. Make the change. A bug fix gets a regression test; name the violated clause if there is one.
 3. If the change addresses an inbox note, delete the note.
 4. Run `scripts/verify.sh`.
-5. Commit, push, open a pull request to `master`. Never merge it.
+5. Stop and ask the developer to review the working tree. Only after approval: commit, push,
+   open a pull request to `master`. Never merge it.

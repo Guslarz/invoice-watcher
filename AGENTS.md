@@ -75,6 +75,9 @@ only when relevant), and the guideline for the area you touch (`docs/agents/guid
   (`<type>`: `feature`, `fix`, `docs`, `chore`, `infra`).
 - Every change ends with a pushed branch and a pull request to `master`
   (`gh pr create --base master`). Agents never merge pull requests.
+- **Ask before every commit.** Stop with the changes uncommitted in the working tree, summarize
+  them (`git status`, diff stat) and wait for the developer's explicit approval. Approval of a
+  plan is not approval to commit. Push and open the pull request only after the commit is approved.
 - Commit messages: imperative, English, short subject line.
 
 ## Verification

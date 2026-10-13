@@ -16,8 +16,9 @@ Output: a pull request to `master` containing spec, code, tests and docs — and
 5. **Verify.** Run `scripts/verify.sh`. Fix failures; do not weaken checks.
 6. **Delete the plan file** `docs/agents/projects/<slug>.md` and the inbox note it came from,
    if any. Git history keeps both.
-7. Commit, push the branch and open a pull request to `master` (`gh pr create --base master`).
-   Never merge it.
+7. Stop and ask the developer to review the working tree (summarize `git status` / diff stat).
+   Only after approval: commit, push the branch and open a pull request to `master`
+   (`gh pr create --base master`). Never merge it.
 8. Report with this block:
 
 ```
