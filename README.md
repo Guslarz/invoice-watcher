@@ -1,25 +1,24 @@
 # InvoiceWatcher
 
-## About
+InvoiceWatcher scans mailboxes on a schedule and publishes every new e-mail as an event to Kafka,
+so invoices can be picked up and processed automatically.
 
-TODO
+📖 **Documentation: https://guslarz.github.io/invoice-watcher/**
 
-## Local development
+- [User guide](docs/guide/index.md) · [Operations](docs/operate/index.md) ·
+  [Development](docs/develop/index.md) · [Specifications](docs/specs/index.md) ·
+  [Decisions](docs/adr/index.md)
 
-For local development there are predefined IntelliJ runners in `.run` directory.
+## Quick start
 
-For them to work `application.local.yml` file must be created in `apps/mail-producer-app/src/main/resources` directory, to define missing properties such as e-mail credentials.
-
-```yaml
-TODO przykład
+```shell
+./gradlew build analyze
 ```
 
-## TODOsy
+Local run configurations for IntelliJ are in `.run/` — see [Development](docs/develop/index.md).
 
-- error `WARNING: sun.misc.Unsafe::allocateMemory has been called by io.grpc.netty.shaded.io.netty.util.internal.PlatformDependent0$2 (jar:nested:/usr/bin/app/app.jar/!BOOT-INF/lib/grpc-netty-shaded-1.80.0.jar!/)`
-- wolumen dla kafki
-- terraform fmt
-- ograniczenia zasobow w manifestach
-- proby
-- firewall
-- doksy dla ai
+## Contributing
+
+Development is spec-driven and every change goes through a pull request to `master`.
+The rules — for AI agents and humans alike — are in [AGENTS.md](AGENTS.md). Ideas and TODOs for
+later are collected in [docs/agents/inbox](docs/agents/inbox/README.md).
