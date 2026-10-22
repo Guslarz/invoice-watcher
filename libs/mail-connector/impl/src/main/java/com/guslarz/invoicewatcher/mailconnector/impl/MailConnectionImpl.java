@@ -43,27 +43,34 @@ public class MailConnectionImpl implements MailConnection {
   private List<MailMessage> getEmailMessagesFromFolder(MailQuery query, Folder folder) throws MessagingException {
     folder.open(Folder.READ_ONLY);
     int messageCount = folder.getMessageCount();
-    int startIndex = findFirstIndexMatchingQuery(query, folder, messageCount);
-    Message[] messages = folder.getMessages(startIndex, messageCount);
+    int firstMessageNumber = findFirstMessageNumberMatchingQuery(query, folder, messageCount);
+    if (firstMessageNumber > messageCount) {
+      return List.of();
+    }
+    Message[] messages = folder.getMessages(firstMessageNumber, messageCount);
     return Stream.of(messages)
         .map(this::toMessage)
         .toList();
   }
 
-  private int findFirstIndexMatchingQuery(MailQuery query, Folder folder, int messageCount) {
+  /**
+   * Returns the 1-based IMAP number of the first message matching the query, or
+   * {@code messageCount + 1} when no message matches.
+   */
+  private int findFirstMessageNumberMatchingQuery(MailQuery query, Folder folder, int messageCount) {
     BinarySearchEngine engine = new BinarySearchEngine();
     Date dateFrom = DateUtil.toDate(query.dateFrom());
     BinarySearchConfig config = BinarySearchConfig.builder()
         .itemCount(messageCount)
         .searchPredicate(index -> {
           try {
-            return !dateFrom.after(folder.getMessage(index).getSentDate());
+            return !dateFrom.after(folder.getMessage(index + 1).getSentDate());
           } catch (MessagingException e) {
             throw new MailConnectionException(e);
           }
         })
         .build();
-    return engine.getIndexEqualOrGreaterThan(config);
+    return engine.getIndexEqualOrGreaterThan(config) + 1;
   }
 
   private MailMessage toMessage(Message message) {

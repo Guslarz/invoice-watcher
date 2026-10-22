@@ -52,7 +52,6 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
   forward so that the next scan picks up only messages that arrived since. *(gap:
   `docs/agents/inbox/scan-timestamp-moves-to-oldest-message.md`)*
 - **MAIL-022** A folder with no new messages is left unchanged and nothing is published for it.
-  *(gap: `docs/agents/inbox/folder-search-index-bounds.md`)*
 - **MAIL-023** A folder that has never been scanned has no scan timestamp; its first scan picks up
   all messages in the folder. *(gap: `docs/agents/inbox/folder-without-scan-timestamp.md`)*
 <!-- --8<-- [end:new-messages] -->
