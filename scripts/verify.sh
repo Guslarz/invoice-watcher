@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Single verification entry point: documentation checks, generated reference, documentation site
-# build, Gradle build. The regenerated docs/reference/ pages are part of the change - commit them.
+# Single verification entry point: documentation checks, generated reference, deployment files,
+# documentation site build, Gradle build. The regenerated docs/reference/ pages are part of the change - commit them.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -34,6 +34,9 @@ while IFS=: read -r file key; do
   fi
 done < <(grep -oE '^INVOICE_WATCHER_[A-Z0-9_]+' --with-filename -r --include=.env deployments/k8s-apps)
 ((unknown == 0)) || exit 1
+
+echo "==> Deployment files"
+scripts/check-deployments.sh
 
 echo "==> Documentation site"
 if command -v mkdocs >/dev/null 2>&1; then

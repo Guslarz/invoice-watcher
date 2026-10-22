@@ -20,7 +20,10 @@ the dev environment can run, and a release produces a versioned image and a GitH
 <!-- --8<-- [start:pipeline] -->
 - **RELEASE-001** Every pull request that changes a file outside `docs/` runs
   `./gradlew build analyze`: compilation, tests, Checkstyle and SpotBugs. Every pull request checks
-  that the generated `docs/reference/` is up to date. A failure blocks the change.
+  that the generated `docs/reference/` is up to date. Every pull request that changes a file under
+  `deployments/` checks the deployment files: OpenTofu files are formatted and valid
+  (`tofu fmt -check`, `tofu validate`), the helmfile and the kustomize environments render and the
+  rendered manifests match their Kubernetes schemas. A failure blocks the change.
 - **RELEASE-002** Every push to `master` that changes a file outside `docs/` builds and publishes
   the image `ghcr.io/guslarz/invoice-watcher/mail-producer-docker:snapshot`, replacing the
   previous snapshot.
@@ -39,6 +42,14 @@ the dev environment can run, and a release produces a versioned image and a GitH
   the `build` job of `Build and analyze` is skipped and the `reference` job runs.
 - **RELEASE-001** Given a pull request changing any file outside `docs/`, when it is opened, then
   both `build` and `reference` run.
+- **RELEASE-001** Given a pull request with a misindented or invalid `.tf` file under
+  `deployments/infrastructure/`, when it is opened, then the `deployments` job of
+  `Build and analyze` fails.
+- **RELEASE-001** Given a pull request with a manifest field unknown to its schema under
+  `deployments/k8s/` or `deployments/k8s-apps/`, when it is opened, then the `deployments` job
+  fails.
+- **RELEASE-001** Given a pull request not touching `deployments/`, when it is opened, then the
+  `deployments` job is skipped.
 - **RELEASE-002** Given a pull request changing only files under `docs/`, when it is merged, then
   `Snapshot` does not run.
 - **RELEASE-002** Given a pull request is merged, when the `Snapshot` workflow finishes, then

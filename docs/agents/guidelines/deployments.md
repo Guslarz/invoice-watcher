@@ -19,4 +19,7 @@ Rules:
 - Pin every chart, provider and action version.
 - Secrets never go into the repository — Secret Manager + external-secrets (ADR-0006).
 - Changes under `deployments/` are a planning trigger (`AGENTS.md`) and impact `OPERATIONS`.
-- Validate locally when possible: `tofu validate`, `helmfile template`, `kubectl kustomize`.
+- Run `tofu fmt -recursive deployments/infrastructure` before committing.
+- `scripts/check-deployments.sh` runs the same checks as the `deployments` CI job (OpenTofu
+  formatting and validation, helmfile and kustomize rendering, kubeconform schema validation);
+  a missing local tool skips its check.

@@ -6,5 +6,5 @@ resource "google_firestore_database" "db" {
   depends_on = [
     google_project_service.firestore_api
   ]
-  deletion_policy             = "DELETE"
+  deletion_policy = "DELETE"
 }
