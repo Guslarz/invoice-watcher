@@ -44,9 +44,9 @@ or care who consumes the events.
   the event; the folder's scan timestamp moves forward only after all messages of the folder are
   handed over.
 - **EVENT-012** If the event backend does not confirm an event, handing over fails and the folder
-  is treated as failed ([MAIL-041](mail-scanning.md)). Events of the same folder confirmed before
-  the failure are published again in the next scan: delivery is at-least-once, consumers must
-  tolerate duplicates.
+  is treated as failed ([MAIL-041](../specs/mail-scanning.md)). Events of the same folder
+  confirmed before the failure are published again in the next scan: delivery is at-least-once,
+  consumers must tolerate duplicates.
 <!-- --8<-- [end:delivery] -->
 
 ## Acceptance
