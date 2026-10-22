@@ -18,3 +18,5 @@ spec:
           envFrom:
             - configMapRef:
                 name: mail-producer-env-config-map
+            - secretRef:
+                name: mail-producer-secret

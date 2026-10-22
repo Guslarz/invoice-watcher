@@ -54,8 +54,8 @@ while it is not needed. After it is up, application changes are deployed automat
 
 - **DEPLOY-010** `up` creates, in region `europe-west1`: a GKE cluster with one preemptible
   `e2-standard-2` node, a Firestore database in Datastore mode, Secret Manager secrets (GitHub
-  token, registry credentials, Cloudflare token), a global IP address for the gateway, and a
-  proxied wildcard DNS record `*.guslarz.com` in Cloudflare pointing at it.
+  token, registry credentials, Cloudflare token, AES key), a global IP address for the gateway,
+  and a proxied wildcard DNS record `*.guslarz.com` in Cloudflare pointing at it.
 - **DEPLOY-011** The application reaches Firestore through workload identity — no service
   account keys are stored.
 
@@ -77,6 +77,11 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-032** Application configuration is passed as environment variables generated from
   `overlays/<env>/config/.env` of each application.
 - **DEPLOY-033** Images are pulled from `ghcr.io` with credentials synced from Secret Manager.
+<!-- --8<-- [start:aes-key] -->
+- **DEPLOY-034** The mail producer gets the AES key (`invoice-watcher.secret.aes.key`) from the
+  Secret Manager secret `aes_key`, synced into its namespace by external-secrets and passed as an
+  environment variable. The key is not stored in the repository.
+<!-- --8<-- [end:aes-key] -->
 
 ## Acceptance
 
@@ -90,6 +95,11 @@ while it is not needed. After it is up, application changes are deployed automat
   to `master`, then ArgoCD applies it without manual steps.
 - **DEPLOY-002** Given the dev environment is up, when `Environment` runs with `down` / `dev`,
   then the cluster, the Firestore database and the DNS record no longer exist.
+- **DEPLOY-034** Given the `AES_KEY` secret is set and the dev environment is up, when the
+  `mail-producer` pod starts, then it starts with the key from Secret Manager, and no file under
+  `deployments/` contains the key.
+- **DEPLOY-034** Given the `AES_KEY` secret is not set, when `Environment` runs with `up` / `dev`,
+  then the workflow fails before creating any resources.
 
 ## Configuration
 
@@ -103,6 +113,7 @@ GitHub repository settings used by the workflows:
 | `CLOUDFLARE_ZONE_ID` | variable | Cloudflare zone of the domain |
 | `PAT` | secret | GitHub token used to pull images and read the repository |
 | `CLOUDFLARE_API_TOKEN` | secret | Cloudflare token for DNS and origin certificates |
+| `AES_KEY` | secret | AES key that decrypts mailbox passwords, as printed by `secret-helper generate-key` |
 <!-- --8<-- [end:github-settings] -->
 
 ## Out of scope

@@ -97,6 +97,7 @@ Where the values come from:
 | `CLOUDFLARE_ZONE_ID` | the Zone ID from step 2 |
 | `PAT` | the token from step 3 |
 | `CLOUDFLARE_API_TOKEN` | the token from step 2 |
+| `AES_KEY` | a new key from `secret-helper generate-key` ([keys and users](keys-and-users.md#1-generate-the-key)) |
 
 The `Snapshot` and `Release` workflows need nothing else — they publish images with the
 workflow's own `GITHUB_TOKEN`.

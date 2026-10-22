@@ -32,6 +32,7 @@ module "secret" {
   github_username      = var.github_username
   github_pat           = var.github_pat
   cloudflare_api_token = var.cloudflare_api_token
+  aes_key              = var.aes_key
 }
 
 module "firestore" {
