@@ -39,10 +39,15 @@ or care who consumes the events.
 - **EVENT-010** The event backend is selected with `invoice-watcher.event-producer.mode`. The only
   supported value is `kafka`; with it, events are sent to the brokers in
   `invoice-watcher.event-producer.kafka.bootstrap-servers`, keys as strings, values as JSON.
-- **EVENT-011** A message is considered handed over once it is passed to the event backend; the
-  folder's scan timestamp moves forward after all messages of the folder are handed over.
-  *(gap: delivery failures are not detected —
-  `docs/agents/inbox/kafka-send-not-confirmed.md`)*
+<!-- --8<-- [start:delivery] -->
+- **EVENT-011** A message is considered handed over once the event backend confirms it has stored
+  the event; the folder's scan timestamp moves forward only after all messages of the folder are
+  handed over.
+- **EVENT-012** If the event backend does not confirm an event, handing over fails and the folder
+  is treated as failed ([MAIL-041](mail-scanning.md)). Events of the same folder confirmed before
+  the failure are published again in the next scan: delivery is at-least-once, consumers must
+  tolerate duplicates.
+<!-- --8<-- [end:delivery] -->
 
 ## Acceptance
 
@@ -53,6 +58,11 @@ or care who consumes the events.
 - **EVENT-004** Given a message from `billing@shop.example` with subject `Invoice 10/2026`, when it
   is published, then the event value has `sender` containing `billing@shop.example` and `title`
   `Invoice 10/2026`.
+- **EVENT-011** Given the backend confirms every event, when a folder with two new messages is
+  scanned, then the folder's scan timestamp moves forward.
+- **EVENT-012** Given the backend rejects the second of three events, when the folder is scanned,
+  then an error is logged, the folder's scan timestamp is unchanged and the remaining folders of
+  the mailbox are skipped.
 
 ## Configuration
 

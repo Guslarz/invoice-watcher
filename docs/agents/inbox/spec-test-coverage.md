@@ -16,6 +16,11 @@ To settle:
   publishing against an embedded or Testcontainers Kafka, user configuration against the
   Datastore emulator and H2, `secret-helper` commands.
 - Gap clauses (`*(gap: ...)*`) get their tests together with the fix.
-- Clauses that cannot be tested in code (DEPLOY-*, RELEASE-*) are verified by the workflows or
-  marked as manually checked.
-- Optionally extend `scripts/check-docs.sh` to report clauses without a test that names them.
+- Every clause is either covered by a test that names it or carries an explicit, stated reason
+  why not: e.g. a marker next to the clause like `*(untested: <reason>)*`. This applies
+  to clauses that cannot be tested in code (DEPLOY-*, RELEASE-*: verified by the workflows or
+  checked manually) and to any clause deliberately left without a test. A missing test
+  must never be silent.
+- Extend `scripts/check-docs.sh` (run by `scripts/verify.sh`) to fail on clauses that have
+  neither a test naming them nor an `untested` reason. Once that check exists, the rule belongs
+  in the spec template and Protocol implement.
