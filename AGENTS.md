@@ -58,6 +58,10 @@ Then implement the approved plan with **Protocol implement** (`docs/agents/proto
 Everything else (fixes that restore spec'd behavior, refactors, dependency bumps, typos) uses
 **Protocol lightweight** (`docs/agents/protocols/lightweight.md`).
 
+Several independent topics at once (e.g. a batch of inbox notes) are run with **Protocol parallel**
+(`docs/agents/protocols/parallel.md`): requirements are discussed in the dispatcher session, approved
+work runs in background workers, one worktree per topic.
+
 When unsure, ask the developer which protocol applies.
 
 Out-of-scope problems or ideas noticed during work go to `docs/agents/inbox/` as a new note
@@ -72,9 +76,10 @@ only when relevant), and the guideline for the area you touch (`docs/agents/guid
 ## Git workflow
 
 - `master` is the main development branch. **Never commit or push directly to `master`.**
-- Every change starts on its own branch created from an up-to-date `master`:
-  `git switch master && git pull --ff-only && git switch -c <type>/<slug>`
-  (`<type>`: `feature`, `fix`, `docs`, `chore`, `infra`).
+- Every change starts on its own branch created from an up-to-date `master`, in its own worktree
+  next to `master/`: `scripts/worktree.sh new <type>/<slug>`
+  (`<type>`: `feature`, `fix`, `docs`, `chore`, `infra`). In a plain clone without worktrees:
+  `git switch master && git pull --ff-only && git switch -c <type>/<slug>`.
 - Every change ends with a pushed branch and a pull request to `master`
   (`gh pr create --base master`). Agents never merge pull requests.
 - **Ask before every commit.** Stop with the changes uncommitted in the working tree, summarize
