@@ -9,8 +9,8 @@ The documentation site is built by `.github/workflows/docs.yml`, but it is not d
 repository is private and GitHub Pages is disabled. Do it once the site has meaningful content
 (specs, guides, generated reference).
 
-Before going public, resolve `aes-key-in-repo` (rotate the key — it stays in git history) and
-check the history for other secrets.
+Before going public, make sure the AES key was rotated (the old one is in git history, see
+`docs/setup/keys-and-users.md`) and check the history for other secrets.
 
 Steps:
 1. Settings → General → Change visibility → Public.

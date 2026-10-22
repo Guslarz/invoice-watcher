@@ -21,6 +21,9 @@ on:
       CLOUDFLARE_API_TOKEN:
         description: Cloudflare API Token
         required: true
+      AES_KEY:
+        description: AES key that decrypts mailbox passwords
+        required: true
 
 jobs:
   opentofu:
@@ -40,6 +43,16 @@ jobs:
           declare -A ACTION_MAP=( ["up"]="apply" ["down"]="destroy" )
           echo "ACTION=${ACTION_MAP[${{ inputs.action }}]}" >> $GITHUB_ENV
 
+      - name: Check secrets
+        if: ${{ inputs.action == 'up' }}
+        env:
+          AES_KEY: ${{ secrets.AES_KEY }}
+        run: |
+          if [ -z "$AES_KEY" ]; then
+            echo "::error::The AES_KEY secret is not set"
+            exit 1
+          fi
+
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v2
         with:
@@ -52,6 +65,7 @@ jobs:
           gcp_project_number="${{ vars.GCP_PROJECT_NUMBER }}"
           github_pat="${{ secrets.PAT }}"
           cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          aes_key="${{ secrets.AES_KEY }}"
           cloudflare_zone_id="${{ vars.CLOUDFLARE_ZONE_ID }}"
           EOF
 

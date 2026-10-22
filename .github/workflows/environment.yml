@@ -32,6 +32,7 @@ jobs:
     secrets:
       PAT: ${{ secrets.PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      AES_KEY: ${{ secrets.AES_KEY }}
 
   k8s-install:
     if: ${{ github.event.inputs.action == 'up' }}

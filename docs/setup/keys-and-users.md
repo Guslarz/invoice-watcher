@@ -35,12 +35,20 @@ The application reads the key from
 [`invoice-watcher.secret.aes.key`](../reference/configuration.md#invoice-watcher-secret-aes)
 (environment variable `INVOICE_WATCHER_SECRET_AES_KEY`) and does not start without it.
 
-!!! warning "Where the key lives today"
-    In the dev environment the key is set in
-    `deployments/k8s-apps/apps/mail-producer/overlays/dev/config/.env`, which is committed. That
-    breaks [ADR-0006](../adr/0006-keep-secrets-out-of-the-repository.md) and is pending a move to
-    Secret Manager. Locally, put it into the git-ignored `application-local.yml`
-    ([local development](local.md)).
+Where the key goes:
+
+- **Dev environment** — the `AES_KEY` GitHub secret ([one-time setup](one-time.md#4-configure-the-github-repository)):
+
+    --8<-- "docs/specs/deployment.md:aes-key"
+
+    To change the key, update the secret, run `Environment` with `up` again and restart the
+    `mail-producer` pod once external-secrets has refreshed its secret (at most an hour).
+    Passwords encrypted with the old key must be encrypted again.
+
+- **Locally** — the git-ignored `application-local.yml` ([local development](local.md)).
+
+Never put the key into a committed file
+([ADR-0006](../adr/0006-keep-secrets-out-of-the-repository.md)).
 
 ## 2. Encrypt a mailbox password
 

@@ -61,21 +61,18 @@ flowchart LR
 ### How secrets reach the cluster
 
 No secret is stored in the repository ([ADR-0006](../adr/0006-keep-secrets-out-of-the-repository.md)).
-The GitHub token and the Cloudflare token are given to the `Environment` workflow as GitHub
+The GitHub token, the Cloudflare token and the AES key are given to the `Environment` workflow as GitHub
 secrets; OpenTofu stores them in Secret Manager, and the cluster pulls them from there:
 
 ```mermaid
 flowchart LR
-  ghs[GitHub secrets<br/>PAT, CLOUDFLARE_API_TOKEN] -->|Environment workflow, OpenTofu| sm[(Secret Manager)]
+  ghs[GitHub secrets<br/>PAT, CLOUDFLARE_API_TOKEN, AES_KEY] -->|Environment workflow, OpenTofu| sm[(Secret Manager)]
   sm -->|GKE secret sync| ci[Secrets in namespace cluster-init]
   ci -->|external-secrets| repo[ArgoCD repository credentials]
   ci -->|external-secrets| pull[Image pull secret<br/>in invoice-watcher-dev]
+  ci -->|external-secrets| aes[AES key for the mail producer<br/>in invoice-watcher-dev]
   ci --> cert[Cloudflare origin issuer]
 ```
-
-!!! warning
-    The AES key that decrypts mailbox passwords is still committed in the dev overlay's `.env`.
-    Moving it to Secret Manager is pending.
 
 ## Delivery
 

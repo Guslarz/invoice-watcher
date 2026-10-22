@@ -35,6 +35,5 @@ Examples and tests use obviously fake values.
 - Every new credential needs a Secret Manager secret (or GitHub secret) and a way to deliver it,
   which is more work than a value in a `.env` file.
 - A secret found in the repository is a bug: remove it, rotate it, and move it to a secret store.
-  The AES key in the dev overlay is such a case (`docs/agents/inbox/aes-key-in-repo.md`).
 - In code, secrets are held as `Secret` from `libs/secret/api` and never logged
   (`docs/agents/guidelines/code.md`).

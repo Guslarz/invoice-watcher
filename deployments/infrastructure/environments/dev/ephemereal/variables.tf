@@ -38,3 +38,7 @@ variable "cloudflare_zone_id" {
 variable "domain_name" {
   default = "guslarz.com"
 }
+
+variable "aes_key" {
+  sensitive = true
+}

@@ -14,3 +14,7 @@ variable "github_pat" {
 variable "cloudflare_api_token" {
   sensitive = true
 }
+
+variable "aes_key" {
+  sensitive = true
+}
