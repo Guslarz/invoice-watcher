@@ -30,6 +30,8 @@ the dev environment can run, and a release produces a versioned image and a GitH
 <!-- --8<-- [end:pipeline] -->
 - **RELEASE-004** The project version is derived from git tags; it is never written in build files.
   Builds between releases get a snapshot version of the next patch release.
+  Helm charts installed from the repository by path are not released and carry the fixed
+  version `0.0.0`.
 - **RELEASE-005** The mail producer image runs the application on Java 25 (Eclipse Temurin JRE)
   and carries OCI labels with the source repository, version and build time.
 

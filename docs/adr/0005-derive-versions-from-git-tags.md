@@ -20,3 +20,5 @@ Environments run the `snapshot` image.
 
 - No version bumps in pull requests.
 - A local build needs the tags (`git fetch --tags`) to get the right version.
+- Local Helm charts are not versioned (fixed `0.0.0`); they are deployed from the commit, not
+  from a release.
