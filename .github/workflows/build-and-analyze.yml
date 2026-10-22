@@ -4,11 +4,13 @@ on:
   pull_request:
 
 jobs:
-  # Documentation-only changes (everything under docs/) skip the Gradle build
+  # Documentation-only changes (everything under docs/) skip the Gradle build; changes outside
+  # deployments/ skip the deployment file checks
   changes:
     runs-on: ubuntu-26.04
     outputs:
       code: ${{ steps.diff.outputs.code }}
+      deployments: ${{ steps.diff.outputs.deployments }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
@@ -16,7 +18,7 @@ jobs:
           fetch-depth: 2
 
       # HEAD is the pull request merge commit, HEAD^1 the tip of the base branch
-      - name: Detect changes outside docs/
+      - name: Detect changes outside docs/ and in deployments/
         id: diff
         run: |
           outside_docs=$(git diff --name-only HEAD^1 HEAD | grep -cv '^docs/' || true)
@@ -24,6 +26,12 @@ jobs:
             echo "code=true" >> "$GITHUB_OUTPUT"
           else
             echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+          in_deployments=$(git diff --name-only HEAD^1 HEAD | grep -c '^deployments/' || true)
+          if [ "$in_deployments" -gt 0 ]; then
+            echo "deployments=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deployments=false" >> "$GITHUB_OUTPUT"
           fi
 
   build:
@@ -45,6 +53,43 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build analyze
+
+  deployments:
+    needs: changes
+    if: needs.changes.outputs.deployments == 'true'
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      # Same versions as infrastructure.yml and k8s-install.yml
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v2
+        with:
+          tofu_version: '1.12.5'
+
+      - name: Setup helmfile
+        uses: helmfile/helmfile-action@v2.4.7
+        with:
+          helmfile-version: v1.7.3
+          helm-version: v4.2.3
+          helmfile-args: version
+
+      - name: Setup kubeconform
+        env:
+          KUBECONFORM_VERSION: v0.8.0
+          KUBECONFORM_SHA256: 9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883
+        run: |
+          curl -fsSLo kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/$KUBECONFORM_VERSION/kubeconform-linux-amd64.tar.gz"
+          echo "$KUBECONFORM_SHA256  kubeconform.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf kubeconform.tar.gz -C "$RUNNER_TEMP/bin" kubeconform
+          rm kubeconform.tar.gz
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Check deployment files
+        run: scripts/check-deployments.sh
 
   reference:
     runs-on: ubuntu-26.04

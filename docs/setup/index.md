@@ -30,9 +30,14 @@ Cloudflare origin certificate, so the *Flexible* mode does not work.
 | JDK | 25 | Building and running the applications |
 | Docker | any recent | Local Kafka, building images |
 | Python | 3.10+ | The documentation site |
-| [OpenTofu](https://opentofu.org/docs/intro/install/) | 1.12.x | The one-time `persistent` setup |
+| [OpenTofu](https://opentofu.org/docs/intro/install/) | 1.12.x | The one-time `persistent` setup; checking the OpenTofu files |
 | [gcloud CLI](https://cloud.google.com/sdk/docs/install) | any recent | Authenticating OpenTofu, inspecting the cluster |
-| kubectl | any recent | Optional: inspecting the cluster (`gcloud components install kubectl`) |
+| kubectl | any recent | Optional: inspecting the cluster (`gcloud components install kubectl`); rendering the kustomize environments |
+| [helmfile](https://helmfile.readthedocs.io/) + [helm](https://helm.sh/docs/intro/install/) | 1.7.x / 4.2.x | Optional: rendering the helmfile |
+| [kubeconform](https://github.com/yannh/kubeconform) | 0.8.x | Optional: validating the rendered manifests |
+
+`scripts/check-deployments.sh` (part of `scripts/verify.sh`) skips the checks whose tool is
+missing; CI runs all of them.
 
 ## Values to adapt in the repository
 
