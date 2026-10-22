@@ -4,7 +4,31 @@ on:
   pull_request:
 
 jobs:
+  # Documentation-only changes (everything under docs/) skip the Gradle build
+  changes:
+    runs-on: ubuntu-26.04
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      # HEAD is the pull request merge commit, HEAD^1 the tip of the base branch
+      - name: Detect changes outside docs/
+        id: diff
+        run: |
+          outside_docs=$(git diff --name-only HEAD^1 HEAD | grep -cv '^docs/' || true)
+          if [ "$outside_docs" -gt 0 ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout sources
@@ -21,6 +45,21 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build analyze
+
+  reference:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 25
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       # docs/reference/ is generated from code and committed with the change (scripts/verify.sh)
       - name: Check generated reference is up to date
