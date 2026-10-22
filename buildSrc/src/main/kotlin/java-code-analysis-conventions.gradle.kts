@@ -5,6 +5,7 @@ plugins {
 
 checkstyle {
   toolVersion = "11.0.0"
+  maxWarnings = 0
 }
 
 spotbugs {

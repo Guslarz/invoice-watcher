@@ -1,7 +1,7 @@
 # Build and release
 
 - Use the wrapper: `./gradlew build analyze`. `analyze` = Checkstyle + SpotBugs (`check`), and
-  `build` depends on it.
+  `build` depends on it. Any Checkstyle violation fails the build (`maxWarnings = 0`).
 - Convention plugins live in `buildSrc/src/main/kotlin`; module build files only pick one
   (`spring-boot-app-conventions`, `spring-boot-lib-conventions`, `java-lib-conventions`,
   `docker.image-conventions`) and list dependencies. Shared build logic goes to `buildSrc`, not
