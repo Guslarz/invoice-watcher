@@ -18,7 +18,8 @@ subagents) land in the same layout. Worktree name `<type>-<slug>` gives branch `
 
 ## Dispatcher steps
 
-1. **Triage.** For each topic decide the protocol (`AGENTS.md` → Workflow selection). Topics that
+1. **Triage.** Run `scripts/worktree.sh prune` first and report the worktrees it kept (it does
+   nothing below 10 worktrees besides `master`). For each topic decide the protocol (`AGENTS.md` → Workflow selection). Topics that
    touch the same files (same spec, module or k8s base) are merged into one topic or queued one
    after another — never run in parallel.
 2. **Lightweight topics** need no discussion. The worker creates its own worktree through the hook:
@@ -52,4 +53,7 @@ After the pull request is merged, the developer or the dispatcher runs
 the worktree has uncommitted changes or commits that are neither merged nor pushed. `claude rm`
 alone keeps a hook-created worktree that still has files; deleting the session in `claude agents`
 runs the same check through the `WorktreeRemove` hook. Worktrees of finished subagents are not
-removed automatically; `scripts/worktree.sh list` shows them.
+removed automatically. `scripts/worktree.sh prune` removes in one go, without asking, every
+worktree `rm` would remove whose background session is `done` (the current one excepted), deletes
+those sessions with `claude rm` and lists the kept worktrees with the reason. It runs only from 10
+worktrees besides `master` on; `prune --all` ignores that threshold.
