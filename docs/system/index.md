@@ -26,6 +26,7 @@ sequenceDiagram
       T->>M: messages sent since the folder's scan timestamp
       M-->>T: sender, subject, date
       T->>K: one event per message (key = user's e-mail)
+      K-->>T: event stored
       T->>D: move the folder's scan timestamp forward
     end
   end
@@ -81,5 +82,7 @@ How to add a user is described in [keys and users](../setup/keys-and-users.md).
 ## What it produces
 
 --8<-- "docs/specs/event-publishing.md:event"
+
+--8<-- "docs/specs/event-publishing.md:delivery"
 
 An example of a published event is shown in [In action](../results/index.md).
