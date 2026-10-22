@@ -6,7 +6,9 @@ Output: one plan file in `docs/agents/projects/`. **No production code.**
 
 ## Steps
 
-1. Create the branch: `scripts/worktree.sh new <type>/<slug>` and work in the printed worktree
+1. Run `scripts/worktree.sh prune` and report the worktrees it kept (it does nothing below 10
+   worktrees besides `master`). Create the branch: `scripts/worktree.sh new <type>/<slug>` and work
+   in the printed worktree
    (plain clone without worktrees: `git switch master && git pull --ff-only && git switch -c <type>/<slug>`).
 2. Load context: affected spec(s) in `docs/specs/`, `docs/adr/index.md`, relevant guideline.
 3. Copy `docs/agents/templates/plan.md` to `docs/agents/projects/<slug>.md` and fill it in:
