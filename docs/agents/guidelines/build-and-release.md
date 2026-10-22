@@ -11,6 +11,8 @@
 - Docker images are separate modules in `images/` that consume an app's `bootJar` through the
   `dockerImageResource` configuration. Registry settings come from Gradle properties
   `com.guslarz.invoicewatcher.docker.{registry,namespace,username,password,tag}`.
-- CI (`.github/workflows`): `build-and-analyze` on PRs, `snapshot` on push to `master`
-  (image tag `snapshot`), `release` manual (bumps version, publishes images), `docs` builds and
+- CI (`.github/workflows`): `build-and-analyze` on PRs (job `build` runs `./gradlew build analyze`
+  and is skipped when only `docs/` changed; job `reference` checks `docs/reference/` on every PR),
+  `snapshot` on push to `master` unless only `docs/` changed, or run by hand (image tag
+  `snapshot`), `release` manual (bumps version, publishes images), `docs` builds and
   deploys the documentation site.
