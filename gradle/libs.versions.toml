@@ -11,7 +11,7 @@ jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.2
 lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version = "9.5.0" }
 picocli = { group = "info.picocli", name = "picocli", version = "4.7.7" }
 spotbugs-gradle-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-gradle-plugin", version = "6.5.8" }
-spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version = "4.1.0" }
+spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version = "4.1.1" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 spring-boot = { group = "org.springframework.boot", name = "spring-boot" }
 spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure" }
