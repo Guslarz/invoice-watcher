@@ -8,9 +8,7 @@
       "Bash(scripts/worktree.sh *)",
       "Bash(git add *)",
       "Bash(git fetch *)",
-      "Bash(git rebase origin/master)"
-    ],
-    "ask": [
+      "Bash(git rebase origin/master)",
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(gh pr create *)"
