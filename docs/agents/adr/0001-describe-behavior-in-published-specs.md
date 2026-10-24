@@ -1,6 +1,6 @@
 ---
 id: ADR-0001
-status: accepted
+status: superseded by ADR-0007
 date: 2026-10-13
 ---
 
@@ -13,7 +13,7 @@ the system must do, and users need documentation. Writing both separately makes 
 
 ## Decision
 
-- Each capability has a specification in `docs/specs/` with numbered, normative clauses and
+- Each capability has a specification (originally in docs/specs/, now `docs/agents/specs/`) with numbered, normative clauses and
   Given/When/Then acceptance criteria. It is the source of truth for behavior.
 - Changes that alter behavior are planned first (`docs/agents/protocols/plan.md`): the spec
   changes before the code, and tests name the clauses they verify.

@@ -1,8 +1,10 @@
 # Keys and users
 
 InvoiceWatcher logs in to mailboxes with their passwords, so it has to store them. They are
-stored encrypted with an AES key that only the running application has
-([secret encryption](../specs/secret-encryption.md)).
+stored encrypted with an AES key that only the running application has. Every encryption uses
+AES-256-GCM with a fresh random IV, so the same password encrypted twice gives two different
+values, and a value encrypted with one key cannot be decrypted with another. Passwords are
+decrypted only for the moment of connecting to a mailbox and are never logged.
 
 ## The `secret-helper` tool
 
@@ -16,7 +18,11 @@ and run it with `java -jar apps/secret-helper-app/build/libs/secret-helper.jar <
 the `SecretHelperApp - …` run configurations in IntelliJ). It asks for every value on standard
 input, so keys and passwords do not end up in the shell history.
 
---8<-- "docs/specs/secret-encryption.md:secret-helper"
+| Command | What it does |
+|---------|--------------|
+| `generate-key` | Asks for a password and prints a new key derived from it. |
+| `encrypt` | Asks for the key and a value, prints the encrypted value. |
+| `decrypt` | Asks for the key and an encrypted value, prints the original value. |
 
 All options are listed in the [secret-helper reference](../reference/cli.md).
 
@@ -39,7 +45,9 @@ Where the key goes:
 
 - **Dev environment** — the `AES_KEY` GitHub secret ([one-time setup](one-time.md#4-configure-the-github-repository)):
 
-    --8<-- "docs/specs/deployment.md:aes-key"
+    The workflow stores it in the Secret Manager secret `aes_key`; external-secrets syncs it into
+    the `invoice-watcher-dev` namespace and the mail producer gets it as an environment
+    variable.
 
     To change the key, update the secret, run `Environment` with `up` again and restart the
     `mail-producer` pod once external-secrets has refreshed its secret (at most an hour).
@@ -47,8 +55,7 @@ Where the key goes:
 
 - **Locally** — the git-ignored `application-local.yml` ([local development](local.md)).
 
-Never put the key into a committed file
-([ADR-0006](../adr/0006-keep-secrets-out-of-the-repository.md)).
+Never put the key into a committed file.
 
 ## 2. Encrypt a mailbox password
 
@@ -73,7 +80,11 @@ A user is an e-mail address with one or more mailboxes, each with folders to wat
 There is no user interface or API for managing users yet. Today a user can be defined in the
 application configuration as the **mock user**:
 
---8<-- "docs/specs/user-configuration.md:mock-user"
+when [`invoice-watcher.mail-producer.mock.user.enabled`](../reference/configuration.md#invoice-watcher-mail-producer-mock-user)
+is `true`, the application creates the user at startup, or replaces it if it exists, from the
+`...mock.user.*` properties: the e-mail address (also used as the mailbox username), host, port
+(default 993), encrypted password and a comma-separated list of folders. Every start resets the
+user's folders so that their scan timestamps are ten days before the start.
 
 For the dev environment that means adding to
 `deployments/k8s-apps/apps/mail-producer/overlays/dev/config/.env` (and merging it to `master`):

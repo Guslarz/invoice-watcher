@@ -19,7 +19,6 @@ or care who consumes the events.
 
 ## Behavior
 
-<!-- --8<-- [start:event] -->
 - **EVENT-001** Each picked-up message is published as exactly one event, in the order the
   messages are stored in the folder (oldest first).
 - **EVENT-002** All events go to one topic, configured by
@@ -34,12 +33,10 @@ or care who consumes the events.
     | `title` | string | Subject |
     | `date` | date-time | When the message was sent, in UTC |
     | `content` | string | Message content *(always `null` for now — see MAIL-030)* |
-<!-- --8<-- [end:event] -->
 
 - **EVENT-010** The event backend is selected with `invoice-watcher.event-producer.mode`. The only
   supported value is `kafka`; with it, events are sent to the brokers in
   `invoice-watcher.event-producer.kafka.bootstrap-servers`, keys as strings, values as JSON.
-<!-- --8<-- [start:delivery] -->
 - **EVENT-011** A message is considered handed over once the event backend confirms it has stored
   the event; the folder's scan timestamp moves forward only after all messages of the folder are
   handed over.
@@ -47,7 +44,6 @@ or care who consumes the events.
   is treated as failed ([MAIL-041](../specs/mail-scanning.md)). Events of the same folder
   confirmed before the failure are published again in the next scan: delivery is at-least-once,
   consumers must tolerate duplicates.
-<!-- --8<-- [end:delivery] -->
 
 ## Acceptance
 
@@ -68,9 +64,9 @@ or care who consumes the events.
 
 Properties, their types, defaults and meaning are listed in the generated reference:
 
-- [`invoice-watcher.mail-producer.task`](../reference/configuration.md#invoice-watcher-mail-producer-task)
-- [`invoice-watcher.event-producer`](../reference/configuration.md#invoice-watcher-event-producer)
-- [`invoice-watcher.event-producer.kafka`](../reference/configuration.md#invoice-watcher-event-producer-kafka)
+- [`invoice-watcher.mail-producer.task`](../../reference/configuration.md#invoice-watcher-mail-producer-task)
+- [`invoice-watcher.event-producer`](../../reference/configuration.md#invoice-watcher-event-producer)
+- [`invoice-watcher.event-producer.kafka`](../../reference/configuration.md#invoice-watcher-event-producer-kafka)
 
 ## Out of scope
 

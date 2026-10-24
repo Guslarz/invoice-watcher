@@ -2,5 +2,5 @@ apiVersion: v2
 name: cluster-init
 description: A Helm chart for Kubernetes
 type: application
-# Fixed, not released: see RELEASE-004 (docs/specs/build-and-release.md).
+# Fixed, not released: see RELEASE-004 (docs/agents/specs/build-and-release.md).
 version: 0.0.0

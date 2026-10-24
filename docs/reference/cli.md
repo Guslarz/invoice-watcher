@@ -2,8 +2,7 @@
 
 # secret-helper
 
-Usage of the `secret-helper` command-line tool, as printed by `--help`. See
-[secret encryption](../specs/secret-encryption.md) for what the commands do.
+Usage of the `secret-helper` command-line tool, as printed by `--help`.
 
 ```text
 Usage: secret-helper [-hV] [COMMAND]

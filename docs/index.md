@@ -19,6 +19,4 @@ flowchart LR
 | Set it up yourself, from cloud accounts to a running environment | [Setup](setup/index.md) |
 | Run it on your machine and contribute | [Local development](setup/local.md) |
 | See what it produces | [In action](results/index.md) |
-| Know exactly how a feature behaves | [Specifications](specs/index.md) |
-| Understand why it is built this way | [Decisions](adr/index.md) |
 | Look up a property, command or module | [Reference](reference/index.md) |

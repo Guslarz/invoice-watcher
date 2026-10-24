@@ -22,14 +22,12 @@ restart.
 
 ### Model
 
-<!-- --8<-- [start:model] -->
 - **USER-001** A **user** has a unique name — their e-mail address — and one or more **mailbox
   configurations**.
 - **USER-002** A mailbox configuration has a server (IMAP host and port), credentials (username and
   encrypted password, see [secret encryption](../specs/secret-encryption.md)) and one or more **folders**.
 - **USER-003** A folder has a name as seen by the mail server (e.g. `INBOX`, `Invoices`,
   `INBOX/Bills`) and a scan timestamp (see MAIL-020).
-<!-- --8<-- [end:model] -->
 - **USER-004** Configuration is read anew at the beginning of every scan; the only value
   InvoiceWatcher itself writes during normal operation is the folder's scan timestamp.
 
@@ -54,7 +52,6 @@ restart.
 
 ### Mock user
 
-<!-- --8<-- [start:mock-user] -->
 - **USER-030** When `invoice-watcher.mail-producer.mock.user.enabled=true`, the application
   creates or replaces, at startup, one user from properties: name and username `...email`,
   server `...host` and `...port` (default 993), password `...password` (encrypted value) and the
@@ -62,7 +59,6 @@ restart.
 - **USER-031** Every replace resets the mock user's folders: their scan timestamps are set to ten
   days before the application start. Each restart therefore picks up the last ten days of mail
   again.
-<!-- --8<-- [end:mock-user] -->
 
 ## Acceptance
 
@@ -78,10 +74,10 @@ restart.
 
 Properties, their types, defaults and meaning are listed in the generated reference:
 
-- [`invoice-watcher.mail-producer.dao`](../reference/configuration.md#invoice-watcher-mail-producer-dao)
-- [`invoice-watcher.mail-producer.dao.firestore`](../reference/configuration.md#invoice-watcher-mail-producer-dao-firestore)
-- [`invoice-watcher.mail-producer.dao.jpa`](../reference/configuration.md#invoice-watcher-mail-producer-dao-jpa)
-- [`invoice-watcher.mail-producer.mock.user`](../reference/configuration.md#invoice-watcher-mail-producer-mock-user)
+- [`invoice-watcher.mail-producer.dao`](../../reference/configuration.md#invoice-watcher-mail-producer-dao)
+- [`invoice-watcher.mail-producer.dao.firestore`](../../reference/configuration.md#invoice-watcher-mail-producer-dao-firestore)
+- [`invoice-watcher.mail-producer.dao.jpa`](../../reference/configuration.md#invoice-watcher-mail-producer-dao-jpa)
+- [`invoice-watcher.mail-producer.mock.user`](../../reference/configuration.md#invoice-watcher-mail-producer-mock-user)
 
 ## Out of scope
 

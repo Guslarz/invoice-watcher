@@ -22,7 +22,6 @@ while it is not needed. After it is up, application changes are deployed automat
 
 ### One-time setup
 
-<!-- --8<-- [start:one-time-setup] -->
 - **DEPLOY-004** Before the first `up`, the `persistent` configuration
   (`deployments/infrastructure/environments/<env>/persistent`) must be applied once, by hand,
   with OpenTofu and the operator's own Google Cloud credentials. The workflows cannot do it,
@@ -38,17 +37,14 @@ while it is not needed. After it is up, application changes are deployed automat
       that account — without stored keys.
 - **DEPLOY-006** The OpenTofu state of `persistent` itself is kept locally on the operator's
   machine (not in git and not in the bucket).
-<!-- --8<-- [end:one-time-setup] -->
 
 ### Environment lifecycle
 
-<!-- --8<-- [start:environment-workflow] -->
 - **DEPLOY-001** The `Environment` workflow (run manually) takes an action, `up` or `down`, and an
   environment (`dev`).
 - **DEPLOY-002** `up` creates the environment's cloud resources and then installs the cluster
   services. `down` destroys the cloud resources; the cluster and everything in it go with them.
 - **DEPLOY-003** Running `up` on an environment that is already up only applies differences.
-<!-- --8<-- [end:environment-workflow] -->
 
 ### Cloud resources (per environment)
 
@@ -77,11 +73,9 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-032** Application configuration is passed as environment variables generated from
   `overlays/<env>/config/.env` of each application.
 - **DEPLOY-033** Images are pulled from `ghcr.io` with credentials synced from Secret Manager.
-<!-- --8<-- [start:aes-key] -->
 - **DEPLOY-034** The mail producer gets the AES key (`invoice-watcher.secret.aes.key`) from the
   Secret Manager secret `aes_key`, synced into its namespace by external-secrets and passed as an
   environment variable. The key is not stored in the repository.
-<!-- --8<-- [end:aes-key] -->
 
 ## Acceptance
 
@@ -105,7 +99,6 @@ while it is not needed. After it is up, application changes are deployed automat
 
 GitHub repository settings used by the workflows:
 
-<!-- --8<-- [start:github-settings] -->
 | Name | Kind | Meaning |
 |------|------|---------|
 | `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER` | variable | Google Cloud project |
@@ -114,7 +107,6 @@ GitHub repository settings used by the workflows:
 | `PAT` | secret | GitHub token used to pull images and read the repository |
 | `CLOUDFLARE_API_TOKEN` | secret | Cloudflare token for DNS and origin certificates |
 | `AES_KEY` | secret | AES key that decrypts mailbox passwords, as printed by `secret-helper generate-key` |
-<!-- --8<-- [end:github-settings] -->
 
 ## Out of scope
 

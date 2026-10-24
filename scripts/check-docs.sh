@@ -35,22 +35,22 @@ require_keys() {
 
 # Specs: frontmatter, unique id, listed in the index.
 declare -A spec_ids=()
-for spec in docs/specs/*.md; do
-  [[ "$spec" == docs/specs/index.md ]] && continue
+for spec in docs/agents/specs/*.md; do
+  [[ "$spec" == docs/agents/specs/index.md ]] && continue
   require_keys "$spec" id title status audience modules
   id=$(frontmatter "$spec" id)
   status=$(frontmatter "$spec" status)
   [[ "$status" =~ ^(planned|implemented)$ ]] || fail "$spec: status must be planned|implemented"
   [[ -z "${spec_ids[$id]:-}" ]] || fail "$spec: duplicate id $id (also ${spec_ids[$id]})"
   spec_ids[$id]=$spec
-  grep -q "($(basename "$spec"))" docs/specs/index.md || fail "$spec: not listed in docs/specs/index.md"
+  grep -q "($(basename "$spec"))" docs/agents/specs/index.md || fail "$spec: not listed in docs/agents/specs/index.md"
 done
 
 # ADRs: frontmatter, listed in the index.
-for adr in docs/adr/[0-9]*.md; do
+for adr in docs/agents/adr/[0-9]*.md; do
   [[ -e "$adr" ]] || continue
   require_keys "$adr" id status date
-  grep -q "($(basename "$adr"))" docs/adr/index.md || fail "$adr: not listed in docs/adr/index.md"
+  grep -q "($(basename "$adr"))" docs/agents/adr/index.md || fail "$adr: not listed in docs/agents/adr/index.md"
 done
 
 # Plans: frontmatter, referenced specs and source exist.
@@ -73,7 +73,7 @@ done
 while IFS=: read -r file path; do
   [[ -e "$path" ]] || fail "$file: referenced path '$path' does not exist"
 done < <(grep -oE '`(docs|scripts|apps|libs|images|buildSrc|config|deployments|\.github)/[^`<>* ]*`' \
-  --with-filename AGENTS.md docs/agents/protocols/*.md docs/agents/guidelines/*.md docs/specs/*.md docs/adr/*.md \
+  --with-filename AGENTS.md docs/agents/protocols/*.md docs/agents/guidelines/*.md docs/agents/specs/*.md docs/agents/adr/*.md \
   | tr -d '`' | sed -E 's#/$##' | sort -u)
 
 if ((errors > 0)); then

@@ -2,7 +2,7 @@
 
 Each specification describes one capability of InvoiceWatcher: what it does, in numbered
 clauses, with acceptance criteria. Specifications are the source of truth — code and tests are
-checked against them, and guides quote them.
+checked against them, and user pages explain the same behavior in their own words.
 
 | Spec | Capability | Status |
 |------|------------|--------|

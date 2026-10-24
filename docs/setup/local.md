@@ -86,7 +86,7 @@ mkdocs serve
 
 ## How we work
 
-Changes are spec-driven: behavior is described in [specifications](../specs/index.md) first,
-then implemented and tested against numbered clauses. Every change goes through a pull request to
+Changes are spec-driven: behavior is described in specifications in the repository first, then
+implemented and tested against numbered clauses. Every change goes through a pull request to
 `master`. The rules for AI agents — a good summary for humans too — are in
 [`AGENTS.md`](https://github.com/Guslarz/invoice-watcher/blob/master/AGENTS.md).

@@ -15,15 +15,12 @@ One paragraph: what problem this capability solves and for whom.
 
 ## Behavior
 
-<!-- Numbered, normative, present tense. One observable fact per clause.
-     Wrap clauses reused by system/setup pages in snippet markers. -->
+<!-- Numbered, normative, present tense. One observable fact per clause. -->
 
-<!-- --8<-- [start:example-section] -->
 - **XXXX-001** The system does X when Y.
 - **XXXX-002** ...
 - **XXXX-003** Intended behavior the code does not meet yet. *(gap:
   `docs/agents/inbox/<note>.md`)*
-<!-- --8<-- [end:example-section] -->
 
 ## Acceptance
 
@@ -35,7 +32,7 @@ One paragraph: what problem this capability solves and for whom.
 ## Configuration
 
 Link each properties group (prefix) to its section of the generated
-[configuration reference](../reference/configuration.md); do not copy defaults or meanings here.
+[configuration reference](../../reference/configuration.md); do not copy defaults or meanings here.
 
 ## Out of scope
 

@@ -17,7 +17,6 @@ the dev environment can run, and a release produces a versioned image and a GitH
 
 ## Behavior
 
-<!-- --8<-- [start:pipeline] -->
 - **RELEASE-001** Every pull request that changes a file outside `docs/` runs
   `./gradlew build analyze`: compilation, tests, Checkstyle and SpotBugs. Every pull request checks
   that the generated `docs/reference/` is up to date. Every pull request that changes a file under
@@ -30,7 +29,6 @@ the dev environment can run, and a release produces a versioned image and a GitH
 - **RELEASE-003** The `Release` workflow (run manually with `major`, `minor` or `patch`) increments
   the version, tags the commit `v<version>`, publishes the image tagged `<version>` and creates
   the GitHub release `v<version>`.
-<!-- --8<-- [end:pipeline] -->
 - **RELEASE-004** The project version is derived from git tags; it is never written in build files.
   Builds between releases get a snapshot version of the next patch release.
   Helm charts installed from the repository by path are not released and carry the fixed

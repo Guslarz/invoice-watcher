@@ -36,7 +36,6 @@ encrypted values.
 
 ### `secret-helper` tool
 
-<!-- --8<-- [start:secret-helper] -->
 - **SECRET-010** `secret-helper generate-key` asks for a password and prints a new key derived
   from it (PBKDF2-HMAC-SHA256, 65 536 iterations, random salt). The salt is not shown, so the same
   password gives a different key every time — keep the printed key, not the password.
@@ -46,7 +45,6 @@ encrypted values.
   original value.
 - **SECRET-013** All input is read interactively from standard input, so keys and passwords do not
   end up in the shell history. The tool exits with status 0 on success.
-<!-- --8<-- [end:secret-helper] -->
 
 ## Acceptance
 
@@ -61,7 +59,7 @@ encrypted values.
 
 Properties, their types, defaults and meaning are listed in the generated reference:
 
-- [`invoice-watcher.secret.aes`](../reference/configuration.md#invoice-watcher-secret-aes)
+- [`invoice-watcher.secret.aes`](../../reference/configuration.md#invoice-watcher-secret-aes)
 
 ## Out of scope
 

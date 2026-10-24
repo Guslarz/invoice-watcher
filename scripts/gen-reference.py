@@ -4,8 +4,7 @@ Run by scripts/verify.sh; the generated pages are committed with the change that
 and the Build and analyze workflow fails when they are out of date. Inputs:
 - build/docs-reference/modules.json: Gradle modules, descriptions, project dependencies,
 - <module>/build/classes/java/main/META-INF/spring-configuration-metadata.json,
-- build/docs-reference/cli/*.txt: secret-helper --help output,
-- docs/specs/*.md frontmatter: which spec covers which module.
+- build/docs-reference/cli/*.txt: secret-helper --help output.
 """
 
 import json
@@ -34,21 +33,6 @@ def load_modules():
     return modules
 
 
-def load_specs():
-    """Maps module directory -> list of (spec title, spec file)."""
-    by_module = {}
-    for path in sorted((ROOT / "docs" / "specs").glob("*.md")):
-        text = path.read_text()
-        if path.name == "index.md" or not text.startswith("---"):
-            continue
-        frontmatter = text.split("---", 2)[1]
-        title = re.search(r"^title: *(.+)$", frontmatter, re.M).group(1).strip()
-        modules = re.search(r"^modules:\n((?: +- .+\n)*)", frontmatter, re.M)
-        for module_dir in re.findall(r"- *(\S+)", modules.group(1) if modules else ""):
-            by_module.setdefault(module_dir, []).append((title, path.name))
-    return by_module
-
-
 def anchor(name):
     return name.replace(".", "-")
 
@@ -65,7 +49,7 @@ def cell(text):
     return str(text).replace("|", "\\|").replace("\n", " ")
 
 
-def configuration_page(modules, specs):
+def configuration_page(modules):
     sections = []
     for module in modules:
         path = ROOT / module["dir"] / METADATA
@@ -96,12 +80,7 @@ def configuration_page(modules, specs):
         lines += [f"## `{top}` {{ #{anchor(top)} }}", ""]
         if group.get("description"):
             lines += [group["description"], ""]
-        covered = specs.get(module["dir"], [])
-        where = f"Module `{module['path']}`"
-        if covered:
-            where += " — specified in " + ", ".join(
-                f"[{title}](../specs/{file})" for title, file in covered)
-        lines += [where + ".", ""]
+        lines += [f"Module `{module['path']}`.", ""]
         lines += ["| Property | Type | Default | Description |", "|---|---|---|---|"]
         for prop in properties:
             default = prop.get("defaultValue")
@@ -124,8 +103,7 @@ def cli_page():
     lines = [
         "# secret-helper",
         "",
-        "Usage of the `secret-helper` command-line tool, as printed by `--help`. See",
-        "[secret encryption](../specs/secret-encryption.md) for what the commands do.",
+        "Usage of the `secret-helper` command-line tool, as printed by `--help`.",
         "",
         "```text",
         text.rstrip(),
@@ -141,21 +119,19 @@ def cli_page():
     return "\n".join(lines)
 
 
-def modules_page(modules, specs):
+def modules_page(modules):
     lines = [
         "# Modules",
         "",
         "Gradle modules, registered automatically from every directory under `apps/`, `images/`",
         "and `libs/` that contains a `build.gradle.kts`.",
         "",
-        "| Module | Directory | Description | Specs |",
-        "|---|---|---|---|",
+        "| Module | Directory | Description |",
+        "|---|---|---|",
     ]
     for module in modules:
-        covered = ", ".join(f"[{title}](../specs/{file})"
-                            for title, file in specs.get(module["dir"], []))
         lines.append(f"| `{module['path']}` | `{module['dir']}` "
-                     f"| {cell(module['description'])} | {covered} |")
+                     f"| {cell(module['description'])} |")
     lines += ["", "## Dependencies", "", "```mermaid", "flowchart LR"]
     for kind in ("apps", "images", "libs"):
         lines.append(f"  subgraph {kind}")
@@ -180,7 +156,6 @@ def write(name, content):
 
 
 modules = load_modules()
-specs = load_specs()
-write("configuration.md", configuration_page(modules, specs))
+write("configuration.md", configuration_page(modules))
 write("cli.md", cli_page())
-write("modules.md", modules_page(modules, specs))
+write("modules.md", modules_page(modules))
