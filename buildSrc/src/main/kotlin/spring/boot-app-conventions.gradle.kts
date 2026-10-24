@@ -1,23 +1,15 @@
-import docker.DockerImageResourceType
+package spring
+
 import docker.DockerImageResourceCategoryName
+import docker.DockerImageResourceType
 
 plugins {
-  id("java-app-conventions")
-  id("dependencies.spring-conventions")
+  id("spring.boot-common-conventions")
   id("org.springframework.boot")
 }
 
 dependencies {
-  implementation("org.springframework.boot:spring-boot-starter")
-  annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-
-  testImplementation("org.springframework.boot:spring-boot-starter-test")
-}
-
-tasks {
-  withType<Test> {
-    useJUnitPlatform()
-  }
+  implementation(versionCatalogs.named("libs").findLibrary("spring-boot-starter").get())
 }
 
 configurations.consumable("dockerImageResource") {

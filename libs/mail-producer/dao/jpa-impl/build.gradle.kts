@@ -1,5 +1,5 @@
 plugins {
-  id("spring-boot-lib-conventions")
+  id("spring.boot-lib-conventions")
 }
 
 description = "Storage of users in a relational database via JPA (H2 or Cloud SQL)."

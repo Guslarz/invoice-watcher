@@ -2,7 +2,7 @@
 
 - Java 25, Google Java style (2-space indent) enforced by Checkstyle (`config/checkstyle`);
   SpotBugs exclusions in `config/spotbugs/exclude.xml` — add an exclusion only with a comment why.
-- Lombok is applied to every module (`dependencies.lombok-conventions`). Prefer records +
+- Lombok is applied to every module (`jvm.common-conventions`). Prefer records +
   `@Builder` for data, `@RequiredArgsConstructor` for injection, `@Slf4j` for logging,
   `@UtilityClass` for constant holders.
 - Logging: `log.info("> Start ...")` / `log.info("< Finished ...")` brackets around units of work;
