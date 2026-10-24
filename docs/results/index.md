@@ -4,7 +4,7 @@ What a running InvoiceWatcher looks like from the outside: the events it publish
 logs.
 
 !!! note "Illustrative examples"
-    The examples on this page are built from the code and the specifications — the log format is
+    The examples on this page are built from the code — the log format is
     taken from a local run, the event from the message model and the JSON serializer. They will
     be replaced with captures from the running environment.
 
@@ -13,7 +13,7 @@ logs.
 One event per picked-up message, on the topic
 [`invoice-watcher.mail-producer.task.topic`](../reference/configuration.md#invoice-watcher-mail-producer-task)
 (`all-mails` in dev). The key is the user, the value describes the message
-([event publishing](../specs/event-publishing.md)):
+([fields](../system/index.md#what-it-produces)):
 
 ```text
 key:   jan@example.com

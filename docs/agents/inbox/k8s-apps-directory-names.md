@@ -13,5 +13,5 @@ A rename has to update every reference to the paths:
 - the ArgoCD application in `deployments/k8s/cluster-init/templates/apps/invoice-watcher.yml`,
   which points at `deployments/k8s-apps/environments/<env>`,
 - relative paths in the kustomizations themselves,
-- `docs/agents/guidelines/deployments.md`, `docs/specs/deployment.md` (DEPLOY-030, DEPLOY-032),
+- `docs/agents/guidelines/deployments.md`, `docs/agents/specs/deployment.md` (DEPLOY-030, DEPLOY-032),
   ADR-0004 and the repository map in `AGENTS.md`.

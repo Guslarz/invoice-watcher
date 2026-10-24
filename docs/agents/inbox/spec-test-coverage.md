@@ -5,7 +5,7 @@ area: build
 added: 2026-10-13
 ---
 
-The retrofitted specs (`docs/specs/`) describe behavior that is almost untested: there are five
+The retrofitted specs (`docs/agents/specs/`) describe behavior that is almost untested: there are five
 test classes (`AesUtilTest`, `BinarySearchEngineTest`, `MailConnectionImplTest`,
 `KafkaEventProducerTest`, `MailProducerTaskImplTest`), only some name a clause, 12 of 16 modules
 have no tests, and no test starts a Spring context (mode switching and property binding are

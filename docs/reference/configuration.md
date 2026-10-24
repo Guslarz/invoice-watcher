@@ -7,7 +7,7 @@ is how the deployed environments configure the applications.
 
 ## `invoice-watcher.event-producer` { #invoice-watcher-event-producer }
 
-Module `:libs:event-producer-api` — specified in [Event publishing](../specs/event-publishing.md).
+Module `:libs:event-producer-api`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -15,7 +15,7 @@ Module `:libs:event-producer-api` — specified in [Event publishing](../specs/e
 
 ## `invoice-watcher.event-producer.kafka` { #invoice-watcher-event-producer-kafka }
 
-Module `:libs:event-producer-kafka-impl` — specified in [Event publishing](../specs/event-publishing.md).
+Module `:libs:event-producer-kafka-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -23,7 +23,7 @@ Module `:libs:event-producer-kafka-impl` — specified in [Event publishing](../
 
 ## `invoice-watcher.mail-producer.dao` { #invoice-watcher-mail-producer-dao }
 
-Module `:libs:mail-producer-dao-api` — specified in [User configuration](../specs/user-configuration.md).
+Module `:libs:mail-producer-dao-api`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Module `:libs:mail-producer-dao-api` — specified in [User configuration](../sp
 
 ## `invoice-watcher.mail-producer.dao.firestore` { #invoice-watcher-mail-producer-dao-firestore }
 
-Module `:libs:mail-producer-dao-firestore-impl` — specified in [User configuration](../specs/user-configuration.md).
+Module `:libs:mail-producer-dao-firestore-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -40,7 +40,7 @@ Module `:libs:mail-producer-dao-firestore-impl` — specified in [User configura
 
 ## `invoice-watcher.mail-producer.dao.jpa` { #invoice-watcher-mail-producer-dao-jpa }
 
-Module `:libs:mail-producer-dao-jpa-impl` — specified in [User configuration](../specs/user-configuration.md).
+Module `:libs:mail-producer-dao-jpa-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -55,7 +55,7 @@ Module `:libs:mail-producer-dao-jpa-impl` — specified in [User configuration](
 
 ## `invoice-watcher.mail-producer.mock.user` { #invoice-watcher-mail-producer-mock-user }
 
-Module `:libs:mail-producer-mock-user` — specified in [User configuration](../specs/user-configuration.md).
+Module `:libs:mail-producer-mock-user`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -68,7 +68,7 @@ Module `:libs:mail-producer-mock-user` — specified in [User configuration](../
 
 ## `invoice-watcher.mail-producer.scheduler` { #invoice-watcher-mail-producer-scheduler }
 
-Module `:libs:mail-producer-scheduler-impl` — specified in [Mail scanning](../specs/mail-scanning.md).
+Module `:libs:mail-producer-scheduler-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -76,7 +76,7 @@ Module `:libs:mail-producer-scheduler-impl` — specified in [Mail scanning](../
 
 ## `invoice-watcher.mail-producer.task` { #invoice-watcher-mail-producer-task }
 
-Module `:libs:mail-producer-task` — specified in [Event publishing](../specs/event-publishing.md), [Mail scanning](../specs/mail-scanning.md).
+Module `:libs:mail-producer-task`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -84,7 +84,7 @@ Module `:libs:mail-producer-task` — specified in [Event publishing](../specs/e
 
 ## `invoice-watcher.secret.aes` { #invoice-watcher-secret-aes }
 
-Module `:libs:secret-aes` — specified in [Secret encryption](../specs/secret-encryption.md).
+Module `:libs:secret-aes`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|

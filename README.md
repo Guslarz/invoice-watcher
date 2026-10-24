@@ -6,8 +6,9 @@ so invoices can be picked up and processed automatically.
 📖 **Documentation: https://guslarz.github.io/invoice-watcher/**
 
 - [System](docs/system/index.md) · [Setup](docs/setup/index.md) ·
-  [In action](docs/results/index.md) · [Specifications](docs/specs/index.md) ·
-  [Decisions](docs/adr/index.md) · [Reference](docs/reference/index.md)
+  [In action](docs/results/index.md) · [Reference](docs/reference/index.md)
+- For contributors: [Specifications](docs/agents/specs/index.md) ·
+  [Decisions](docs/agents/adr/index.md) · [`AGENTS.md`](AGENTS.md)
 
 ## Quick start
 

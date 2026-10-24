@@ -24,16 +24,13 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 
 ### Schedule
 
-<!-- --8<-- [start:schedule] -->
 - **MAIL-001** The mail producer runs a scan at a fixed rate, by default every hour. The first
   scan starts when the application starts.
 - **MAIL-002** A scan processes every user, every mailbox configuration of that user and every
   configured folder of that mailbox, one after another.
-<!-- --8<-- [end:schedule] -->
 
 ### Connecting to a mailbox
 
-<!-- --8<-- [start:connection] -->
 - **MAIL-010** InvoiceWatcher connects to the mailbox over IMAP with implicit TLS (`imaps`), using
   the host and port from the mailbox configuration (port 993 is the usual one).
 - **MAIL-011** It authenticates with a username and password (basic authentication). The password
@@ -41,11 +38,9 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
   (see [secret encryption](../specs/secret-encryption.md)).
 - **MAIL-012** Folders are opened read-only. InvoiceWatcher never marks, moves or deletes
   messages.
-<!-- --8<-- [end:connection] -->
 
 ### Which messages are picked up
 
-<!-- --8<-- [start:new-messages] -->
 - **MAIL-020** Each folder remembers a scan timestamp. A scan picks up the messages in that folder
   sent at or after the scan timestamp.
 - **MAIL-021** After the picked-up messages are handed over, the folder's scan timestamp moves
@@ -54,7 +49,6 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 - **MAIL-022** A folder with no new messages is left unchanged and nothing is published for it.
 - **MAIL-023** A folder that has never been scanned has no scan timestamp; its first scan picks up
   all messages in the folder. *(gap: `docs/agents/inbox/folder-without-scan-timestamp.md`)*
-<!-- --8<-- [end:new-messages] -->
 
 ### What is read from a message
 
@@ -89,7 +83,7 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 
 Properties, their types, defaults and meaning are listed in the generated reference:
 
-- [`invoice-watcher.mail-producer.scheduler`](../reference/configuration.md#invoice-watcher-mail-producer-scheduler)
+- [`invoice-watcher.mail-producer.scheduler`](../../reference/configuration.md#invoice-watcher-mail-producer-scheduler)
 
 ## Out of scope
 

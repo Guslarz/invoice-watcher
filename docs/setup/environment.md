@@ -3,7 +3,10 @@
 The dev environment exists only while it is needed: create it, use it, destroy it. Both are done
 by one manual GitHub Actions workflow.
 
---8<-- "docs/specs/deployment.md:environment-workflow"
+The `Environment` workflow takes an action, `up` or `down`, and an environment (`dev`). `up`
+creates the cloud resources and then installs the cluster services; running it again on an
+environment that is already up only applies the differences. `down` destroys the cloud
+resources, and the cluster with everything in it goes with them.
 
 ## Create
 

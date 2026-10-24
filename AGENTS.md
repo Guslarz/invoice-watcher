@@ -22,17 +22,17 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `deployments/k8s/` | helmfile + `cluster-init` chart (ArgoCD, certificates, secrets) |
 | `deployments/k8s-apps/` | kustomize bases/overlays deployed by ArgoCD |
 | `.github/workflows/` | CI: build, snapshot, release, environment, docs |
-| `docs/` | Published documentation (MkDocs) — see below |
-| `docs/agents/` | Agent-only material, not published |
+| `docs/` | Published user documentation (MkDocs) — see below |
+| `docs/agents/` | Specs, ADRs and agent material, not published |
 
 ## Documentation model
 
 | Directory | What it holds | Published |
 |-----------|---------------|-----------|
-| `docs/specs/` | Canonical behavior per capability. Normative, present tense, numbered clauses, Given/When/Then. **Code must match the spec.** | yes |
-| `docs/adr/` | Decisions whose reasoning must survive. Title is the instruction. | yes |
-| `docs/system/`, `docs/setup/`, `docs/results/` | Narrative pages: how the system works, how to reproduce its setup (every manual step), what it produces. Reuse spec clauses via snippets instead of restating them. | yes |
+| `docs/system/`, `docs/setup/`, `docs/results/` | User pages: how the system works, how to reproduce its setup (every manual step), what it produces. Prose written for users; they do not quote or link specs and ADRs. | yes |
 | `docs/reference/` | Generated from code by `scripts/verify.sh` and committed with the change — never edit by hand. | yes |
+| `docs/agents/specs/` | Canonical behavior per capability. Normative, present tense, numbered clauses, Given/When/Then. **Code must match the spec.** | no |
+| `docs/agents/adr/` | Decisions whose reasoning must survive. Title is the instruction. | no |
 | `docs/agents/protocols/` | How to plan / implement / do lightweight changes. | no |
 | `docs/agents/guidelines/` | Coding, module, build and k8s conventions. | no |
 | `docs/agents/projects/` | Temporary plans, one per change; deleted by the PR that implements them. | no |
@@ -40,7 +40,9 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `docs/agents/templates/` | Templates for specs, ADRs and plans. | no |
 
 Rules:
-- One fact has one place. Link or include (`--8<--`), do not copy.
+- Specs are the single normative source of behavior. User pages explain the same behavior in
+  their own words and are updated in the same change as the spec. Otherwise one fact has one
+  place: link, do not copy.
 - Specs describe *what* the system does, not *how* the code is structured.
 - A spec clause the code does not meet yet is marked `*(gap: docs/agents/inbox/<note>.md)*`;
   the change that fixes it removes the marker and the note.
@@ -70,8 +72,8 @@ the current change.
 
 ## Context loading
 
-Before editing, read: the spec(s) of the capability, `docs/adr/index.md` (titles only, open an ADR
-only when relevant), and the guideline for the area you touch (`docs/agents/guidelines/`).
+Before editing, read: the spec(s) of the capability, `docs/agents/adr/index.md` (titles only, open
+an ADR only when relevant), and the guideline for the area you touch (`docs/agents/guidelines/`).
 
 ## Git workflow
 

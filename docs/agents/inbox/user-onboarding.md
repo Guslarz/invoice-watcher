@@ -12,5 +12,5 @@ mailbox configurations, `mail-producer-folders`) by hand in the Firestore consol
 environment has no users yet; filling it is still to be done.
 
 Decide how users are added (an admin CLI command in `secret-helper` or a new tool, an import from
-a file, a small API) and specify it in `docs/specs/user-configuration.md` (the "Out of scope" item
+a file, a small API) and specify it in `docs/agents/specs/user-configuration.md` (the "Out of scope" item
 about a user interface). Then update `docs/setup/keys-and-users.md`.

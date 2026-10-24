@@ -11,8 +11,7 @@ The repository is a Gradle multi-module Java 25 / Spring Boot 4 project with two
 
 The applications contain almost no code — they put libraries together. Each library area has an
 `api` module with interfaces, records and configuration properties, and one or more
-implementations that plug themselves in through Spring Boot auto-configuration
-([ADR-0003](../adr/0003-put-every-library-behind-an-api-module.md)). Where there is a choice, a
+implementations that plug themselves in through Spring Boot auto-configuration. Where there is a choice, a
 `mode` property picks the implementation:
 
 | Area | Implementations | Selected by |
@@ -60,7 +59,7 @@ flowchart LR
 
 ### How secrets reach the cluster
 
-No secret is stored in the repository ([ADR-0006](../adr/0006-keep-secrets-out-of-the-repository.md)).
+No secret is stored in the repository.
 The GitHub token, the Cloudflare token and the AES key are given to the `Environment` workflow as GitHub
 secrets; OpenTofu stores them in Secret Manager, and the cluster pulls them from there:
 
@@ -85,9 +84,14 @@ flowchart LR
   rel[Release workflow] --> tag[tag vX.Y.Z, image :X.Y.Z, GitHub release]
 ```
 
---8<-- "docs/specs/build-and-release.md:pipeline"
+- **Pull requests** are built and tested (`./gradlew build analyze`: tests, Checkstyle,
+  SpotBugs), the generated reference pages are checked to be up to date, and changes under
+  `deployments/` are checked for formatting, validity and rendering. A failure blocks the merge.
+- **Every merge to `master`** that touches more than documentation publishes the image
+  `ghcr.io/guslarz/invoice-watcher/mail-producer-docker:snapshot`, replacing the previous one.
+- **The `Release` workflow**, run by hand with `major`, `minor` or `patch`, tags the commit
+  `v<version>`, publishes the image tagged `<version>` and creates the GitHub release.
 
-Versions come from git tags ([ADR-0005](../adr/0005-derive-versions-from-git-tags.md)); the dev
-environment always runs the `snapshot` image. Application manifests are deployed by ArgoCD from
-`master` ([ADR-0004](../adr/0004-deploy-applications-with-argocd-from-master.md)) — merging a
+Versions come from git tags and are never written in build files; the dev environment always runs
+the `snapshot` image. Application manifests are deployed by ArgoCD from `master` — merging a
 change to `deployments/k8s-apps` is the deployment.

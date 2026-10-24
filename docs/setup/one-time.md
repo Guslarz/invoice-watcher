@@ -3,7 +3,21 @@
 These steps are done once per Google Cloud project, by hand. After them, the environment is
 created and destroyed only by the [`Environment` workflow](environment.md).
 
---8<-- "docs/specs/deployment.md:one-time-setup"
+The GitHub workflows cannot create what they themselves need to run, so a small OpenTofu
+configuration, `persistent` (`deployments/infrastructure/environments/<env>/persistent`), is
+applied once with your own Google Cloud credentials. It creates resources that outlive the
+environment and that `up` and `down` never touch:
+
+- the bucket `<project-id>-tfstate` (versioned, not public) for the OpenTofu state of the
+  environment,
+- the IAM, IAM Credentials and Cloud Resource Manager APIs,
+- the service account `github-actions` with the roles needed to create and destroy the
+  environment, and the workload identity pool `github-actions-pool` with provider
+  `github-provider`, which lets only workflows of your GitHub repository act as that account —
+  without stored keys.
+
+The OpenTofu state of `persistent` itself stays on your machine, not in git and not in the
+bucket.
 
 ## 1. Apply `persistent`
 
@@ -84,20 +98,16 @@ packages accept only classic tokens:
 
 In the repository open **Settings → Secrets and variables → Actions** and add:
 
---8<-- "docs/specs/deployment.md:github-settings"
-
-Where the values come from:
-
-| Name | Value |
-|------|-------|
-| `GCP_PROJECT_ID` | `<project-id>` |
-| `GCP_PROJECT_NUMBER` | the number printed in step 1 |
-| `GCP_GKE_CLUSTER_NAME` | `invoice-watcher-cluster` (`gcp_gke_cluster_name` in the `ephemereal` variables) |
-| `GCP_ZONE` | `europe-west1-b` (`gcp_zone` in the `ephemereal` variables) |
-| `CLOUDFLARE_ZONE_ID` | the Zone ID from step 2 |
-| `PAT` | the token from step 3 |
-| `CLOUDFLARE_API_TOKEN` | the token from step 2 |
-| `AES_KEY` | a new key from `secret-helper generate-key` ([keys and users](keys-and-users.md#1-generate-the-key)) |
+| Name | Kind | Value |
+|------|------|-------|
+| `GCP_PROJECT_ID` | variable | `<project-id>` |
+| `GCP_PROJECT_NUMBER` | variable | the number printed in step 1 |
+| `GCP_GKE_CLUSTER_NAME` | variable | `invoice-watcher-cluster` (`gcp_gke_cluster_name` in the `ephemereal` variables) |
+| `GCP_ZONE` | variable | `europe-west1-b` (`gcp_zone` in the `ephemereal` variables) |
+| `CLOUDFLARE_ZONE_ID` | variable | the Zone ID from step 2 |
+| `PAT` | secret | the token from step 3 |
+| `CLOUDFLARE_API_TOKEN` | secret | the token from step 2 |
+| `AES_KEY` | secret | a new key from `secret-helper generate-key` ([keys and users](keys-and-users.md#1-generate-the-key)) |
 
 The `Snapshot` and `Release` workflows need nothing else — they publish images with the
 workflow's own `GITHUB_TOKEN`.
