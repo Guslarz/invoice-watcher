@@ -112,4 +112,8 @@ In the repository open **Settings → Secrets and variables → Actions** and ad
 The `Snapshot` and `Release` workflows need nothing else — they publish images with the
 workflow's own `GITHUB_TOKEN`.
 
+In **Settings → Advanced Security** enable **Dependabot security updates**, so that Dependabot
+opens pull requests fixing reported vulnerable dependencies. Weekly version updates need no
+setting; they are configured in `.github/dependabot.yml`.
+
 Next: [create the environment](environment.md).

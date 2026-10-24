@@ -6,3 +6,22 @@ updates:
       - /.github/actions/*
     schedule:
       interval: weekly
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      spring-boot:
+        patterns:
+          - org.springframework.boot*
+          - io.spring.*
+      spring-cloud-gcp:
+        patterns:
+          - com.google.cloud:spring-cloud-gcp*
+      other:
+        patterns:
+          - "*"
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
