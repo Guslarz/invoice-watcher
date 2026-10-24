@@ -24,7 +24,10 @@ the dev environment can run, and a release produces a versioned image and a GitH
   (`tofu fmt -check`, `tofu validate`), the helmfile and the kustomize environments render and the
   rendered manifests match their Kubernetes schemas. Every pull request checks that every
   `INVOICE_WATCHER_*` variable in a kustomize `.env` file binds to a property in the generated
-  configuration reference. A failure blocks the change.
+  configuration reference. Every pull request that changes a file under `deployments/` or
+  `.github/workflows/` checks that the names shared by OpenTofu, the Kubernetes manifests and the
+  workflows match: the application namespace, the ServiceAccounts bound by workload identity and
+  the gateway address. A failure blocks the change.
 - **RELEASE-002** Every push to `master` that changes a file outside `docs/` builds and publishes
   the image `ghcr.io/guslarz/invoice-watcher/mail-producer-docker:snapshot`, replacing the
   previous snapshot.
@@ -52,8 +55,14 @@ the dev environment can run, and a release produces a versioned image and a GitH
 - **RELEASE-001** Given a pull request with a manifest field unknown to its schema under
   `deployments/k8s/` or `deployments/k8s-apps/`, when it is opened, then the `deployments` job
   fails.
-- **RELEASE-001** Given a pull request not touching `deployments/`, when it is opened, then the
-  `deployments` job is skipped.
+- **RELEASE-001** Given a pull request renaming `secret-sync-sa` only in the cluster-init chart,
+  when it is opened, then the `deployments` job of `Build and analyze` fails and names both files.
+  The same holds for the application namespace (`app_namespace` in OpenTofu, the environment's
+  `kustomization.yml`, the ArgoCD Application), `app-sa` and `gke-gateway-ip`.
+- **RELEASE-001** Given a pull request changing only `.github/workflows/`, when it is opened, then
+  the `deployments` job runs.
+- **RELEASE-001** Given a pull request touching neither `deployments/` nor `.github/workflows/`,
+  when it is opened, then the `deployments` job is skipped.
 - **RELEASE-002** Given a pull request changing only files under `docs/`, when it is merged, then
   `Snapshot` does not run.
 - **RELEASE-002** Given a pull request is merged, when the `Snapshot` workflow finishes, then

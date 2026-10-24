@@ -5,7 +5,8 @@ on:
 
 jobs:
   # Documentation-only changes (everything under docs/) skip the Gradle build but still check the
-  # generated reference (it runs Gradle too); changes outside deployments/ skip the deployment file checks
+  # generated reference (it runs Gradle too); changes outside deployments/ and .github/workflows/ skip the
+  # deployment file checks (the workflows share names with the deployment files)
   changes:
     runs-on: ubuntu-26.04
     outputs:
@@ -18,7 +19,7 @@ jobs:
           fetch-depth: 2
 
       # HEAD is the pull request merge commit, HEAD^1 the tip of the base branch
-      - name: Detect changes outside docs/ and in deployments/
+      - name: Detect changes outside docs/ and in deployments/ or .github/workflows/
         id: diff
         run: |
           outside_docs=$(git diff --name-only HEAD^1 HEAD | grep -cv '^docs/' || true)
@@ -27,7 +28,7 @@ jobs:
           else
             echo "code=false" >> "$GITHUB_OUTPUT"
           fi
-          in_deployments=$(git diff --name-only HEAD^1 HEAD | grep -c '^deployments/' || true)
+          in_deployments=$(git diff --name-only HEAD^1 HEAD | grep -cE '^(deployments|\.github/workflows)/' || true)
           if [ "$in_deployments" -gt 0 ]; then
             echo "deployments=true" >> "$GITHUB_OUTPUT"
           else

@@ -102,8 +102,8 @@ In the repository open **Settings → Secrets and variables → Actions** and ad
 |------|------|-------|
 | `GCP_PROJECT_ID` | variable | `<project-id>` |
 | `GCP_PROJECT_NUMBER` | variable | the number printed in step 1 |
-| `GCP_GKE_CLUSTER_NAME` | variable | `invoice-watcher-cluster` (`gcp_gke_cluster_name` in the `ephemereal` variables) |
-| `GCP_ZONE` | variable | `europe-west1-b` (`gcp_zone` in the `ephemereal` variables) |
+| `GCP_GKE_CLUSTER_NAME` | variable | the cluster name, e.g. `invoice-watcher-cluster` — OpenTofu creates the cluster under it and `k8s-install` looks for it there |
+| `GCP_ZONE` | variable | a zone in `europe-west1`, e.g. `europe-west1-b` — OpenTofu creates the cluster in it and `k8s-install` looks for it there |
 | `CLOUDFLARE_ZONE_ID` | variable | the Zone ID from step 2 |
 | `PAT` | secret | the token from step 3 |
 | `CLOUDFLARE_API_TOKEN` | secret | the token from step 2 |

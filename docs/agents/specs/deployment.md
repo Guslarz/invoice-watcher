@@ -58,6 +58,8 @@ while it is not needed. After it is up, application changes are deployed automat
   and a proxied wildcard DNS record `*.guslarz.com` in Cloudflare pointing at it.
 - **DEPLOY-011** The application reaches Firestore through workload identity — no service
   account keys are stored.
+- **DEPLOY-012** OpenTofu creates the cluster in the zone and under the name given by the
+  repository variables `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME`, the same ones `k8s-install` uses.
 
 ### Cluster services
 
@@ -95,6 +97,8 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-002** Given the dev environment is down, when `Environment` runs with `up` / `dev`,
   then the workflow succeeds, ArgoCD is reachable at `https://argocd.guslarz.com` and the
   `mail-producer` pod in `invoice-watcher-dev` is running.
+- **DEPLOY-012** Given `GCP_ZONE` set to a zone other than the OpenTofu default, when `Environment`
+  runs with `up` / `dev`, then the cluster is created in that zone and `k8s-install` finds it.
 - **DEPLOY-030** Given the environment is up, when a change to `deployments/k8s-apps` is merged
   to `master`, then ArgoCD applies it without manual steps.
 - **DEPLOY-002** Given the dev environment is up, when `Environment` runs with `down` / `dev`,
