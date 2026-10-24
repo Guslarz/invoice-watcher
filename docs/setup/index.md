@@ -51,6 +51,7 @@ region `europe-west1`. To reproduce it under another account or domain, change t
 | GitHub user name | `deployments/infrastructure/environments/dev/ephemereal/variables.tf` (`github_username`), `deployments/k8s/values/cluster-init.yml.gotmpl` (`github.username`, `github.orgUrl`), `deployments/k8s-apps/components/app-identity/image-pull-secret.yml` |
 | Image name `ghcr.io/<owner>/invoice-watcher/mail-producer-docker` | `deployments/k8s-apps/apps/mail-producer/overlays/dev/kustomization.yml` |
 | Domain | `deployments/infrastructure/environments/dev/ephemereal/variables.tf` (`domain_name`), `deployments/k8s/environments/dev.yml.gotmpl` (`domain`) |
-| Region, zone, cluster name | `deployments/infrastructure/environments/dev/ephemereal/variables.tf` (`gcp_region`, `gcp_zone`, `gcp_gke_cluster_name`) — must match the `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME` GitHub variables |
+| Region | `deployments/infrastructure/environments/dev/ephemereal/variables.tf` (`gcp_region`) |
+| Zone, cluster name | the `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME` GitHub variables ([one-time setup](one-time.md#4-configure-the-github-repository)); `gcp_zone` and `gcp_gke_cluster_name` in the same `variables.tf` are used only when you run OpenTofu locally |
 
 On the pages that follow, `<project-id>` and `<domain>` stand for your values.

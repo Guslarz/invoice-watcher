@@ -69,6 +69,8 @@ jobs:
           cat > terraform.tfvars <<EOF
           gcp_project_id="${{ vars.GCP_PROJECT_ID }}"
           gcp_project_number="${{ vars.GCP_PROJECT_NUMBER }}"
+          gcp_zone="${{ vars.GCP_ZONE }}"
+          gcp_gke_cluster_name="${{ vars.GCP_GKE_CLUSTER_NAME }}"
           github_pat="${{ secrets.PAT }}"
           cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}"
           aes_key="${{ secrets.AES_KEY }}"

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Deployment file checks, run by CI (Build and analyze / deployments) and scripts/verify.sh:
 # OpenTofu formatting and validation, rendering of the helmfile and the kustomize environments,
-# Kubernetes schema validation of the rendered manifests, the local Kafka image matching the cluster one.
+# Kubernetes schema validation of the rendered manifests, the local Kafka image matching the cluster one,
+# names shared by OpenTofu, the manifests and the workflows matching (scripts/check-names.sh).
 # A missing tool skips its check locally and fails it in CI (when CI is set).
 set -euo pipefail
 
@@ -41,6 +42,9 @@ if [[ -z "$cluster_image" || "$local_image" != "$cluster_image" ]]; then
   echo "FAIL: $local_kafka: image '$local_image' differs from '$cluster_image' in $cluster_kafka" >&2
   exit 1
 fi
+
+echo "==> Shared names"
+scripts/check-names.sh
 
 echo "==> OpenTofu"
 if command -v tofu >/dev/null 2>&1; then
