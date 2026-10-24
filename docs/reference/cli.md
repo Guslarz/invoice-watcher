@@ -15,7 +15,7 @@ Commands:
                   value.
   encrypt       Asks for the key and a value and prints the value encrypted
                   with AES-GCM.
-  generate-key  Prints a new Base64-encoded AES-256 key.
+  generate-key  Prints a new random Base64-encoded AES-256 key.
 ```
 
 ## decrypt
@@ -39,11 +39,8 @@ Asks for the key and a value and prints the value encrypted with AES-GCM.
 ## generate-key
 
 ```text
-Usage: secret-helper generate-key [-hV] [-m=<mode>]
-Prints a new Base64-encoded AES-256 key.
-  -h, --help          Show this help message and exit.
-  -m, --mode=<mode>   How the key is made: password derives it from a password
-                        read from standard input (PBKDF2, random salt); random
-                        is not implemented yet. Default: password.
-  -V, --version       Print version information and exit.
+Usage: secret-helper generate-key [-hV]
+Prints a new random Base64-encoded AES-256 key.
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
 ```

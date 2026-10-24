@@ -5,8 +5,7 @@ import java.util.Scanner;
 public class CommandUtil {
 
   public static String promptForLine(Scanner scanner, String message) {
-    System.out.print(message + ": ");
-    System.out.flush();
+    IO.print(message + ": ");
     return scanner.nextLine();
   }
 }

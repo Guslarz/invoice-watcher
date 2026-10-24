@@ -36,15 +36,19 @@ encrypted values.
 
 ### `secret-helper` tool
 
-- **SECRET-010** `secret-helper generate-key` asks for a password and prints a new key derived
-  from it (PBKDF2-HMAC-SHA256, 65 536 iterations, random salt). The salt is not shown, so the same
-  password gives a different key every time — keep the printed key, not the password.
+- **SECRET-010** `secret-helper generate-key` prints a new random 256-bit AES key, Base64-encoded,
+  made with a cryptographically secure random generator. It asks for nothing.
 - **SECRET-011** `secret-helper encrypt` asks for the key and the value and prints the encrypted
   value.
 - **SECRET-012** `secret-helper decrypt` asks for the key and an encrypted value and prints the
   original value.
 - **SECRET-013** All input is read interactively from standard input, so keys and passwords do not
   end up in the shell history. The tool exits with status 0 on success.
+- **SECRET-014** Without a command, or with an unknown command or option, the tool prints its
+  usage on standard error and exits with status 2.
+- **SECRET-015** When a command fails — a wrong key or a tampered value in `decrypt`, an invalid
+  key, input ending early — the tool prints a one-line message on standard error, without a stack
+  trace and without any plaintext, and exits with status 1.
 
 ## Acceptance
 
@@ -52,8 +56,16 @@ encrypted values.
   printed values differ and both decrypt to the password.
 - **SECRET-005** Given a value encrypted with key A, when `decrypt` is run with key B, then the
   tool fails and prints no plaintext.
+- **SECRET-010** Given nothing on standard input, when `generate-key` runs twice, then it prints
+  two different Base64 values that decode to 32 bytes and are accepted by `encrypt`.
 - **SECRET-012** Given a key from `generate-key` and a value from `encrypt`, when `decrypt` is run
   with them, then it prints the original value.
+- **SECRET-014** Given no arguments, when the tool runs, then its usage is printed on standard
+  error and the exit status is 2. The same for `generate-key --mode password` (an unknown option).
+- **SECRET-015** Given a value encrypted with key A, when `decrypt` runs with key B, then standard
+  error has one line, standard output has no plaintext and the exit status is 1.
+- **SECRET-015** Given empty standard input, when `encrypt` runs, then standard error has one line
+  and the exit status is 1.
 
 ## Configuration
 
@@ -65,4 +77,3 @@ Properties, their types, defaults and meaning are listed in the generated refere
 
 - Key rotation and re-encryption of stored values.
 - Integration with a key management service.
-- `generate-key --mode random` is accepted but not implemented and fails.
