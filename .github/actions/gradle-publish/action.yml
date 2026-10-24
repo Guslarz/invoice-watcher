@@ -1,0 +1,30 @@
+name: Build and publish
+description: Builds, analyzes and publishes the artifacts and Docker images to ghcr.io
+
+inputs:
+  username:
+    description: Registry user
+    required: true
+  password:
+    description: Registry password or token
+    required: true
+  tag:
+    description: Docker image tag; the project version when empty
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Build and publish artifacts
+      shell: bash
+      env:
+        REGISTRY_USERNAME: ${{ inputs.username }}
+        REGISTRY_PASSWORD: ${{ inputs.password }}
+        TAG: ${{ inputs.tag }}
+      run: |
+        ./gradlew build analyze publish \
+          -Pcom.guslarz.invoicewatcher.docker.registry=ghcr.io \
+          -Pcom.guslarz.invoicewatcher.docker.namespace=guslarz/invoice-watcher \
+          -Pcom.guslarz.invoicewatcher.docker.username="$REGISTRY_USERNAME" \
+          -Pcom.guslarz.invoicewatcher.docker.password="$REGISTRY_PASSWORD" \
+          ${TAG:+-Pcom.guslarz.invoicewatcher.docker.tag="$TAG"}

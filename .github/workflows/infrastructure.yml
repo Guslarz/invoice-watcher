@@ -36,27 +36,33 @@ jobs:
         working-directory: ./deployments/infrastructure/environments/${{ inputs.environment }}/${{ inputs.module }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
-
-      - name: Set environmental variables
-        run: |
-          declare -A ACTION_MAP=( ["up"]="apply" ["down"]="destroy" )
-          echo "ACTION=${ACTION_MAP[${{ inputs.action }}]}" >> $GITHUB_ENV
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Check secrets
         if: ${{ inputs.action == 'up' }}
         env:
           AES_KEY: ${{ secrets.AES_KEY }}
+          PAT: ${{ secrets.PAT }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          if [ -z "$AES_KEY" ]; then
-            echo "::error::The AES_KEY secret is not set"
-            exit 1
-          fi
+          missing=0
+          for secret in AES_KEY PAT CLOUDFLARE_API_TOKEN; do
+            if [ -z "${!secret}" ]; then
+              echo "::error::The $secret secret is not set"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Set environment variables
+        run: |
+          declare -A PLAN_FLAGS_MAP=( ["up"]="" ["down"]="-destroy" )
+          echo "PLAN_FLAGS=${PLAN_FLAGS_MAP[${{ inputs.action }}]}" >> "$GITHUB_ENV"
 
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v2
+        uses: ./.github/actions/setup-deploy-tools
         with:
-          tofu_version: '1.12.5'
+          helmfile: 'false'
 
       - name: Setup variables
         run: |-
@@ -70,16 +76,17 @@ jobs:
           EOF
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
+        uses: ./.github/actions/gcp-auth
         with:
-          workload_identity_provider: "projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
-          service_account: "github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
+          project-id: ${{ vars.GCP_PROJECT_ID }}
+          project-number: ${{ vars.GCP_PROJECT_NUMBER }}
 
       - name: Tofu Init
         run: tofu init -input=false
 
+      # The logged plan (a destroy plan for down) is saved and applied as is
       - name: Tofu Plan
-        run: tofu plan -input=false
+        run: tofu plan -input=false $PLAN_FLAGS -out=tfplan
 
-      - name: Tofu action
-        run: tofu ${{ env.ACTION }} -auto-approve -input=false
+      - name: Tofu Apply
+        run: tofu apply -input=false tfplan

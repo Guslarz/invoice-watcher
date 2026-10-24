@@ -1,0 +1,19 @@
+name: Authenticate to Google Cloud
+description: Workload identity federation as the github-actions service account (created by persistent)
+
+inputs:
+  project-id:
+    description: Google Cloud project ID
+    required: true
+  project-number:
+    description: Google Cloud project number
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+      with:
+        workload_identity_provider: 'projects/${{ inputs.project-number }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
+        service_account: 'github-actions@${{ inputs.project-id }}.iam.gserviceaccount.com'

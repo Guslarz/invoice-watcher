@@ -26,8 +26,8 @@ jobs:
   infrastructure:
     uses: ./.github/workflows/infrastructure.yml
     with:
-      action: ${{ github.event.inputs.action }}
-      environment: ${{ github.event.inputs.environment }}
+      action: ${{ inputs.action }}
+      environment: ${{ inputs.environment }}
       module: ephemereal
     secrets:
       PAT: ${{ secrets.PAT }}
@@ -35,8 +35,8 @@ jobs:
       AES_KEY: ${{ secrets.AES_KEY }}
 
   k8s-install:
-    if: ${{ github.event.inputs.action == 'up' }}
+    if: ${{ inputs.action == 'up' }}
     uses: ./.github/workflows/k8s-install.yml
     needs: infrastructure
     with:
-      environment: ${{ github.event.inputs.environment }}
+      environment: ${{ inputs.environment }}

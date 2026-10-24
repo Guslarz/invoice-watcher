@@ -17,7 +17,7 @@ The workflow has two jobs:
 
 | Job | What it does |
 |-----|--------------|
-| `infrastructure` | OpenTofu applies `deployments/infrastructure/environments/dev/ephemereal`: Secret Manager secrets, Firestore database, GKE cluster and node pool, global IP, Cloudflare DNS record. State is kept in the `<project-id>-tfstate` bucket. |
+| `infrastructure` | Checks that the `AES_KEY`, `PAT` and `CLOUDFLARE_API_TOKEN` secrets are set and stops before touching anything when one is missing. Then OpenTofu plans `deployments/infrastructure/environments/dev/ephemereal`, prints the plan in the log and applies exactly that plan: Secret Manager secrets, Firestore database, GKE cluster and node pool, global IP, Cloudflare DNS record. State is kept in the `<project-id>-tfstate` bucket. |
 | `k8s-install` | Waits for the cluster, then `helmfile sync` installs ArgoCD, cert-manager, origin-ca-issuer, external-secrets and the `cluster-init` chart (gateway, certificate, secret sync, the ArgoCD application). |
 
 From then on ArgoCD deploys the applications from `master` by itself.
@@ -57,8 +57,9 @@ kubectl -n invoice-watcher-dev rollout restart deploy/mail-producer
 
 ## Destroy
 
-Run **Environment** with `down` and `dev`. OpenTofu destroys everything `up` created; the
-cluster goes with all it contains.
+Run **Environment** with `down` and `dev`. OpenTofu prints a destroy plan in the log and
+applies exactly that plan: everything `up` created is destroyed, and the cluster goes with all it
+contains.
 
 !!! danger "Data is deleted"
     `down` deletes the Firestore database — users, mailboxes, folders and scan timestamps. There

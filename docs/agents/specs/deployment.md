@@ -45,6 +45,10 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-002** `up` creates the environment's cloud resources and then installs the cluster
   services. `down` destroys the cloud resources; the cluster and everything in it go with them.
 - **DEPLOY-003** Running `up` on an environment that is already up only applies differences.
+- **DEPLOY-007** `up` fails before creating any resources when the `AES_KEY`, `PAT` or
+  `CLOUDFLARE_API_TOKEN` secret is not set.
+- **DEPLOY-008** The workflow logs the OpenTofu plan of the action it runs — a destroy plan for
+  `down` — and executes exactly that saved plan.
 
 ### Cloud resources (per environment)
 
@@ -95,11 +99,13 @@ while it is not needed. After it is up, application changes are deployed automat
   to `master`, then ArgoCD applies it without manual steps.
 - **DEPLOY-002** Given the dev environment is up, when `Environment` runs with `down` / `dev`,
   then the cluster, the Firestore database and the DNS record no longer exist.
+- **DEPLOY-007** Given the `PAT` secret is not set, when `Environment` runs with `up` / `dev`, then
+  the workflow fails before `tofu init`. Same for `AES_KEY` and `CLOUDFLARE_API_TOKEN`.
+- **DEPLOY-008** Given the dev environment is up, when `Environment` runs with `down` / `dev`, then
+  the logged plan lists only destroys and the next step applies that saved plan file.
 - **DEPLOY-034** Given the `AES_KEY` secret is set and the dev environment is up, when the
   `mail-producer` pod starts, then it starts with the key from Secret Manager, and no file under
   `deployments/` contains the key.
-- **DEPLOY-034** Given the `AES_KEY` secret is not set, when `Environment` runs with `up` / `dev`,
-  then the workflow fails before creating any resources.
 - **DEPLOY-035** Given the dev environment is up, when `kubectl get pods -o yaml` runs in
   `invoice-watcher-dev`, then every container has `resources.requests.cpu`,
   `resources.requests.memory` and `resources.limits.memory`, and no `resources.limits.cpu`.

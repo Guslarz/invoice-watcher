@@ -14,22 +14,14 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: 25
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+      - name: Setup Java and Gradle
+        uses: ./.github/actions/setup-gradle
 
       - name: Build and publish artifacts
-        run: |
-          ./gradlew build analyze publish \
-            -Pcom.guslarz.invoicewatcher.docker.registry=ghcr.io \
-            -Pcom.guslarz.invoicewatcher.docker.namespace=guslarz/invoice-watcher \
-            -Pcom.guslarz.invoicewatcher.docker.username=${{ github.actor }} \
-            -Pcom.guslarz.invoicewatcher.docker.password=${{ secrets.GITHUB_TOKEN }} \
-            -Pcom.guslarz.invoicewatcher.docker.tag=snapshot
+        uses: ./.github/actions/gradle-publish
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          tag: snapshot
