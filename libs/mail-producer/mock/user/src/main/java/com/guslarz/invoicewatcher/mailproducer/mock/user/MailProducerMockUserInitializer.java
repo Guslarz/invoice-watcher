@@ -34,14 +34,14 @@ public class MailProducerMockUserInitializer {
   }
 
   private MailScanConfig buildMailScanConfig() {
-    ZonedDateTime scanTimestamp = ZonedDateTime.now().minusDays(10);
+    ZonedDateTime startDate = ZonedDateTime.now().minusDays(10);
     return MailScanConfig.builder()
         .server(getMailServer())
         .credentials(getMailCredentials())
         .folders(properties.folders().stream()
             .map(folderName -> FolderConfig.builder()
                 .name(folderName)
-                .scanTimestamp(scanTimestamp)
+                .startDate(startDate)
                 .build())
             .toList())
         .build();

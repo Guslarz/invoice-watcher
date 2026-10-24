@@ -40,7 +40,7 @@ flowchart LR
       end
       argocd -->|syncs from master| app
     end
-    producer -->|users, scan timestamps| fs[(Firestore<br/>Datastore mode)]
+    producer -->|users, scan positions| fs[(Firestore<br/>Datastore mode)]
     sm[(Secret Manager)]
   end
 
@@ -54,7 +54,7 @@ flowchart LR
 - **ArgoCD** is the only thing exposed (`https://argocd.<domain>`); the mail producer has no
   HTTP interface for users.
 - **Kafka** runs as a single node inside the cluster, without persistent storage.
-- **Firestore** keeps users, mailboxes, folders and scan timestamps. The mail producer reaches it
+- **Firestore** keeps users, mailboxes, folders and scan positions. The mail producer reaches it
   through workload identity, so there are no service account keys.
 
 ### How secrets reach the cluster

@@ -6,7 +6,7 @@ added: 2026-10-13
 ---
 
 The only supported way to define a user is the mock user from properties (USER-030), which is a
-single user with one mailbox whose scan timestamps reset on every restart (USER-031). Adding real
+single user with one mailbox whose scan positions reset on every restart (USER-031). Adding real
 users to the dev environment means writing nested entities (`mail-producer-users` with embedded
 mailbox configurations, `mail-producer-folders`) by hand in the Firestore console. The dev
 environment has no users yet; filling it is still to be done.

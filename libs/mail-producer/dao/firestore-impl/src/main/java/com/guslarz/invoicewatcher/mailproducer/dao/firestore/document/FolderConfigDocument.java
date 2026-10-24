@@ -18,5 +18,7 @@ public class FolderConfigDocument {
   private String id;
 
   private String name;
-  private String scanTimestamp;
+  private String startDate;
+  private Long uidValidity;
+  private Long lastUid;
 }

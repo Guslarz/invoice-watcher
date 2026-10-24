@@ -62,7 +62,7 @@ applies exactly that plan: everything `up` created is destroyed, and the cluster
 contains.
 
 !!! danger "Data is deleted"
-    `down` deletes the Firestore database — users, mailboxes, folders and scan timestamps. There
+    `down` deletes the Firestore database — users, mailboxes, folders and scan positions. There
     are no backups.
 
 What stays: everything created by the [one-time setup](one-time.md) (state bucket, GitHub
