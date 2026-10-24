@@ -5,9 +5,11 @@ area: build
 added: 2026-10-13
 ---
 
-The retrofitted specs (`docs/agents/specs/`) describe behavior that is almost untested: the only tests
-are `AesUtilTest` (`libs/util/aes`) and `BinarySearchEngineTest` (`libs/mail-connector/impl`),
-and neither names a clause. Protocol implement requires a test naming every *changed* clause, but
+The retrofitted specs (`docs/agents/specs/`) describe behavior that is almost untested: there are five
+test classes (`AesUtilTest`, `BinarySearchEngineTest`, `MailConnectionImplTest`,
+`KafkaEventProducerTest`, `MailProducerTaskImplTest`), only some name a clause, 12 of 16 modules
+have no tests, and no test starts a Spring context (mode switching and property binding are
+untested). Protocol implement requires a test naming every *changed* clause, but
 the clauses written in the retrofit have no tests at all.
 
 To settle:

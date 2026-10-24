@@ -11,3 +11,11 @@ connects to a Cloud SQL for PostgreSQL instance. `MailProducerDaoJpaAutoConfigur
 `CloudSqlJdbcInfoProvider` bean built from `gcp.*` is not used by it. Use the provider's JDBC URL
 and driver when `gcp` is set (or drop the `gcp` properties and document the Cloud SQL JDBC URL
 for `basic.url` instead), and add a test.
+
+Also found in the repository review:
+- `DummyCloudSqlJdbcInfoProvider` (package `util`) is neither a dummy nor a utility: it adapts
+  `basic.*` to the provider interface. Its bean name `mailProducerDaoJpaInfoProvider` is vague.
+- `mail-producer-app`'s `application.yml` disables `spring.cloud.gcp.sql`, so the Cloud SQL
+  integration is off even when `gcp.*` is set.
+- With only `gcp.*` set, building the `DataSource` fails with a `NullPointerException` on
+  `dataSource().basic()`.
