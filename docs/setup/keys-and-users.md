@@ -20,7 +20,7 @@ input, so keys and passwords do not end up in the shell history.
 
 | Command | What it does |
 |---------|--------------|
-| `generate-key` | Asks for a password and prints a new key derived from it. |
+| `generate-key` | Prints a new random key. |
 | `encrypt` | Asks for the key and a value, prints the encrypted value. |
 | `decrypt` | Asks for the key and an encrypted value, prints the original value. |
 
@@ -30,12 +30,10 @@ All options are listed in the [secret-helper reference](../reference/cli.md).
 
 ```shell
 $ java -jar apps/secret-helper-app/build/libs/secret-helper.jar generate-key
-Enter encryption password: <password>
 <Base64 key, 44 characters>
 ```
 
-Keep the printed key (e.g. in a password manager). The password cannot recreate it — the salt is
-random and not shown.
+Keep the printed key (e.g. in a password manager) — it is random and cannot be generated again.
 
 The application reads the key from
 [`invoice-watcher.secret.aes.key`](../reference/configuration.md#invoice-watcher-secret-aes)
