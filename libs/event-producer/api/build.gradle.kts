@@ -5,5 +5,5 @@ plugins {
 description = "Event producer interface and backend selection."
 
 dependencies {
-  implementation(libs.spring.boot.starter)
+  implementation(libs.spring.boot)
 }

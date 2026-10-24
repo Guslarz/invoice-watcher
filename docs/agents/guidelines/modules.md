@@ -9,8 +9,10 @@
 - Every `build.gradle.kts` sets a one-line `description`; it is published in the generated module
   reference, and a module without one fails the docs build.
 - A library area has an `api` module and one or more implementations:
-  - `api` — interfaces, records, `@ConfigurationProperties`, exceptions. No Spring beans except an
-    optional `@AutoConfiguration` that only enables properties.
+  - `api` — interfaces, records, `@ConfigurationProperties`, exceptions. No Spring beans and no
+    auto-configuration: the configuration processor generates metadata for properties records
+    without registering them, and implementations use only their `Constants`. A module with
+    `@ConfigurationProperties` depends on `implementation(libs.spring.boot)` — nothing more.
   - `impl` / `<tech>-impl` — implementation plus an `@AutoConfiguration` class.
 - Consumers depend on `api` (`api(projects.libs.xApi)`); only applications depend on `impl`.
 - Applications (`apps/*`) contain almost no code — they compose `impl` modules in
