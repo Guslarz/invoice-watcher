@@ -30,8 +30,7 @@ releases:
     chart: oci://quay.io/jetstack/charts/cert-manager
     version: 1.21.2
     values:
-      - crds:
-          enabled: true
+      - values/cert-manager.yml
   - name: origin-ca-issuer
     namespace: origin-ca-issuer
     chart: oci://ghcr.io/cloudflare/origin-ca-issuer-charts/origin-ca-issuer
@@ -54,4 +53,4 @@ releases:
     chart: oci://ghcr.io/external-secrets/charts/external-secrets
     version: 2.12.0
     values:
-      - installCRDs: true
+      - values/external-secrets.yml

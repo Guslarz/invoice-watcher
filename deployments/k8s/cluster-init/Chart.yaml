@@ -1,6 +1,6 @@
 apiVersion: v2
 name: cluster-init
-description: A Helm chart for Kubernetes
+description: Cluster-wide resources of an InvoiceWatcher environment — the external gateway, its Cloudflare origin certificate, secret syncs from Secret Manager and the ArgoCD applications
 type: application
 # Fixed, not released: see RELEASE-004 (docs/agents/specs/build-and-release.md).
 version: 0.0.0
