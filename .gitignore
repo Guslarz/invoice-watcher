@@ -49,7 +49,9 @@ application-local.yml
 
 ### Documentation ###
 site/
+.cache/
 .venv/
+.venv-docs/
 
 ### Proposed commit message (AGENTS.md, Git workflow) ###
 .gitmessage

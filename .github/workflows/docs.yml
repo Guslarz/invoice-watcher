@@ -26,14 +26,14 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-docs.txt
 
-      - name: Install MkDocs
+      - name: Install Zensical
         run: pip install -r requirements-docs.txt
 
       - name: Check documentation structure
         run: scripts/check-docs.sh
 
       - name: Build site
-        run: mkdocs build --strict
+        run: zensical build --strict
 
       - name: Upload site
         if: ${{ vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request' }}

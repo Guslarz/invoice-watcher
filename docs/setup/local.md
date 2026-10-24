@@ -77,12 +77,16 @@ pointing at it.
 
 ## Documentation site
 
+`scripts/verify.sh` installs the pinned site generator (Zensical) into `.venv-docs/` in the
+working tree and builds the site; it needs `python3` with `venv` (`python3-venv` on Debian/Ubuntu)
+or `virtualenv`. After one run, preview the site with live reload:
+
 ```shell
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements-docs.txt
 scripts/verify.sh
-mkdocs serve
+.venv-docs/bin/zensical serve
 ```
+
+In IntelliJ, the `docs` run configuration starts the same preview at http://localhost:8000/invoice-watcher/.
 
 ## How we work
 

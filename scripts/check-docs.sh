@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Structural checks for docs/ and AGENTS.md. Link checking is done by `mkdocs build --strict`.
+# Structural checks for docs/ and AGENTS.md. Link checking is done by `zensical build --strict`.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
