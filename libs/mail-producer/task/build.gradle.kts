@@ -1,5 +1,5 @@
 plugins {
-  id("spring-boot-lib-conventions")
+  id("spring.boot-lib-conventions")
 }
 
 description = "Scan task: reads users, scans their folders and publishes new messages."

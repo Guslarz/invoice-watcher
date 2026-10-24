@@ -1,5 +1,5 @@
 plugins {
-  id("spring-boot-lib-conventions")
+  id("spring.boot-lib-conventions")
 }
 
 description = "Creates a mock user from properties at startup."

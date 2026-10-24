@@ -15,6 +15,8 @@
     `@ConfigurationProperties` depends on `implementation(libs.spring.boot)` — nothing more.
   - `impl` / `<tech>-impl` — implementation plus an `@AutoConfiguration` class.
 - Consumers depend on `api` (`api(projects.libs.xApi)`); only applications depend on `impl`.
+  An `api` module is always declared with `api(...)`, never `implementation`/`compileOnly`; leave
+  it out when another declared `api` module already brings it.
 - Applications (`apps/*`) contain almost no code — they compose `impl` modules in
   `build.gradle.kts`.
 
@@ -35,7 +37,7 @@
 
 - `@ConfigurationProperties` **records**, prefix `invoice-watcher.<area>[.<sub>]`.
 - Defaults via `@DefaultValue` with constants in a nested `Defaults` class.
-- The configuration processor (enabled in `spring-boot-{app,lib}-conventions`) generates metadata
+- The configuration processor (enabled in `spring.boot-common-conventions`) generates metadata
   that feeds the published configuration reference. Every record (also nested ones) needs Javadoc
   with a `@param` per component — it becomes the property description, and a property without
   one fails the docs build (`scripts/gen-reference.py`).

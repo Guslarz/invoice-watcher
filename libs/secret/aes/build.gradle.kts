@@ -1,5 +1,5 @@
 plugins {
-  id("spring-boot-lib-conventions")
+  id("spring.boot-lib-conventions")
 }
 
 description = "AES-GCM implementation of secrets, decrypted only when used."
@@ -9,4 +9,6 @@ dependencies {
   implementation(projects.libs.utilAes)
 
   implementation(libs.spring.boot.autoconfigure)
+
+  implementation(libs.jspecify)
 }

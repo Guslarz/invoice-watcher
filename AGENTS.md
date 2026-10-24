@@ -15,8 +15,8 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 |------|---------|
 | `apps/` | Runnable Spring Boot / picocli applications (`mail-producer-app`, `secret-helper-app`) |
 | `libs/<area>/{api,impl,*-impl}` | Libraries; `api` = interfaces + records, `impl` = Spring auto-configuration |
-| `images/` | Docker image modules (`docker/image-conventions`) |
-| `buildSrc/` | Gradle convention plugins (`java-*`, `spring-boot-{app,lib}-conventions`) |
+| `images/` | Docker image modules (`docker.image-conventions`) |
+| `buildSrc/` | Gradle convention plugins (`jvm.*`, `spring.boot-{app,lib}-conventions`) |
 | `config/` | Checkstyle (Google style) and SpotBugs config |
 | `deployments/infrastructure/` | Terraform modules and environments |
 | `deployments/k8s/` | helmfile + `cluster-init` chart (ArgoCD, certificates, secrets) |

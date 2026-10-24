@@ -3,12 +3,9 @@ plugins {
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_25
-  targetCompatibility = JavaVersion.VERSION_25
-}
-
-repositories {
-  gradlePluginPortal()
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(25)
+  }
 }
 
 dependencies {

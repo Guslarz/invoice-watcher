@@ -2,12 +2,14 @@
 axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.21.4" }
 
 [libraries]
+commons-lang3 = { group = "org.apache.commons", name = "commons-lang3" }
 gradle-docker-plugin = { group = "com.bmuschko", name = "gradle-docker-plugin", version = "10.0.0" }
 h2 = { group = "com.h2database", name = "h2" }
-jackson-core = { group = "tools.jackson.core", name = "jackson-core" }
 jackson-databind = { group = "tools.jackson.core", name = "jackson-databind" }
 jakarta-annotations = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
 jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.2" }
+jspecify = { group = "org.jspecify", name = "jspecify" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
 lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version = "9.8.2" }
 picocli = { group = "info.picocli", name = "picocli", version = "4.7.7" }
 spotbugs-gradle-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-gradle-plugin", version = "6.5.8" }
@@ -15,10 +17,12 @@ spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-g
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 spring-boot = { group = "org.springframework.boot", name = "spring-boot" }
 spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure" }
+spring-boot-configuration-processor = { group = "org.springframework.boot", name = "spring-boot-configuration-processor" }
 spring-boot-starter = { group = "org.springframework.boot", name = "spring-boot-starter" }
 spring-boot-starter-data-jpa = { group = "org.springframework.boot", name = "spring-boot-starter-data-jpa" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
+spring-cloud-gcp-dependencies = { group = "com.google.cloud", name = "spring-cloud-gcp-dependencies", version = "8.0.4" }
 spring-cloud-gcp-starter-datastore = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-data-datastore" }
 spring-cloud-gcp-starter-firestore = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-data-firestore" }
 spring-cloud-gcp-starter-sql-postgresql = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-sql-postgresql" }
