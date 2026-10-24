@@ -10,8 +10,7 @@ One concept, several names:
   (`MailProcessorService`, `MailProcessorContext`); the specs say "scan" (MAIL-002) and "publish"
   (EVENT-011). `MailProducerTask` lives alone in `libs/mail-producer/scheduler/api`, while its
   implementation is in `libs/mail-producer/task`, which has no api/impl split.
-- The spec's "mailbox configuration" (USER-001/002) is `MailScanConfig` / `scanConfigs`; the "scan
-  timestamp" is `MailQuery.dateFrom`.
+- The spec's "mailbox configuration" (USER-001/002) is `MailScanConfig` / `scanConfigs`.
 - "Email" (`MailConnection.getEmailMessages`, `processEmailMessages`) next to "Mail" everywhere else.
 - Domain records (`User`, `MailScanConfig`, `MailServer`, `FolderConfig`) are in
   `...dao.api.entity.user`, although they are not entities and not all about users.

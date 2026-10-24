@@ -8,6 +8,8 @@ import java.time.ZonedDateTime;
 public record FolderConfig(
     String id,
     String name,
-    ZonedDateTime scanTimestamp
+    ZonedDateTime startDate,
+    Long uidValidity,
+    Long lastUid
 ) {
 }

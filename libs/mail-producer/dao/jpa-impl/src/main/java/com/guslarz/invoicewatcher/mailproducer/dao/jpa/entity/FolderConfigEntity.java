@@ -26,5 +26,11 @@ public class FolderConfigEntity {
   private String name;
 
   @Column
-  private ZonedDateTime scanTimestamp;
+  private ZonedDateTime startDate;
+
+  @Column
+  private Long uidValidity;
+
+  @Column
+  private Long lastUid;
 }

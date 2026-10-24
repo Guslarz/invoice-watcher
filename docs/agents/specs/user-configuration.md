@@ -27,9 +27,9 @@ restart.
 - **USER-002** A mailbox configuration has a server (IMAP host and port), credentials (username and
   encrypted password, see [secret encryption](../specs/secret-encryption.md)) and one or more **folders**.
 - **USER-003** A folder has a name as seen by the mail server (e.g. `INBOX`, `Invoices`,
-  `INBOX/Bills`) and a scan timestamp (see MAIL-020).
+  `INBOX/Bills`), an optional start date (see MAIL-023) and a scan position (see MAIL-020).
 - **USER-004** Configuration is read anew at the beginning of every scan; the only value
-  InvoiceWatcher itself writes during normal operation is the folder's scan timestamp.
+  InvoiceWatcher itself writes during normal operation is the folder's scan position.
 
 ### Storage
 
@@ -39,7 +39,8 @@ restart.
 - **USER-011** In `firestore` mode, users are stored in Firestore in Datastore mode, kind
   `mail-producer-users` (one entity per user, keyed by name, with the mailbox configurations
   embedded), and folders in kind `mail-producer-folders` (one entity per folder, referenced from
-  the mailbox configuration by id). The scan timestamp is stored as ISO-8601 text.
+  the mailbox configuration by id). The folder entity holds the start date (ISO-8601 text), the
+  UIDVALIDITY and the last UID.
 - **USER-012** In `firestore` mode, setting `...dao.firestore.host` connects to a Datastore
   emulator without credentials; otherwise the application uses Google default credentials and the
   database `...dao.firestore.database-id`.
@@ -56,9 +57,9 @@ restart.
   creates or replaces, at startup, one user from properties: name and username `...email`,
   server `...host` and `...port` (default 993), password `...password` (encrypted value) and the
   folders listed in `...folders`.
-- **USER-031** Every replace resets the mock user's folders: their scan timestamps are set to ten
-  days before the application start. Each restart therefore picks up the last ten days of mail
-  again.
+- **USER-031** Every replace resets the mock user's folders: their start date is set to ten days
+  before the start and their scan position is cleared. Each restart therefore picks up the last
+  ten days of mail again.
 
 ## Acceptance
 
@@ -67,8 +68,8 @@ restart.
 - **USER-030** Given the mock user properties for `jan@example.com` with folders `INBOX` and
   `Invoices`, when the application starts, then the database contains exactly one user
   `jan@example.com` with these two folders.
-- **USER-031** Given the mock user already exists with a scan timestamp from yesterday, when the
-  application restarts, then the scan timestamp is ten days before the restart.
+- **USER-031** Given the mock user exists with a scan position, when the application restarts,
+  then its folders have no position and a start date ten days before the restart.
 
 ## Configuration
 

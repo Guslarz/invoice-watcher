@@ -13,3 +13,4 @@ this list is usually enough; open a record to see why.
 | [0006](0006-keep-secrets-out-of-the-repository.md) | Keep secrets out of the repository | accepted |
 | [0007](0007-keep-specs-and-decisions-out-of-the-published-site.md) | Keep specs and decisions out of the published documentation site | accepted |
 | [0008](0008-build-the-documentation-site-with-zensical.md) | Build the documentation site with Zensical | accepted |
+| [0009](0009-track-scanned-messages-by-imap-uid-not-by-date.md) | Track scanned messages by IMAP UID, not by date | accepted |

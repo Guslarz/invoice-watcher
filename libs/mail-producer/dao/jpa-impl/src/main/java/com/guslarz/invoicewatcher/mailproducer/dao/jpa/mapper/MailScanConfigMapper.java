@@ -53,7 +53,9 @@ public class MailScanConfigMapper {
     return FolderConfig.builder()
         .id(folder.id() != null ? String.valueOf(folder.id()) : null)
         .name(folder.name())
-        .scanTimestamp(folder.scanTimestamp())
+        .startDate(folder.startDate())
+        .uidValidity(folder.uidValidity())
+        .lastUid(folder.lastUid())
         .build();
   }
 
@@ -61,7 +63,9 @@ public class MailScanConfigMapper {
     return FolderConfigEntity.builder()
         .id(folder.id() != null ? Long.parseLong(folder.id()) : null)
         .name(folder.name())
-        .scanTimestamp(folder.scanTimestamp())
+        .startDate(folder.startDate())
+        .uidValidity(folder.uidValidity())
+        .lastUid(folder.lastUid())
         .build();
   }
 }

@@ -38,12 +38,13 @@ or care who consumes the events.
   supported value is `kafka`; with it, events are sent to the brokers in
   `invoice-watcher.event-producer.kafka.bootstrap-servers`, keys as strings, values as JSON.
 - **EVENT-011** A message is considered handed over once the event backend confirms it has stored
-  the event; the folder's scan timestamp moves forward only after all messages of the folder are
-  handed over.
-- **EVENT-012** If the event backend does not confirm an event, handing over fails and the folder
-  is treated as failed ([MAIL-041](../specs/mail-scanning.md)). Events of the same folder
-  confirmed before the failure are published again in the next scan: delivery is at-least-once,
-  consumers must tolerate duplicates.
+  the event. The folder's scan position is saved once, after all messages of the folder are handed
+  over.
+- **EVENT-012** If the event backend does not confirm an event, handing over fails, the folder's
+  position is saved at the last confirmed event and the folder is treated as failed
+  ([MAIL-041](../specs/mail-scanning.md)). An event can still be published twice, e.g. when the
+  application stops before the position is saved: delivery is at-least-once, consumers must
+  tolerate duplicates.
 
 ## Acceptance
 
@@ -55,10 +56,10 @@ or care who consumes the events.
   is published, then the event value has `sender` containing `billing@shop.example` and `title`
   `Invoice 10/2026`.
 - **EVENT-011** Given the backend confirms every event, when a folder with two new messages is
-  scanned, then the folder's scan timestamp moves forward.
+  scanned, then the position is saved once, at the second message.
 - **EVENT-012** Given the backend rejects the second of three events, when the folder is scanned,
-  then an error is logged, the folder's scan timestamp is unchanged and the remaining folders of
-  the mailbox are skipped.
+  then an error is logged, the position is saved at the first message, the remaining folders of
+  the mailbox are skipped, and the next scan publishes the second and third messages.
 
 ## Configuration
 

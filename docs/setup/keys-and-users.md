@@ -84,7 +84,8 @@ when [`invoice-watcher.mail-producer.mock.user.enabled`](../reference/configurat
 is `true`, the application creates the user at startup, or replaces it if it exists, from the
 `...mock.user.*` properties: the e-mail address (also used as the mailbox username), host, port
 (default 993), encrypted password and a comma-separated list of folders. Every start resets the
-user's folders so that their scan timestamps are ten days before the start.
+user's folders: their start date is set to ten days before the start and their scan position is
+cleared.
 
 For the dev environment that means adding to
 `deployments/k8s-apps/apps/mail-producer/overlays/dev/config/.env` (and merging it to `master`):

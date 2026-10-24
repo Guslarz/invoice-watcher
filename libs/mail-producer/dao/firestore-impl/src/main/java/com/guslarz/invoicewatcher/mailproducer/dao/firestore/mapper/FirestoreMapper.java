@@ -49,7 +49,9 @@ public class FirestoreMapper {
     return FolderConfigDocument.builder()
         .id(folder.id())
         .name(folder.name())
-        .scanTimestamp(folder.scanTimestamp() != null ? folder.scanTimestamp().toString() : null)
+        .startDate(folder.startDate() != null ? folder.startDate().toString() : null)
+        .uidValidity(folder.uidValidity())
+        .lastUid(folder.lastUid())
         .build();
   }
 
@@ -57,7 +59,9 @@ public class FirestoreMapper {
     return FolderConfig.builder()
         .id(doc.getId())
         .name(doc.getName())
-        .scanTimestamp(doc.getScanTimestamp() != null ? ZonedDateTime.parse(doc.getScanTimestamp()) : null)
+        .startDate(doc.getStartDate() != null ? ZonedDateTime.parse(doc.getStartDate()) : null)
+        .uidValidity(doc.getUidValidity())
+        .lastUid(doc.getLastUid())
         .build();
   }
 

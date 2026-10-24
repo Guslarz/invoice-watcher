@@ -22,11 +22,11 @@ sequenceDiagram
   loop every mailbox of every user
     T->>M: connect (IMAPS, decrypted password)
     loop every folder
-      T->>M: messages sent since the folder's scan timestamp
+      T->>M: messages received after the folder's scan position
       M-->>T: sender, subject, date
       T->>K: one event per message (key = user's e-mail)
       K-->>T: event stored
-      T->>D: move the folder's scan timestamp forward
+      T->>D: move the folder's scan position to the last stored event
     end
   end
 ```
@@ -50,23 +50,27 @@ Folders are opened read-only: InvoiceWatcher never marks, moves or deletes your 
 
 ### Which messages are picked up
 
-Every folder remembers when it was last scanned. A scan picks up the messages sent since that
-moment and, once they are published, moves the folder's timestamp forward, so the next scan only
-looks at mail that arrived in between. A folder without new messages is left alone.
+The mail server numbers the messages of a folder in the order it receives them (IMAP UIDs).
+Every folder remembers the number of the last message InvoiceWatcher published — its *scan
+position*. A scan picks up the messages with a higher number, in the order the server received
+them, and once they are published moves the position to the last of them, so the next scan only
+looks at mail that arrived in between. The date a sender wrote into a message plays no role: a
+message that arrives late with an old date is still picked up. A folder without new messages is
+left alone.
+
+A folder that has never been scanned has no position yet. Its first scan picks up the messages the
+server received since the folder's start date, or every message in the folder when it has no start
+date. If the server renumbers a folder (for example after it was rebuilt), the old position no
+longer means anything; InvoiceWatcher notices this and scans the folder as if for the first time.
 
 For every message InvoiceWatcher reads the sender, the subject and the date it was sent.
 
 If a mailbox cannot be reached, or a folder cannot be read, the error is logged and the scan moves
-on to the next mailbox. The folder's timestamp stays where it was, so nothing is lost — its
-messages are picked up again in the next scan.
+on to the next mailbox. A folder that fails halfway keeps the position of the last message that
+was published, so the next scan continues with the first one that was not.
 
 !!! warning "Current limitations"
     - The message content is not read yet; events carry only sender, subject and date.
-    - After a scan the folder's timestamp moves only to the oldest picked-up message, so later
-      scans publish the same messages again. Consumers have to tolerate duplicates anyway (see
-      [What it produces](#what-it-produces)).
-    - A folder without a scan timestamp cannot be scanned yet, and it stops the folders after it in
-      the same mailbox from being scanned. Give every new folder a starting timestamp.
 
 ## What InvoiceWatcher needs to know
 
@@ -76,8 +80,8 @@ so a change takes effect at the next scan without a restart.
 A **user** is identified by their e-mail address and has one or more **mailboxes**. A mailbox
 is an IMAP server (host and port) with a username and an encrypted password, and it lists one or
 more **folders** to watch — by the name the mail server uses, such as `INBOX`, `Invoices` or
-`INBOX/Bills`. Each folder keeps the time it was last scanned; that timestamp is the only thing
-InvoiceWatcher itself writes.
+`INBOX/Bills`. A folder can have a start date that limits its first scan, and it keeps its scan
+position; the position is the only thing InvoiceWatcher itself writes.
 
 ```mermaid
 erDiagram
@@ -94,7 +98,9 @@ erDiagram
   }
   FOLDER {
     string name "e.g. INBOX, Invoices"
-    datetime scanTimestamp
+    datetime startDate "optional, limits the first scan"
+    long uidValidity "scan position: the server's folder numbering"
+    long lastUid "scan position: last published message"
   }
 ```
 
@@ -106,7 +112,7 @@ How to add a user is described in [keys and users](../setup/keys-and-users.md).
 ## What it produces
 
 Every picked-up message becomes exactly one event on a single Kafka topic (`all-mails` in the dev
-environment), in the order the messages are stored in the folder, oldest first. The event key is
+environment), in the order the server received the messages, oldest first. The event key is
 the user's e-mail address, so all events of one user land in the same partition, in order. The
 value is a JSON object:
 
@@ -117,9 +123,11 @@ value is a JSON object:
 | `date` | date-time | When the message was sent, in UTC |
 | `content` | string | Message content — always `null` for now |
 
-A folder's timestamp moves forward only after Kafka has confirmed every event of that folder. If
-an event is not confirmed, the folder counts as failed and its messages are published again in the
-next scan — including those already confirmed. Delivery is therefore *at least once*: consumers
-must be ready to receive the same message twice.
+A message counts as published once Kafka has confirmed its event. The folder's scan position is
+saved once, after every event of the folder is confirmed. If an event is not confirmed, the folder
+counts as failed: its position is saved at the last confirmed event and the next scan continues
+from there. An event can still be published twice — for example when the application stops after
+Kafka confirmed an event but before the position was saved. Delivery is therefore *at least once*:
+consumers must be ready to receive the same message twice.
 
 An example of a published event is shown in [In action](../results/index.md).

@@ -1,10 +1,12 @@
 package com.guslarz.invoicewatcher.mailproducer.task;
 
+import com.guslarz.invoicewatcher.mailconnector.api.FolderMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnection;
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionFactory;
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionProperties;
-import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
+import com.guslarz.invoicewatcher.mailconnector.api.MailFolderMessages;
 import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
+import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.FolderConfig;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.MailScanConfig;
 import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.User;
@@ -14,8 +16,6 @@ import com.guslarz.invoicewatcher.mailproducer.scheduler.api.MailProducerTask;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Slf4j
 @Component
@@ -65,14 +65,25 @@ public class MailProducerTaskImpl implements MailProducerTask {
     }
   }
 
-  private void processEmailMessages(MailProcessorContext context, List<MailMessage> mailMessages) {
-    if (mailMessages.isEmpty()) {
-      return;
+  /**
+   * Hands over the messages in UID order and saves the folder's position once: at the last message
+   * after all of them, or at the last confirmed one when handing over fails.
+   */
+  private void processEmailMessages(MailProcessorContext context, MailFolderMessages folderMessages) {
+    Long lastConfirmedUid = null;
+    try {
+      for (FolderMessage message : folderMessages.messages()) {
+        mailProcessorService.processMail(context, message.message());
+        lastConfirmedUid = message.uid();
+      }
+    } finally {
+      if (lastConfirmedUid != null) {
+        folderConfigDaoService.updateScanPosition(context.folderConfig(), ScanPosition.builder()
+            .uidValidity(folderMessages.uidValidity())
+            .lastUid(lastConfirmedUid)
+            .build());
+      }
     }
-    for (MailMessage message : mailMessages) {
-      mailProcessorService.processMail(context, message);
-    }
-    folderConfigDaoService.updateScanTimestamp(context.folderConfig(), mailMessages.getFirst().date());
   }
 
   private MailConnectionProperties connectionProperties(MailScanConfig scanConfig) {
@@ -86,7 +97,18 @@ public class MailProducerTaskImpl implements MailProducerTask {
   private MailQuery query(FolderConfig folderConfig) {
     return MailQuery.builder()
             .folder(folderConfig.name())
-            .dateFrom(folderConfig.scanTimestamp())
+            .startDate(folderConfig.startDate())
+            .position(position(folderConfig))
+            .build();
+  }
+
+  private ScanPosition position(FolderConfig folderConfig) {
+    if (folderConfig.uidValidity() == null || folderConfig.lastUid() == null) {
+      return null;
+    }
+    return ScanPosition.builder()
+            .uidValidity(folderConfig.uidValidity())
+            .lastUid(folderConfig.lastUid())
             .build();
   }
 }
