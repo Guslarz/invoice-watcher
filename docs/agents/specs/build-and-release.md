@@ -22,7 +22,9 @@ the dev environment can run, and a release produces a versioned image and a GitH
   that the generated `docs/reference/` is up to date. Every pull request that changes a file under
   `deployments/` checks the deployment files: OpenTofu files are formatted and valid
   (`tofu fmt -check`, `tofu validate`), the helmfile and the kustomize environments render and the
-  rendered manifests match their Kubernetes schemas. A failure blocks the change.
+  rendered manifests match their Kubernetes schemas. Every pull request checks that every
+  `INVOICE_WATCHER_*` variable in a kustomize `.env` file binds to a property in the generated
+  configuration reference. A failure blocks the change.
 - **RELEASE-002** Every push to `master` that changes a file outside `docs/` builds and publishes
   the image `ghcr.io/guslarz/invoice-watcher/mail-producer-docker:snapshot`, replacing the
   previous snapshot.
@@ -42,6 +44,8 @@ the dev environment can run, and a release produces a versioned image and a GitH
   the `build` job of `Build and analyze` is skipped and the `reference` job runs.
 - **RELEASE-001** Given a pull request changing any file outside `docs/`, when it is opened, then
   both `build` and `reference` run.
+- **RELEASE-001** Given a kustomize `.env` with `INVOICE_WATCHER_FOO_BAR` (no such property), when
+  a pull request is opened, then the `reference` job of `Build and analyze` fails.
 - **RELEASE-001** Given a pull request with a misindented or invalid `.tf` file under
   `deployments/infrastructure/`, when it is opened, then the `deployments` job of
   `Build and analyze` fails.

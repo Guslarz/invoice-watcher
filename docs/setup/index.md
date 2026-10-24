@@ -37,7 +37,7 @@ Cloudflare origin certificate, so the *Flexible* mode does not work.
 | [kubeconform](https://github.com/yannh/kubeconform) | 0.8.x | Optional: validating the rendered manifests |
 
 `scripts/check-deployments.sh` (part of `scripts/verify.sh`) skips the checks whose tool is
-missing; CI runs all of them.
+missing; CI installs every tool, and there a missing one fails the check.
 
 ## Values to adapt in the repository
 

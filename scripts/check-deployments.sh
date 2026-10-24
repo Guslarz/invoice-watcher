@@ -2,10 +2,18 @@
 # Deployment file checks, run by CI (Build and analyze / deployments) and scripts/verify.sh:
 # OpenTofu formatting and validation, rendering of the helmfile and the kustomize environments,
 # Kubernetes schema validation of the rendered manifests, the local Kafka image matching the cluster one.
-# A missing tool skips its check.
+# A missing tool skips its check locally and fails it in CI (when CI is set).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+missing_tool() {
+  if [[ -n "${CI:-}" ]]; then
+    echo "FAIL: $1 not installed" >&2
+    exit 1
+  fi
+  echo "SKIP: $1 not installed${2:+ - $2}" >&2
+}
 
 # Custom resources are validated against the community CRD catalog; kinds without a schema anywhere
 # are skipped (kubeconform -ignore-missing-schemas).
@@ -17,7 +25,7 @@ validate_manifests() {
       -schema-location default -schema-location "$crd_catalog" -
   else
     cat >/dev/null
-    echo "SKIP: kubeconform not installed - manifests rendered but not validated" >&2
+    missing_tool kubeconform "manifests rendered but not validated"
   fi
 }
 
@@ -43,7 +51,7 @@ if command -v tofu >/dev/null 2>&1; then
     tofu -chdir="$root" validate
   done
 else
-  echo "SKIP: tofu not installed" >&2
+  missing_tool tofu
 fi
 
 echo "==> Kustomize environments"
@@ -53,7 +61,7 @@ if command -v kubectl >/dev/null 2>&1; then
     kubectl kustomize "$env" | validate_manifests
   done
 else
-  echo "SKIP: kubectl not installed" >&2
+  missing_tool kubectl
 fi
 
 echo "==> Helmfile environments"
@@ -67,5 +75,5 @@ if command -v helmfile >/dev/null 2>&1; then
       | validate_manifests
   done
 else
-  echo "SKIP: helmfile not installed" >&2
+  missing_tool helmfile
 fi

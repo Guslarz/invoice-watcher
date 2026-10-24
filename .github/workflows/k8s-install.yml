@@ -15,16 +15,16 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
+        uses: ./.github/actions/gcp-auth
         with:
-          workload_identity_provider: 'projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
-          service_account: 'github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+          project-id: ${{ vars.GCP_PROJECT_ID }}
+          project-number: ${{ vars.GCP_PROJECT_NUMBER }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v3
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
       - name: Wait for GKE cluster
         timeout-minutes: 5
@@ -39,18 +39,20 @@ jobs:
           LOCATION: ${{ vars.GCP_ZONE }}
 
       - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@v3
+        uses: google-github-actions/get-gke-credentials@3da1e46a907576cefaa90c484278bb5b259dd395 # v3.0.0
         with:
           cluster_name: ${{ vars.GCP_GKE_CLUSTER_NAME }}
           location: ${{ vars.GCP_ZONE }}
 
-      - uses: helmfile/helmfile-action@v2.4.7
+      - name: Setup helmfile
+        uses: ./.github/actions/setup-deploy-tools
         with:
-          helmfile-version: v1.7.3
-          helm-version: v4.2.3
-          helm-plugins: >
-            https://github.com/databus23/helm-diff@v3.15.11
-          helmfile-args: --environment ${{ inputs.environment }} sync
-          helmfile-workdirectory: ./deployments/k8s
+          tofu: 'false'
+
+      # sync, not apply: helm-diff is installed, but apply would only use it to decide what to sync
+      - name: Install cluster services
+        working-directory: ./deployments/k8s
+        run: helmfile --environment "$ENVIRONMENT" sync
         env:
+          ENVIRONMENT: ${{ inputs.environment }}
           GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}

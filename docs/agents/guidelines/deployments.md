@@ -23,4 +23,4 @@ Rules:
 - Run `tofu fmt -recursive deployments/infrastructure` before committing.
 - `scripts/check-deployments.sh` runs the same checks as the `deployments` CI job (OpenTofu
   formatting and validation, helmfile and kustomize rendering, kubeconform schema validation);
-  a missing local tool skips its check.
+  a missing tool skips its check locally and fails it in CI (`CI` set).
