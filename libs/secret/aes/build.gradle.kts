@@ -9,4 +9,6 @@ dependencies {
   implementation(projects.libs.utilAes)
 
   implementation(libs.spring.boot.autoconfigure)
+
+  implementation(libs.jspecify)
 }

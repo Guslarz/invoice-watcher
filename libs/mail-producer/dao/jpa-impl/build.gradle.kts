@@ -10,5 +10,7 @@ dependencies {
   implementation(libs.spring.boot.starter.data.jpa)
   implementation(libs.spring.cloud.gcp.starter.sql.postgresql)
 
+  implementation(libs.jakarta.annotations)
+
   runtimeOnly(libs.h2)
 }

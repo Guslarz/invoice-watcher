@@ -15,6 +15,8 @@
     `@ConfigurationProperties` depends on `implementation(libs.spring.boot)` — nothing more.
   - `impl` / `<tech>-impl` — implementation plus an `@AutoConfiguration` class.
 - Consumers depend on `api` (`api(projects.libs.xApi)`); only applications depend on `impl`.
+  An `api` module is always declared with `api(...)`, never `implementation`/`compileOnly`; leave
+  it out when another declared `api` module already brings it.
 - Applications (`apps/*`) contain almost no code — they compose `impl` modules in
   `build.gradle.kts`.
 

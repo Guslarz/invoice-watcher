@@ -12,6 +12,11 @@ java {
   }
 }
 
+// @SuppressFBWarnings; the Lombok plugin adds it too, but only as a side effect.
+dependencies {
+  compileOnly(spotbugs.toolVersion.map { "com.github.spotbugs:spotbugs-annotations:$it" })
+}
+
 tasks.withType<Test>().configureEach {
   useJUnitPlatform()
 }

@@ -6,7 +6,6 @@ description = "IMAP mailbox connection based on Jakarta Mail, with date-based me
 
 dependencies {
   api(projects.libs.mailConnectorApi)
-  api(projects.libs.secretApi)
 
   implementation(libs.spring.boot.autoconfigure)
   implementation(libs.jakarta.mail)

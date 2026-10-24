@@ -65,7 +65,6 @@ flowchart LR
   libs_event_producer_kafka_impl --> libs_event_producer_api
   libs_mail_connector_api --> libs_secret_api
   libs_mail_connector_impl --> libs_mail_connector_api
-  libs_mail_connector_impl --> libs_secret_api
   libs_mail_producer_dao_api --> libs_mail_connector_api
   libs_mail_producer_dao_firestore_impl --> libs_mail_producer_dao_api
   libs_mail_producer_dao_jpa_impl --> libs_mail_producer_dao_api

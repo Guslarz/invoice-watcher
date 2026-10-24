@@ -3,11 +3,11 @@ package com.guslarz.invoicewatcher.secret.aes.converter;
 import com.guslarz.invoicewatcher.secret.api.Secret;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nullable;
 import java.util.Optional;
 
 @Component

@@ -9,6 +9,7 @@ dependencies {
 
   implementation(libs.spring.boot.starter)
   implementation(libs.spring.kafka)
-  implementation(libs.jackson.core)
-  implementation(libs.jackson.databind)
+
+  // JacksonJsonSerializer needs it; spring-kafka declares it only as optional
+  runtimeOnly(libs.jackson.databind)
 }
