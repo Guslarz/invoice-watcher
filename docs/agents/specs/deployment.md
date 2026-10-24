@@ -76,6 +76,12 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-034** The mail producer gets the AES key (`invoice-watcher.secret.aes.key`) from the
   Secret Manager secret `aes_key`, synced into its namespace by external-secrets and passed as an
   environment variable. The key is not stored in the repository.
+- **DEPLOY-035** Every application container declares CPU and memory requests and a memory limit;
+  no CPU limit is set.
+- **DEPLOY-036** The mail producer reports liveness and readiness through the Spring Boot actuator
+  health probes; Kubernetes restarts it when liveness fails.
+- **DEPLOY-037** Kafka is ready when its client port accepts connections and is restarted when it
+  stops accepting them.
 
 ## Acceptance
 
@@ -94,6 +100,13 @@ while it is not needed. After it is up, application changes are deployed automat
   `deployments/` contains the key.
 - **DEPLOY-034** Given the `AES_KEY` secret is not set, when `Environment` runs with `up` / `dev`,
   then the workflow fails before creating any resources.
+- **DEPLOY-035** Given the dev environment is up, when `kubectl get pods -o yaml` runs in
+  `invoice-watcher-dev`, then every container has `resources.requests.cpu`,
+  `resources.requests.memory` and `resources.limits.memory`, and no `resources.limits.cpu`.
+- **DEPLOY-036** Given the mail producer is running, when `/actuator/health/liveness` stops
+  answering, then the pod is restarted; while it starts, the pod is not Ready.
+- **DEPLOY-037** Given Kafka is starting, when port 9092 does not accept connections yet, then the
+  pod is not Ready.
 
 ## Configuration
 
