@@ -8,6 +8,7 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Random;
@@ -16,6 +17,10 @@ import java.util.Random;
 public class AesUtil {
 
   public static final Random RandomGenerator = new SecureRandom();
+
+  static final int IV_LENGTH = 12;
+  static final int IV_BASE64_LENGTH = 16;
+  private static final int TAG_LENGTH_BITS = 128;
 
   public static String encodeSecretKey(SecretKey secretKey) {
     return encode(secretKey.getEncoded());
@@ -34,17 +39,21 @@ public class AesUtil {
   public static String encrypt(String input, SecretKey secretKey) {
     GCMParameterSpec iv = generateIv();
     Cipher cipher = getAesCipher(Cipher.ENCRYPT_MODE, secretKey, iv);
-    byte[] result = cipher.doFinal(input.getBytes());
+    byte[] result = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
     return encode(iv.getIV()) + encode(result);
   }
 
   @SneakyThrows
   public static String decrypt(String input, SecretKey secretKey) {
-    GCMParameterSpec iv = toIv(decode(input.substring(0, 16))); // 16 characters for 12 bytes
-    String payload = input.substring(16);
+    if (input.length() <= IV_BASE64_LENGTH) {
+      throw new IllegalArgumentException("Encrypted value is too short: expected a "
+          + IV_BASE64_LENGTH + "-character IV followed by the ciphertext");
+    }
+    GCMParameterSpec iv = toIv(decode(input.substring(0, IV_BASE64_LENGTH)));
+    String payload = input.substring(IV_BASE64_LENGTH);
     Cipher cipher = getAesCipher(Cipher.DECRYPT_MODE, secretKey, iv);
-    byte[] result = cipher.doFinal(decode(payload.getBytes()));
-    return new String(result);
+    byte[] result = cipher.doFinal(decode(payload));
+    return new String(result, StandardCharsets.UTF_8);
   }
 
   @SneakyThrows
@@ -55,24 +64,20 @@ public class AesUtil {
   }
 
   private static GCMParameterSpec generateIv() {
-    byte[] iv = new byte[12];
+    byte[] iv = new byte[IV_LENGTH];
     RandomGenerator.nextBytes(iv);
     return toIv(iv);
   }
 
   private static GCMParameterSpec toIv(byte[] input) {
-    return new GCMParameterSpec(128, input);
+    return new GCMParameterSpec(TAG_LENGTH_BITS, input);
   }
 
   private static String encode(byte[] input) {
     return Base64.getEncoder().encodeToString(input);
   }
 
-  private static byte[] decode(byte[] input) {
-    return Base64.getDecoder().decode(input);
-  }
-
   private static byte[] decode(String input) {
-    return decode(input.getBytes());
+    return Base64.getDecoder().decode(input);
   }
 }
