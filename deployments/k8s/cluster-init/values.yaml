@@ -1,0 +1,13 @@
+# Every value is required; rendering fails with a message naming the missing one.
+
+# GCP project number, used in Secret Manager resource names of the secret syncs.
+gcpProjectNumber: ""
+# Base domain; the origin certificate covers its wildcard (*.<domain>).
+domain: ""
+# Environment name; selects the k8s-apps overlay and the application namespace.
+environment: ""
+github:
+  # User name for the ArgoCD repository credentials.
+  username: ""
+  # URL of the GitHub user or organization that owns the invoice-watcher repository.
+  orgUrl: ""
