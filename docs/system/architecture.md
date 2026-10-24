@@ -91,6 +91,10 @@ flowchart LR
   `ghcr.io/guslarz/invoice-watcher/mail-producer-docker:snapshot`, replacing the previous one.
 - **The `Release` workflow**, run by hand with `major`, `minor` or `patch`, tags the commit
   `v<version>`, publishes the image tagged `<version>` and creates the GitHub release.
+- **Dependabot** opens pull requests every week for newer GitHub Actions and Gradle
+  dependencies, grouped so that Spring Boot, Spring Cloud GCP and all other bumps each arrive in
+  one pull request, and opens a pull request with security fixes when a vulnerable dependency is
+  reported. They pass the same checks as any other pull request.
 
 Versions come from git tags and are never written in build files; the dev environment always runs
 the `snapshot` image. Application manifests are deployed by ArgoCD from `master` — merging a
