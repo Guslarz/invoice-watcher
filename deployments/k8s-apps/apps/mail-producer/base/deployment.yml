@@ -15,8 +15,34 @@ spec:
       containers:
         - name: mail-producer
           image: invoice-watcher/mail-producer
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: -XX:MaxRAMPercentage=60
           envFrom:
             - configMapRef:
                 name: mail-producer-env-config-map
             - secretRef:
                 name: mail-producer-secret
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              memory: 512Mi

@@ -14,7 +14,7 @@ spec:
         version: 4.3.1
     spec:
       containers:
-        - name: mail-producer
+        - name: kafka
           image: apache/kafka:4.3.1
           envFrom:
             - configMapRef:
@@ -22,3 +22,20 @@ spec:
           ports:
             - containerPort: 9092
             - containerPort: 9093
+          startupProbe:
+            tcpSocket:
+              port: 9092
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket:
+              port: 9092
+          readinessProbe:
+            tcpSocket:
+              port: 9092
+          resources:
+            requests:
+              cpu: 200m
+              memory: 768Mi
+            limits:
+              memory: 1Gi

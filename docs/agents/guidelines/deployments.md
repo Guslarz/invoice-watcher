@@ -18,6 +18,7 @@ Three layers, applied in this order by the `Environment` workflow (`.github/work
 Rules:
 - Pin every chart, provider and action version.
 - Secrets never go into the repository — Secret Manager + external-secrets (ADR-0006).
+- Every container declares probes, CPU/memory requests and a memory limit; no CPU limits.
 - Changes under `deployments/` are a planning trigger (`AGENTS.md`) and impact `OPERATIONS`.
 - Run `tofu fmt -recursive deployments/infrastructure` before committing.
 - `scripts/check-deployments.sh` runs the same checks as the `deployments` CI job (OpenTofu
