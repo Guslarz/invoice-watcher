@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="local" type="CompoundRunConfigurationType">
-    <toRun name="files/kafka.yml: Compose Deployment" type="docker-deploy" />
+    <toRun name="kafka" type="docker-deploy" />
     <toRun name="MailProducerApp" type="SpringBootApplicationConfigurationType" />
     <method v="2" />
   </configuration>

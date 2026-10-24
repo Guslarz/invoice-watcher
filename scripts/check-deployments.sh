@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Deployment file checks, run by CI (Build and analyze / deployments) and scripts/verify.sh:
 # OpenTofu formatting and validation, rendering of the helmfile and the kustomize environments,
-# Kubernetes schema validation of the rendered manifests. A missing tool skips its check.
+# Kubernetes schema validation of the rendered manifests, the local Kafka image matching the cluster one.
+# A missing tool skips its check.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -19,6 +20,19 @@ validate_manifests() {
     echo "SKIP: kubeconform not installed - manifests rendered but not validated" >&2
   fi
 }
+
+echo "==> Local Kafka image"
+# .run/files/kafka.yml takes its environment from the dev overlay, but compose cannot read the image
+# from kustomize - the tag is repeated and must match.
+cluster_kafka=deployments/k8s-apps/apps/kafka/base/deployment.yml
+local_kafka=.run/files/kafka.yml
+kafka_image() { grep -oE 'image: apache/kafka:[^[:space:]]+' "$1" | cut -d' ' -f2 || true; }
+cluster_image=$(kafka_image "$cluster_kafka")
+local_image=$(kafka_image "$local_kafka")
+if [[ -z "$cluster_image" || "$local_image" != "$cluster_image" ]]; then
+  echo "FAIL: $local_kafka: image '$local_image' differs from '$cluster_image' in $cluster_kafka" >&2
+  exit 1
+fi
 
 echo "==> OpenTofu"
 if command -v tofu >/dev/null 2>&1; then
