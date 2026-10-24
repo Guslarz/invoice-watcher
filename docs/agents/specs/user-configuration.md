@@ -47,9 +47,13 @@ restart.
 - **USER-013** In `jpa` mode the database is either a JDBC data source configured with
   `...dao.jpa.data-source.basic.*` (URL, username, password, driver), or, when
   `...dao.jpa.data-source.gcp.*` (instance connection name, database name) is set, a Cloud SQL for
-  PostgreSQL instance. Schema handling and dialect are set with `...dao.jpa.ddl-auto` and
-  `...dao.jpa.dialect`. No environment provisions Cloud SQL today; dev uses Firestore.
-  *(gap: docs/agents/inbox/jpa-cloud-sql-data-source.md)*
+  PostgreSQL instance reached through the Cloud SQL socket factory with IAM database
+  authentication: the database user is the service account of the Google default credentials
+  (its email without `.gserviceaccount.com`), with no password. Exactly one of them must be set;
+  otherwise the application fails to start and names both properties. With `gcp.*` and default
+  credentials that are not a service account, the application fails to start. Schema handling and dialect
+  are set with `...dao.jpa.ddl-auto` and `...dao.jpa.dialect`. No environment provisions Cloud SQL
+  today; dev uses Firestore.
 
 ### Mock user
 

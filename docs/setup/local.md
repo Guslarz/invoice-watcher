@@ -61,6 +61,13 @@ scripts/verify.sh         # the above + documentation checks and regenerated ref
               - INBOX
     ```
 
+   To use a Cloud SQL for PostgreSQL instance instead of H2, replace `data-source.basic` with
+   `data-source.gcp` (instance connection name and database name). The application then signs in
+   with IAM database authentication as the service account of its Google default credentials (on
+   GKE, the workload's service account), without a username or password. Adding that service
+   account as an IAM database user and granting it `roles/cloudsql.client` and
+   `roles/cloudsql.instanceUser` is up to you.
+
 4. Run the `local` configuration in IntelliJ (it starts Kafka and `MailProducerApp` with the
    `local` profile), or from the command line:
 
