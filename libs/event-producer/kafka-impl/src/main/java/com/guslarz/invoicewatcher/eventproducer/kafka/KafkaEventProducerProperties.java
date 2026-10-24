@@ -1,5 +1,6 @@
 package com.guslarz.invoicewatcher.eventproducer.kafka;
 
+import com.guslarz.invoicewatcher.eventproducer.api.EventProducerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -7,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @param bootstrapServers Kafka brokers, e.g. `kafka:9092`.
  */
-@ConfigurationProperties(prefix = "invoice-watcher.event-producer.kafka")
+@ConfigurationProperties(prefix = EventProducerProperties.Constants.Prefix + ".kafka")
 public record KafkaEventProducerProperties(
     String bootstrapServers
 ) {

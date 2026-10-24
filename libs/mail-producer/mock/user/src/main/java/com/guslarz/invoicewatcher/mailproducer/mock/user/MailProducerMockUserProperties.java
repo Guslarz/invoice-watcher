@@ -17,7 +17,7 @@ import java.util.List;
  * @param password Mailbox password, encrypted with `secret-helper encrypt`.
  * @param folders Folders to scan, e.g. `INBOX`, `Invoices`.
  */
-@ConfigurationProperties("invoice-watcher.mail-producer.mock.user")
+@ConfigurationProperties(prefix = MailProducerMockUserProperties.Constants.Prefix)
 public record MailProducerMockUserProperties(
     Boolean enabled,
     String host,
@@ -26,6 +26,11 @@ public record MailProducerMockUserProperties(
     Secret password,
     List<String> folders
 ) {
+
+  @UtilityClass
+  class Constants {
+    static final String Prefix = "invoice-watcher.mail-producer.mock.user";
+  }
 
   @UtilityClass
   class Defaults {

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
 @Import(MailProducerMockUserInitializer.class)
 @EnableConfigurationProperties(MailProducerMockUserProperties.class)
 @ConditionalOnBooleanProperty(
-    prefix = "invoice-watcher.mail-producer.mock.user",
+    prefix = MailProducerMockUserProperties.Constants.Prefix,
     name = "enabled"
 )
 public class MailProducerMockUserAutoConfiguration {
