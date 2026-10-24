@@ -27,3 +27,4 @@ the system must do, and users need documentation. Writing both separately makes 
 - Behavior changes cost one extra step (spec + plan) but every published statement has one owner.
 - Specs must be written for humans too: plain language, no implementation details.
 - The site build (`mkdocs build --strict`) and `scripts/check-docs.sh` guard links and structure.
+  The site is built with Zensical since [ADR-0008](0008-build-the-documentation-site-with-zensical.md).

@@ -12,3 +12,4 @@ this list is usually enough; open a record to see why.
 | [0005](0005-derive-versions-from-git-tags.md) | Derive versions from git tags | accepted |
 | [0006](0006-keep-secrets-out-of-the-repository.md) | Keep secrets out of the repository | accepted |
 | [0007](0007-keep-specs-and-decisions-out-of-the-published-site.md) | Keep specs and decisions out of the published documentation site | accepted |
+| [0008](0008-build-the-documentation-site-with-zensical.md) | Build the documentation site with Zensical | accepted |

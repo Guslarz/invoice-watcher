@@ -22,7 +22,7 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `deployments/k8s/` | helmfile + `cluster-init` chart (ArgoCD, certificates, secrets) |
 | `deployments/k8s-apps/` | kustomize bases/overlays deployed by ArgoCD |
 | `.github/workflows/` | CI: build, snapshot, release, environment, docs |
-| `docs/` | Published user documentation (MkDocs) — see below |
+| `docs/` | Published user documentation (built with Zensical) — see below |
 | `docs/agents/` | Specs, ADRs and agent material, not published |
 
 ## Documentation model
@@ -98,7 +98,8 @@ an ADR only when relevant), and the guideline for the area you touch (`docs/agen
 ## Verification
 
 - `scripts/verify.sh` is the single entry point: documentation checks, regeneration of
-  `docs/reference/`, `mkdocs build --strict` and `./gradlew build analyze`.
+  `docs/reference/`, `zensical build --strict` (installed into the git-ignored `.venv-docs/`) and
+  `./gradlew build analyze`.
 - Run it before opening a pull request and report the result faithfully. Regenerated
   `docs/reference/` pages belong to the same change and pull request; CI fails when they are
   out of date.
