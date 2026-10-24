@@ -19,5 +19,3 @@ Found by grep, no callers or readers:
   converter.
 - `MailProducerMockUserProperties.enabled` — only `@ConditionalOnBooleanProperty` uses the key.
 - `@RequiredArgsConstructor` on `SecretHelperRunner`, which has no fields.
-
-The unused Cloud SQL provider is covered by `jpa-cloud-sql-data-source.md`.
