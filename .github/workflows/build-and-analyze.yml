@@ -13,7 +13,7 @@ jobs:
       deployments: ${{ steps.diff.outputs.deployments }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
 
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Java and Gradle
         uses: ./.github/actions/setup-gradle
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup OpenTofu and helmfile
         uses: ./.github/actions/setup-deploy-tools
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Java and Gradle
         uses: ./.github/actions/setup-gradle
