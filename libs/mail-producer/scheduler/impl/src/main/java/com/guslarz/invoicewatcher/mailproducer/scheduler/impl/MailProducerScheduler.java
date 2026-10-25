@@ -1,8 +1,9 @@
 package com.guslarz.invoicewatcher.mailproducer.scheduler.impl;
 
 import com.guslarz.invoicewatcher.mailproducer.scheduler.api.MailProducerTask;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +15,7 @@ public class MailProducerScheduler {
   private final TaskScheduler taskScheduler;
   private final MailProducerTask task;
 
-  @PostConstruct
+  @EventListener(ApplicationReadyEvent.class)
   public void schedule() {
     taskScheduler.scheduleAtFixedRate(task::execute, properties.rate());
   }
