@@ -30,9 +30,9 @@ public class MailScanConfigEntity {
   @Embedded
   private MailServerEntity server;
 
-  @OneToOne(cascade = CascadeType.REMOVE)
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
   private MailCredentialsEntity credentials;
 
-  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
   private Collection<FolderConfigEntity> folders;
 }
