@@ -35,7 +35,8 @@ restart.
 
 - **USER-010** The storage is selected with `invoice-watcher.mail-producer.dao.mode`:
   `firestore` (used in the deployed environments) or `jpa` (a relational database, used for local
-  development with H2).
+  development with H2). A missing or unknown value fails the startup with an error naming the
+  property.
 - **USER-011** In `firestore` mode, users are stored in Firestore in Datastore mode, kind
   `mail-producer-users` (one entity per user, keyed by name, with the mailbox configurations
   embedded), and folders in kind `mail-producer-folders` (one entity per folder, referenced from
@@ -74,6 +75,9 @@ restart.
 
 - **USER-004** Given a running application, when a folder is added to a user in the database,
   then the next scan scans that folder without a restart.
+- **USER-010** Given `invoice-watcher.mail-producer.dao.mode=jdbc`, when the application starts,
+  then it fails with an error naming `invoice-watcher.mail-producer.dao.mode`. Given no `dao.mode`,
+  the same.
 - **USER-013** Given `invoice-watcher.mail-producer.dao.mode=jpa` and no `ddl-auto`, when the
   application starts, then it fails with an error naming
   `invoice-watcher.mail-producer.dao.jpa.ddl-auto`. Given `basic.*` set without `url`, the same for

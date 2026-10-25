@@ -11,7 +11,7 @@ Module `:libs:event-producer-api`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.event-producer.mode`<br>`INVOICE_WATCHER_EVENT_PRODUCER_MODE` | `String` |  | Required. Event backend; the only supported value is `kafka`. |
+| `invoice-watcher.event-producer.mode`<br>`INVOICE_WATCHER_EVENT_PRODUCER_MODE` | `EventProducerProperties$Mode` |  | Required. Event backend; the only supported value is `kafka`. |
 
 ## `invoice-watcher.event-producer.kafka` { #invoice-watcher-event-producer-kafka }
 
@@ -27,7 +27,7 @@ Module `:libs:mail-producer-dao-api`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.mail-producer.dao.mode`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_MODE` | `String` |  | Required. Storage backend: `firestore` or `jpa`. |
+| `invoice-watcher.mail-producer.dao.mode`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_MODE` | `MailProducerDaoProperties$Mode` |  | Required. Storage backend: `firestore` or `jpa`. |
 
 ## `invoice-watcher.mail-producer.dao.firestore` { #invoice-watcher-mail-producer-dao-firestore }
 

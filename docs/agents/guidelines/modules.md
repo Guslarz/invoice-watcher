@@ -14,6 +14,9 @@
     auto-configuration: the configuration processor generates metadata for properties records
     without registering them, and implementations use only their `Constants`. A module with
     `@ConfigurationProperties` depends on `implementation(libs.spring.boot)` — nothing more.
+    The one exception: an `api` module that defines a `mode` selector registers one
+    auto-configuration that only binds and validates that record (`<Area>ModeAutoConfiguration`),
+    so every implementation — and an application without any — gets the check.
   - `impl` / `<tech>-impl` — implementation plus an `@AutoConfiguration` class.
 - Consumers depend on `api` (`api(projects.libs.xApi)`); only applications depend on `impl`.
   An `api` module is always declared with `api(...)`, never `implementation`/`compileOnly`; leave
@@ -44,8 +47,9 @@
   only there.
 - Every module that binds a record (`@EnableConfigurationProperties`) declares
   `implementation(libs.spring.boot.starter.validation)` itself; without a validator on the
-  classpath Spring silently ignores `@Validated`. `api` records that are never bound (`mode`
-  selectors) need no constraints.
+  classpath Spring silently ignores `@Validated`. A `mode` record is an enum component with
+  `@NotNull`, bound by its `api` module, so a missing or unknown value fails the startup even
+  when no implementation matches.
 - The configuration processor (enabled in `spring.boot-common-conventions`) generates metadata
   that feeds the published configuration reference. Every record (also nested ones) needs Javadoc
   with a `@param` per component — it becomes the property description, and a property without
