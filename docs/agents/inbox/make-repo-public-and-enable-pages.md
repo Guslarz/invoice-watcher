@@ -13,6 +13,7 @@ Before going public, make sure the AES key was rotated (the old one is in git hi
 `docs/setup/keys-and-users.md`) and check the history for other secrets.
 
 Steps:
+0. Add a license (`choose-a-license.md`).
 1. Settings → General → Change visibility → Public.
 2. Settings → Pages → Source: GitHub Actions
    (or `gh api -X POST repos/Guslarz/invoice-watcher/pages -f build_type=workflow`).
