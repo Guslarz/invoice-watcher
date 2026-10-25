@@ -8,6 +8,7 @@ dependencies {
   api(projects.libs.mailProducerSchedulerApi)
 
   implementation(libs.spring.boot.autoconfigure)
+  implementation(libs.spring.boot.starter.validation)
 
   implementation(libs.jakarta.annotations)
 }

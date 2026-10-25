@@ -11,7 +11,7 @@ Module `:libs:event-producer-api`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.event-producer.mode`<br>`INVOICE_WATCHER_EVENT_PRODUCER_MODE` | `String` |  | Event backend; the only supported value is `kafka`. |
+| `invoice-watcher.event-producer.mode`<br>`INVOICE_WATCHER_EVENT_PRODUCER_MODE` | `String` |  | Required. Event backend; the only supported value is `kafka`. |
 
 ## `invoice-watcher.event-producer.kafka` { #invoice-watcher-event-producer-kafka }
 
@@ -19,7 +19,7 @@ Module `:libs:event-producer-kafka-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  | Kafka brokers, e.g. `kafka:9092`. |
+| `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  | Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`. |
 
 ## `invoice-watcher.mail-producer.dao` { #invoice-watcher-mail-producer-dao }
 
@@ -27,7 +27,7 @@ Module `:libs:mail-producer-dao-api`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.mail-producer.dao.mode`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_MODE` | `String` |  | Storage backend: `firestore` or `jpa`. |
+| `invoice-watcher.mail-producer.dao.mode`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_MODE` | `String` |  | Required. Storage backend: `firestore` or `jpa`. |
 
 ## `invoice-watcher.mail-producer.dao.firestore` { #invoice-watcher-mail-producer-dao-firestore }
 
@@ -35,8 +35,8 @@ Module `:libs:mail-producer-dao-firestore-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.mail-producer.dao.firestore.database-id`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_FIRESTORE_DATABASE_ID` | `String` |  | Id of the Firestore database (in Datastore mode). |
-| `invoice-watcher.mail-producer.dao.firestore.host`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_FIRESTORE_HOST` | `String` |  | Emulator `host:port`; when set, the emulator is used without credentials. |
+| `invoice-watcher.mail-producer.dao.firestore.database-id`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_FIRESTORE_DATABASE_ID` | `String` |  | Optional. Id of the Firestore database (in Datastore mode). |
+| `invoice-watcher.mail-producer.dao.firestore.host`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_FIRESTORE_HOST` | `String` |  | Optional. Emulator `host:port`; when set, the emulator is used without credentials. |
 
 ## `invoice-watcher.mail-producer.dao.jpa` { #invoice-watcher-mail-producer-dao-jpa }
 
@@ -44,14 +44,14 @@ Module `:libs:mail-producer-dao-jpa-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  | JDBC driver class, e.g. `org.h2.Driver`. |
-| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  | Database password. |
-| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  | JDBC URL, e.g. `jdbc:h2:mem:invoice-watcher`. |
-| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  | Database username. |
-| `invoice-watcher.mail-producer.dao.jpa.data-source.gcp.database-name`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_GCP_DATABASE_NAME` | `String` |  | Database name in the instance. |
-| `invoice-watcher.mail-producer.dao.jpa.data-source.gcp.instance-connection-name`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_GCP_INSTANCE_CONNECTION_NAME` | `String` |  | Instance connection name, `project:region:instance`. |
-| `invoice-watcher.mail-producer.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DDL_AUTO` | `String` |  | Hibernate schema handling (`hibernate.hbm2ddl.auto`), e.g. `update`. |
-| `invoice-watcher.mail-producer.dao.jpa.dialect`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DIALECT` | `String` |  | Hibernate dialect class, e.g. `org.hibernate.dialect.H2Dialect`. |
+| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  | Optional. JDBC driver class, e.g. `org.h2.Driver`. |
+| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  | Optional. Database password. |
+| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  | Required when `basic` is set. JDBC URL, e.g. `jdbc:h2:mem:invoice-watcher`. |
+| `invoice-watcher.mail-producer.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  | Optional. Database username. |
+| `invoice-watcher.mail-producer.dao.jpa.data-source.gcp.database-name`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_GCP_DATABASE_NAME` | `String` |  | Required when `gcp` is set. Database name in the instance. |
+| `invoice-watcher.mail-producer.dao.jpa.data-source.gcp.instance-connection-name`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DATA_SOURCE_GCP_INSTANCE_CONNECTION_NAME` | `String` |  | Required when `gcp` is set. Instance connection name, `project:region:instance`. |
+| `invoice-watcher.mail-producer.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DDL_AUTO` | `String` |  | Required in `jpa` mode. Hibernate schema handling (`hibernate.hbm2ddl.auto`), e.g. `update`. |
+| `invoice-watcher.mail-producer.dao.jpa.dialect`<br>`INVOICE_WATCHER_MAIL_PRODUCER_DAO_JPA_DIALECT` | `String` |  | Required in `jpa` mode. Hibernate dialect class, e.g. `org.hibernate.dialect.H2Dialect`. |
 
 ## `invoice-watcher.mail-producer.mock.user` { #invoice-watcher-mail-producer-mock-user }
 
@@ -59,12 +59,12 @@ Module `:libs:mail-producer-mock-user`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.mail-producer.mock.user.email`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_EMAIL` | `String` |  | E-mail address; used as the user name and the mailbox username. |
-| `invoice-watcher.mail-producer.mock.user.enabled`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_ENABLED` | `Boolean` |  | Whether to create the mock user at startup. |
-| `invoice-watcher.mail-producer.mock.user.folders`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_FOLDERS` | `List<String>` |  | Folders to scan, e.g. `INBOX`, `Invoices`. |
-| `invoice-watcher.mail-producer.mock.user.host`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_HOST` | `String` |  | IMAP server host of the mock user's mailbox. |
-| `invoice-watcher.mail-producer.mock.user.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PASSWORD` | `Secret` |  | Mailbox password, encrypted with `secret-helper encrypt`. |
-| `invoice-watcher.mail-producer.mock.user.port`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PORT` | `Integer` | `993` | IMAP server port (IMAPS). |
+| `invoice-watcher.mail-producer.mock.user.email`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_EMAIL` | `String` |  | Required when enabled. E-mail address; used as the user name and the mailbox username. |
+| `invoice-watcher.mail-producer.mock.user.enabled`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_ENABLED` | `Boolean` |  | Optional. Whether to create the mock user at startup. |
+| `invoice-watcher.mail-producer.mock.user.folders`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_FOLDERS` | `List<String>` |  | Required when enabled, at least one. Folders to scan, e.g. `INBOX`, `Invoices`. |
+| `invoice-watcher.mail-producer.mock.user.host`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_HOST` | `String` |  | Required when enabled. IMAP server host of the mock user's mailbox. |
+| `invoice-watcher.mail-producer.mock.user.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PASSWORD` | `Secret` |  | Required when enabled. Mailbox password, encrypted with `secret-helper encrypt`. |
+| `invoice-watcher.mail-producer.mock.user.port`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PORT` | `Integer` | `993` | Optional. IMAP server port (IMAPS), between 1 and 65535. |
 
 ## `invoice-watcher.mail-producer.scheduler` { #invoice-watcher-mail-producer-scheduler }
 
@@ -72,7 +72,7 @@ Module `:libs:mail-producer-scheduler-impl`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.mail-producer.scheduler.rate`<br>`INVOICE_WATCHER_MAIL_PRODUCER_SCHEDULER_RATE` | `Duration` | `1h` | Time between the starts of consecutive scans, e.g. `30s`, `5m`, `1h` or ISO-8601 `PT1H`. |
+| `invoice-watcher.mail-producer.scheduler.rate`<br>`INVOICE_WATCHER_MAIL_PRODUCER_SCHEDULER_RATE` | `Duration` | `1h` | Optional. Time between the starts of consecutive scans, at least one second, e.g. `30s`, `5m`, `1h` or ISO-8601 `PT1H`. |
 
 ## `invoice-watcher.mail-producer.task` { #invoice-watcher-mail-producer-task }
 
@@ -80,7 +80,7 @@ Module `:libs:mail-producer-task`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.mail-producer.task.topic`<br>`INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC` | `String` |  | Topic every scanned message is published to, e.g. `all-mails`. |
+| `invoice-watcher.mail-producer.task.topic`<br>`INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC` | `String` |  | Required. Topic every scanned message is published to, e.g. `all-mails`. |
 
 ## `invoice-watcher.secret.aes` { #invoice-watcher-secret-aes }
 
@@ -88,4 +88,4 @@ Module `:libs:secret-aes`.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `invoice-watcher.secret.aes.key`<br>`INVOICE_WATCHER_SECRET_AES_KEY` | `SecretKey` |  | Base64-encoded AES-256 key, as printed by `secret-helper generate-key`; required. |
+| `invoice-watcher.secret.aes.key`<br>`INVOICE_WATCHER_SECRET_AES_KEY` | `SecretKey` |  | Required. Base64-encoded AES-256 key, as printed by `secret-helper generate-key`. |

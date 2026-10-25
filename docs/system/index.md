@@ -35,7 +35,8 @@ sequenceDiagram
 
 The mail producer scans at a fixed rate — every hour unless
 [`invoice-watcher.mail-producer.scheduler`](../reference/configuration.md#invoice-watcher-mail-producer-scheduler)
-says otherwise. The first scan starts as soon as the application starts. A scan goes through
+says otherwise; the rate cannot be shorter than one second. The first scan starts as soon as the
+application starts. A scan goes through
 every user, every mailbox of that user and every watched folder of that mailbox, one after
 another.
 
@@ -108,6 +109,12 @@ The storage is either Firestore in Datastore mode (used in the deployed environm
 relational database (used locally with H2), chosen with
 [`invoice-watcher.mail-producer.dao.mode`](../reference/configuration.md#invoice-watcher-mail-producer-dao).
 How to add a user is described in [keys and users](../setup/keys-and-users.md).
+
+The application checks its configuration when it starts. A required property that is missing —
+the Kafka brokers, the topic, the encryption key, the database settings of the chosen storage, or
+the mock user's details when the mock user is enabled — or a value out of range stops the startup
+with a message that names the property. Which properties are required is noted in each
+property's description in the [configuration reference](../reference/configuration.md).
 
 ## What it produces
 

@@ -52,15 +52,20 @@ restart.
   (its email without `.gserviceaccount.com`), with no password. Exactly one of them must be set;
   otherwise the application fails to start and names both properties. With `gcp.*` and default
   credentials that are not a service account, the application fails to start. Schema handling and dialect
-  are set with `...dao.jpa.ddl-auto` and `...dao.jpa.dialect`. No environment provisions Cloud SQL
-  today; dev uses Firestore.
+  are set with `...dao.jpa.ddl-auto` and `...dao.jpa.dialect`. `...dao.jpa.ddl-auto` and
+  `...dao.jpa.dialect` are required in `jpa` mode; the properties of the chosen data source
+  (`basic.url`, `gcp.instance-connection-name`, `gcp.database-name`) are required once that data
+  source is set. A violation fails the startup and names the property. No environment provisions
+  Cloud SQL today; dev uses Firestore.
 
 ### Mock user
 
 - **USER-030** When `invoice-watcher.mail-producer.mock.user.enabled=true`, the application
   creates or replaces, at startup, one user from properties: name and username `...email`,
   server `...host` and `...port` (default 993), password `...password` (encrypted value) and the
-  folders listed in `...folders`.
+  folders listed in `...folders`. With the mock user enabled, `...host`, `...email`, `...password`
+  and at least one folder are required, and `...port` is between 1 and 65535. A violation fails
+  the startup and names the property.
 - **USER-031** Every replace resets the mock user's folders: their start date is set to ten days
   before the start and their scan position is cleared. Each restart therefore picks up the last
   ten days of mail again.
@@ -69,9 +74,16 @@ restart.
 
 - **USER-004** Given a running application, when a folder is added to a user in the database,
   then the next scan scans that folder without a restart.
+- **USER-013** Given `invoice-watcher.mail-producer.dao.mode=jpa` and no `ddl-auto`, when the
+  application starts, then it fails with an error naming
+  `invoice-watcher.mail-producer.dao.jpa.ddl-auto`. Given `basic.*` set without `url`, the same for
+  `invoice-watcher.mail-producer.dao.jpa.data-source.basic.url`.
 - **USER-030** Given the mock user properties for `jan@example.com` with folders `INBOX` and
   `Invoices`, when the application starts, then the database contains exactly one user
   `jan@example.com` with these two folders.
+- **USER-030** Given the mock user enabled without `host`, when the application starts, then it
+  fails with an error naming `invoice-watcher.mail-producer.mock.user.host`. Given the mock user
+  disabled and no other mock user properties, the application starts.
 - **USER-031** Given the mock user exists with a scan position, when the application restarts,
   then its folders have no position and a start date ten days before the restart.
 
