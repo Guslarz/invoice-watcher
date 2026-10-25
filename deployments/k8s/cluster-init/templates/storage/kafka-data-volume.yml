@@ -1,0 +1,22 @@
+# Kafka's data disk, created and destroyed by OpenTofu (deployments/infrastructure/modules/gke/disk.tf);
+# Retain, so deleting the volume or the claim never deletes the disk.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kafka-data
+spec:
+  capacity:
+    # Keep in sync with the disk size in deployments/infrastructure/modules/gke/disk.tf
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  # Reserved for the claim of the Kafka StatefulSet (volumeClaimTemplate data, pod kafka-0)
+  claimRef:
+    namespace: 'invoice-watcher-{{ required "environment is required" .Values.environment }}'
+    name: data-kafka-0
+  csi:
+    driver: pd.csi.storage.gke.io
+    volumeHandle: 'projects/{{ required "gcpProjectId is required" .Values.gcpProjectId }}/zones/{{ required "gcpZone is required" .Values.gcpZone }}/disks/kafka-data'
+    fsType: ext4

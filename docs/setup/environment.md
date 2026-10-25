@@ -17,8 +17,8 @@ The workflow has two jobs:
 
 | Job | What it does |
 |-----|--------------|
-| `infrastructure` | Checks that the `AES_KEY`, `PAT` and `CLOUDFLARE_API_TOKEN` secrets are set and stops before touching anything when one is missing. Then OpenTofu plans `deployments/infrastructure/environments/dev/ephemeral`, prints the plan in the log and applies exactly that plan: Secret Manager secrets, Firestore database, GKE cluster and node pool (in the zone and under the name from the `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME` variables), global IP, Cloudflare DNS record. State is kept in the `<project-id>-tfstate` bucket. |
-| `k8s-install` | Waits for the cluster, then `helmfile sync` installs ArgoCD, cert-manager, origin-ca-issuer, external-secrets and the `cluster-init` chart (gateway, certificate, secret sync, the ArgoCD application). |
+| `infrastructure` | Checks that the `AES_KEY`, `PAT` and `CLOUDFLARE_API_TOKEN` secrets are set and stops before touching anything when one is missing. Then OpenTofu plans `deployments/infrastructure/environments/dev/ephemeral`, prints the plan in the log and applies exactly that plan: Secret Manager secrets, Firestore database, GKE cluster and node pool (in the zone and under the name from the `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME` variables), Kafka's 10 GiB data disk `kafka-data` in the same zone, global IP, Cloudflare DNS record. State is kept in the `<project-id>-tfstate` bucket. |
+| `k8s-install` | Waits for the cluster, then `helmfile sync` installs ArgoCD, cert-manager, origin-ca-issuer, external-secrets and the `cluster-init` chart (gateway, certificate, secret sync, the volume for Kafka's disk, the ArgoCD application). |
 
 From then on ArgoCD deploys the applications from `master` by itself.
 
@@ -34,8 +34,8 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d
 ```
 
-The application `invoice-watcher-dev` should be *Synced* and *Healthy*, with the `kafka` and
-`mail-producer` deployments in the namespace `invoice-watcher-dev`:
+The application `invoice-watcher-dev` should be *Synced* and *Healthy*, with the `kafka` stateful set
+and the `mail-producer` deployment in the namespace `invoice-watcher-dev`:
 
 ```shell
 kubectl -n invoice-watcher-dev get pods
@@ -62,8 +62,8 @@ applies exactly that plan: everything `up` created is destroyed, and the cluster
 contains.
 
 !!! danger "Data is deleted"
-    `down` deletes the Firestore database — users, mailboxes, folders and scan positions. There
-    are no backups.
+    `down` deletes the Firestore database — users, mailboxes, folders and scan positions — and
+    Kafka's disk with all published events. There are no backups.
 
 What stays: everything created by the [one-time setup](one-time.md) (state bucket, GitHub
 Actions service account, enabled APIs) and the APIs enabled by `up`, which cost nothing.
@@ -72,5 +72,5 @@ Actions service account, enabled APIs) and the APIs enabled by `up`, which cost 
 
 While the environment is up you pay for: one preemptible `e2-standard-2` node, the GKE cluster
 management fee (one zonal cluster per billing account is covered by the GKE free tier), the
-global IP address and the HTTPS load balancer of the gateway, and Firestore and Secret Manager
-usage (within the free tier at this scale). After `down` only the state bucket remains.
+global IP address and the HTTPS load balancer of the gateway, Kafka's 10 GiB disk (about $1 a
+month), and Firestore and Secret Manager usage (within the free tier at this scale). After `down` only the state bucket remains.

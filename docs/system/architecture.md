@@ -53,7 +53,9 @@ flowchart LR
   and the gateway serves HTTPS with a Cloudflare origin certificate issued in the cluster.
 - **ArgoCD** is the only thing exposed (`https://argocd.<domain>`); the mail producer has no
   HTTP interface for users.
-- **Kafka** runs as a single node inside the cluster, without persistent storage.
+- **Kafka** runs as a single node inside the cluster. Its data is kept on a persistent disk, so
+  events survive restarts of the Kafka pod and replacement of the preemptible node; the disk is
+  deleted together with the environment.
 - **Firestore** keeps users, mailboxes, folders and scan positions. The mail producer reaches it
   through workload identity, so there are no service account keys.
 

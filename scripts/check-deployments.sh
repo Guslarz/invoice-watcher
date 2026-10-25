@@ -33,7 +33,7 @@ validate_manifests() {
 echo "==> Local Kafka image"
 # .run/files/kafka.yml takes its environment from the dev overlay, but compose cannot read the image
 # from kustomize - the tag is repeated and must match.
-cluster_kafka=deployments/k8s-apps/apps/kafka/base/deployment.yml
+cluster_kafka=deployments/k8s-apps/apps/kafka/base/statefulset.yml
 local_kafka=.run/files/kafka.yml
 kafka_image() { grep -oE 'image: apache/kafka:[^[:space:]]+' "$1" | cut -d' ' -f2 || true; }
 cluster_image=$(kafka_image "$cluster_kafka")
@@ -92,8 +92,10 @@ if command -v helmfile >/dev/null 2>&1; then
   for env in deployments/k8s/environments/*.yml.gotmpl; do
     env=$(basename "$env" .yml.gotmpl)
     echo "--- $env"
-    # GCP_PROJECT_NUMBER is required by the values; a placeholder is enough to render
+    # The GCP_* variables are required by the values; placeholders are enough to render
     GCP_PROJECT_NUMBER="${GCP_PROJECT_NUMBER:-000000000000}" \
+      GCP_PROJECT_ID="${GCP_PROJECT_ID:-placeholder-project}" \
+      GCP_ZONE="${GCP_ZONE:-europe-west1-b}" \
       helmfile --file deployments/k8s/helmfile.yaml.gotmpl --environment "$env" template --quiet \
       | validate_manifests
   done

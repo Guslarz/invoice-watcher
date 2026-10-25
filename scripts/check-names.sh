@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Names shared across layers stay literal in every file that uses them (kustomize cannot take
 # variables), so a rename on one side only must fail here instead of on the next `up`: the
-# application namespace, the ServiceAccounts bound by workload identity and the gateway address.
+# application namespace, the ServiceAccounts bound by workload identity, the gateway address and
+# Kafka's data disk.
 # Run by scripts/check-deployments.sh.
 set -euo pipefail
 
@@ -80,5 +81,17 @@ gateway=$k8s/cluster-init/templates/gateway/gateway.yml
 same "gateway address" "$cluster" \
   "$(value "$cluster" '^ *name *= *"([^"]+)".*' '/"google_compute_global_address"/,/name *=/')" \
   "$gateway" "$(value "$gateway" '^ *value: *([^[:space:]]+).*' '/type: NamedAddress/,/value:/')"
+
+echo "--- kafka-data disk"
+disk=$infra/modules/gke/disk.tf
+volume=$k8s/cluster-init/templates/storage/kafka-data-volume.yml
+kafka=$apps/apps/kafka/base/statefulset.yml
+same "Kafka data disk" "$disk" "$(value "$disk" '^ *name *= *"([^"]+)".*' '/"google_compute_disk"/,/name *=/')" \
+  "$volume (volumeHandle)" "$(value "$volume" '^ *volumeHandle:.*\/disks\/([a-z0-9-]+).*')"
+same "Kafka data volume" "$volume" "$(value "$volume" '^  name: *([^[:space:]]+).*')" \
+  "$kafka (volumeName)" "$(value "$kafka" '^ *volumeName: *([^[:space:]]+).*')"
+same "Kafka data claim" "$volume (claimRef)" "$(value "$volume" '^ *name: *([^[:space:]]+).*' '/claimRef:/,/name:/')" \
+  "$kafka (<template>-<statefulset>-0)" \
+  "$(value "$kafka" '^ *name: *([^[:space:]]+).*' '/volumeClaimTemplates:/,/name:/')-$(value "$kafka" '^  name: *([^[:space:]]+).*')-0"
 
 ((failures == 0)) || exit 1
