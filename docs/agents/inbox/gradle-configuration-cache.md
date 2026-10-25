@@ -14,7 +14,5 @@ The configuration cache is not enabled (no project `gradle.properties`). Obstacl
   fails configuration-cache serialization.
 - `apps/secret-helper-app/build.gradle.kts:35-38` writes into the root build directory and sets
   `standardOutput = ...outputStream()` without closing it.
-- `docker/image-conventions.gradle.kts` reads `imageVersion.get()` and `ZonedDateTime.now()` at
-  configuration time (see `docker-image-conventions.md`).
 
 Run `./gradlew build --configuration-cache` to get the full list of problems.
