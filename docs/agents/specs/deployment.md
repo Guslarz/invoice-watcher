@@ -54,12 +54,15 @@ while it is not needed. After it is up, application changes are deployed automat
 
 - **DEPLOY-010** `up` creates, in region `europe-west1`: a GKE cluster with one preemptible
   `e2-standard-2` node, a Firestore database in Datastore mode, Secret Manager secrets (GitHub
-  token, registry credentials, Cloudflare token, AES key), a global IP address for the gateway,
+  token, Cloudflare token, AES key), a global IP address for the gateway,
   and a proxied wildcard DNS record `*.guslarz.com` in Cloudflare pointing at it.
 - **DEPLOY-011** The application reaches Firestore through workload identity — no service
   account keys are stored.
 - **DEPLOY-012** OpenTofu creates the cluster in the zone and under the name given by the
   repository variables `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME`, the same ones `k8s-install` uses.
+- **DEPLOY-013** The OpenTofu configurations require OpenTofu 1.12 or later. Each root
+  configuration pins exact provider versions and commits its `.terraform.lock.hcl`, so CI and
+  operators use the same provider builds.
 
 ### Cluster services
 
@@ -97,8 +100,14 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-002** Given the dev environment is down, when `Environment` runs with `up` / `dev`,
   then the workflow succeeds, ArgoCD is reachable at `https://argocd.guslarz.com` and the
   `mail-producer` pod in `invoice-watcher-dev` is running.
+- **DEPLOY-010** Given the dev environment is down, when `Environment` runs with `up` / `dev`, then
+  Secret Manager holds `github_pat`, `cloudflare_api_token` and `aes_key` and no
+  `ghcr_docker_config_json`, and the application still pulls its image.
 - **DEPLOY-012** Given `GCP_ZONE` set to a zone other than the OpenTofu default, when `Environment`
   runs with `up` / `dev`, then the cluster is created in that zone and `k8s-install` finds it.
+- **DEPLOY-013** Given the committed lock files, when `tofu init` runs in
+  `environments/dev/ephemeral` or `environments/dev/persistent`, then it succeeds and leaves
+  `.terraform.lock.hcl` unchanged.
 - **DEPLOY-030** Given the environment is up, when a change to `deployments/k8s-apps` is merged
   to `master`, then ArgoCD applies it without manual steps.
 - **DEPLOY-002** Given the dev environment is up, when `Environment` runs with `down` / `dev`,

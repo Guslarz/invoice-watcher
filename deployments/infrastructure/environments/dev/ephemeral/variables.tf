@@ -16,14 +16,6 @@ variable "gcp_gke_cluster_name" {
   default = "invoice-watcher-cluster"
 }
 
-variable "github_registry" {
-  default = "ghcr.io"
-}
-
-variable "github_username" {
-  default = "Guslarz"
-}
-
 variable "github_pat" {
   sensitive = true
 }

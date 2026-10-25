@@ -51,7 +51,7 @@ if command -v tofu >/dev/null 2>&1; then
   tofu fmt -check -recursive -diff deployments/infrastructure
   for root in deployments/infrastructure/environments/*/*/; do
     echo "--- $root"
-    tofu -chdir="$root" init -backend=false -input=false >/dev/null
+    tofu -chdir="$root" init -backend=false -input=false -lockfile=readonly >/dev/null
     tofu -chdir="$root" validate
   done
 else

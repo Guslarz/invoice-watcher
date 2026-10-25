@@ -45,7 +45,7 @@ ns_prefix=$(value "$argocd_app" "^ *namespace: *'([a-z0-9-]*)\{\{.*\.Values\.env
 for env_dir in "$apps"/environments/*/; do
   env=$(basename "$env_dir")
   helm_env=$k8s/environments/$env.yml.gotmpl
-  tofu_root=$infra/environments/$env/ephemereal/main.tf
+  tofu_root=$infra/environments/$env/ephemeral/main.tf
   environment=$(value "$helm_env" '^environment: *([^[:space:]]+).*')
   same "namespace of $env" "$tofu_root" "$(value "$tofu_root" '^ *app_namespace *= *"([^"]+)".*')" \
     "${env_dir}kustomization.yml" "$(value "${env_dir}kustomization.yml" '^namespace: *([^[:space:]]+).*')" \

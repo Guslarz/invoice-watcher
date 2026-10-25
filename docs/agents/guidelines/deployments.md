@@ -4,7 +4,7 @@ Three layers, applied in this order by the `Environment` workflow (`.github/work
 
 1. **Infrastructure** — `deployments/infrastructure`, applied with OpenTofu
    (`infrastructure.yml`). `environments/<env>/persistent` (project init, tfstate bucket, CI
-   service account; applied once by hand) and `environments/<env>/ephemereal` (secrets, Firestore,
+   service account; applied once by hand) and `environments/<env>/ephemeral` (secrets, Firestore,
    GKE, Cloudflare DNS; brought up and down by the workflow). Reusable code goes to `modules/`.
 2. **Cluster bootstrap** — `deployments/k8s/helmfile.yaml.gotmpl` (`k8s-install.yml`): ArgoCD,
    cert-manager, Cloudflare origin-ca-issuer, external-secrets and the local `cluster-init` chart
@@ -16,7 +16,11 @@ Three layers, applied in this order by the `Environment` workflow (`.github/work
    `components/`.
 
 Rules:
-- Pin every chart, provider and action version.
+- Pin every chart, provider and action version. OpenTofu: root configurations
+  (`environments/<env>/*`) declare `required_version = ">= 1.12"` and pin exact provider versions;
+  modules declare `~> major.minor`. Each root commits its `.terraform.lock.hcl`; after a provider
+  bump regenerate it with
+  `tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64`.
 - Secrets never go into the repository — Secret Manager + external-secrets (ADR-0006).
 - Every container declares probes, CPU/memory requests and a memory limit; no CPU limits.
 - Changes under `deployments/` are a planning trigger (`AGENTS.md`) and impact `OPERATIONS`.

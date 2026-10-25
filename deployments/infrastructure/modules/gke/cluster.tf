@@ -41,4 +41,7 @@ resource "google_container_node_pool" "default" {
 
 resource "google_compute_global_address" "gateway_ip" {
   name = "gke-gateway-ip"
+  depends_on = [
+    google_project_service.compute_api
+  ]
 }
