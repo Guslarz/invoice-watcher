@@ -1,5 +1,5 @@
 plugins {
-  id("spring.boot-app-conventions")
+  id("springboot.app-conventions")
 }
 
 description = "Spring Boot application that scans mailboxes on a schedule and publishes their messages as events."

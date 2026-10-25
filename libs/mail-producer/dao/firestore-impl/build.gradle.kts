@@ -1,5 +1,5 @@
 plugins {
-  id("spring.boot-lib-conventions")
+  id("springboot.lib-conventions")
 }
 
 description = "Storage of users in Firestore in Datastore mode."
