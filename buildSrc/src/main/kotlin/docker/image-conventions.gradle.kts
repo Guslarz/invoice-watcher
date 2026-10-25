@@ -20,7 +20,7 @@ val dockerProperties = providers.gradlePropertiesPrefixedBy(propertyPrefix).map 
 val registryProperty = dockerProperties.map { it["registry"] }
 
 val resourcesDir = layout.buildDirectory.dir("resources")
-val imageName = name
+val imageName = name.removeSuffix("-docker")
 val projectVersion = providers.provider { version.toString() }
 val imageVersion = dockerProperties.zip(projectVersion) { properties, version ->
   properties["tag"] ?: version

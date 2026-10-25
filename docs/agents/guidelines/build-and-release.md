@@ -19,7 +19,8 @@
   BOM, which wins where both manage a version; libraries do not apply the Spring Boot plugin.
 - Version comes from git tags via axion-release (`scmVersion`). Never hard-code versions.
 - Docker images are separate modules in `images/` that consume an app's `bootJar` through the
-  `dockerImageResource` configuration. Registry settings come from Gradle properties
+  `dockerImageResource` configuration. An image module is named `<image>-docker`; the published
+  image is `<image>`, without the suffix. Registry settings come from Gradle properties
   `com.guslarz.invoicewatcher.docker.{registry,namespace,username,password,tag}`. The jar is
   copied next to the Dockerfile as `app.jar`; the version and build time come in as build args
   `PROJECT_VERSION` and `BUILD_DATE`. `assemble` builds the image (needs a Docker daemon),

@@ -88,7 +88,7 @@ flowchart LR
   SpotBugs), the generated reference pages are checked to be up to date, and changes under
   `deployments/` are checked for formatting, validity and rendering. A failure blocks the merge.
 - **Every merge to `master`** that touches more than documentation publishes the image
-  `ghcr.io/guslarz/invoice-watcher/mail-producer-docker:snapshot`, replacing the previous one.
+  `ghcr.io/guslarz/invoice-watcher/mail-producer:snapshot`, replacing the previous one.
 - **The `Release` workflow**, run by hand with `major`, `minor` or `patch`, tags the commit
   `v<version>`, publishes the image tagged `<version>` and creates the GitHub release.
 - **Dependabot** opens pull requests every week for newer GitHub Actions and Gradle

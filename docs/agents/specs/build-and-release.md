@@ -29,7 +29,7 @@ the dev environment can run, and a release produces a versioned image and a GitH
   workflows match: the application namespace, the ServiceAccounts bound by workload identity and
   the gateway address. A failure blocks the change.
 - **RELEASE-002** Every push to `master` that changes a file outside `docs/` builds and publishes
-  the image `ghcr.io/guslarz/invoice-watcher/mail-producer-docker:snapshot`, replacing the
+  the image `ghcr.io/guslarz/invoice-watcher/mail-producer:snapshot`, replacing the
   previous snapshot.
 - **RELEASE-003** The `Release` workflow (run manually with `major`, `minor` or `patch`) increments
   the version, tags the commit `v<version>`, publishes the image tagged `<version>` and creates
@@ -66,7 +66,8 @@ the dev environment can run, and a release produces a versioned image and a GitH
 - **RELEASE-002** Given a pull request changing only files under `docs/`, when it is merged, then
   `Snapshot` does not run.
 - **RELEASE-002** Given a pull request is merged, when the `Snapshot` workflow finishes, then
-  pulling `...mail-producer-docker:snapshot` gives an image whose version label matches the build.
+  pulling `...invoice-watcher/mail-producer:snapshot` gives an image whose version label matches
+  the build.
 - **RELEASE-003** Given the latest release is `v1.2.0`, when `Release` runs with `minor`, then
   tag `v1.3.0`, image tag `1.3.0` and GitHub release `v1.3.0` exist.
 
