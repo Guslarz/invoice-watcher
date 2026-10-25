@@ -47,6 +47,11 @@ host and port of the mailbox. It logs in with a username and password. The passw
 encrypted and is decrypted only for the moment of connecting — see
 [keys and users](../setup/keys-and-users.md) for how to encrypt it.
 
+InvoiceWatcher accepts only a trusted certificate issued for the mailbox host, so nobody posing as
+the server can capture the password. A server that does not let it connect within 30 seconds, or
+stops answering for 60 seconds, ends the attempt (both limits are configurable); such a mailbox is
+skipped until the next scan, like any other mailbox it cannot reach.
+
 Folders are opened read-only: InvoiceWatcher never marks, moves or deletes your messages.
 
 ### Which messages are picked up

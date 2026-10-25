@@ -13,7 +13,7 @@ and `libs/` that contains a `build.gradle.kts`.
 | `:libs:event-producer-api` | `libs/event-producer/api` | Event producer interface and backend selection. |
 | `:libs:event-producer-kafka-impl` | `libs/event-producer/kafka-impl` | Event producer that sends events to Kafka. |
 | `:libs:mail-connector-api` | `libs/mail-connector/api` | Mailbox connection interfaces: connections, queries, messages, credentials. |
-| `:libs:mail-connector-impl` | `libs/mail-connector/impl` | IMAP mailbox connection based on Jakarta Mail, scanning folders by UID. |
+| `:libs:mail-connector-impl` | `libs/mail-connector/impl` | IMAP mailbox connection based on Angus Mail, scanning folders by UID. |
 | `:libs:mail-producer-dao-api` | `libs/mail-producer/dao/api` | Storage interfaces for users, mailbox configurations and folders. |
 | `:libs:mail-producer-dao-firestore-impl` | `libs/mail-producer/dao/firestore-impl` | Storage of users in Firestore in Datastore mode. |
 | `:libs:mail-producer-dao-jpa-impl` | `libs/mail-producer/dao/jpa-impl` | Storage of users in a relational database via JPA (H2 or Cloud SQL). |

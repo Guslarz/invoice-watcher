@@ -21,6 +21,15 @@ Module `:libs:event-producer-kafka-impl`.
 |---|---|---|---|
 | `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  | Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`. |
 
+## `invoice-watcher.mail-connector.imap` { #invoice-watcher-mail-connector-imap }
+
+Module `:libs:mail-connector-impl`.
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `invoice-watcher.mail-connector.imap.connect-timeout`<br>`INVOICE_WATCHER_MAIL_CONNECTOR_IMAP_CONNECT_TIMEOUT` | `Duration` | `30s` | Optional. How long connecting to the mail server may take, at least one second, e.g. `30s`. |
+| `invoice-watcher.mail-connector.imap.read-timeout`<br>`INVOICE_WATCHER_MAIL_CONNECTOR_IMAP_READ_TIMEOUT` | `Duration` | `60s` | Optional. How long to wait for each response of the mail server, at least one second, e.g. `60s`. |
+
 ## `invoice-watcher.mail-producer.dao` { #invoice-watcher-mail-producer-dao }
 
 Module `:libs:mail-producer-dao-api`.

@@ -72,7 +72,7 @@ A mailbox that cannot be reached is logged and skipped; the scan goes on with th
 
 ```text
 ERROR [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : Error processing scan config: MailScanConfig[server=MailServer[host=imap.example.com, port=993], ...]
-com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException: com.sun.mail.util.MailConnectException: Couldn't connect to host, port: imap.example.com, 993; ...
+com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException: org.eclipse.angus.mail.util.MailConnectException: Couldn't connect to host, port: imap.example.com, 993; ...
 INFO  [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : < Finished scanning for config: imap.example.com
 ```
 

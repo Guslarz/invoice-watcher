@@ -34,12 +34,19 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 ### Connecting to a mailbox
 
 - **MAIL-010** InvoiceWatcher connects to the mailbox over IMAP with implicit TLS (`imaps`), using
-  the host and port from the mailbox configuration (port 993 is the usual one).
+  the host and port from the mailbox configuration (port 993 is the usual one). The server's TLS
+  certificate must be trusted and issued for the configured host; otherwise connecting fails
+  (MAIL-040).
 - **MAIL-011** It authenticates with a username and password (basic authentication). The password
   is stored encrypted and decrypted only for the moment of connecting
   (see [secret encryption](../specs/secret-encryption.md)).
 - **MAIL-012** Folders are opened read-only. InvoiceWatcher never marks, moves or deletes
   messages.
+- **MAIL-013** Connecting gives up after `invoice-watcher.mail-connector.imap.connect-timeout`
+  (default 30 s), and every wait for a server response gives up after
+  `invoice-watcher.mail-connector.imap.read-timeout` (default 60 s). A timeout while connecting is
+  handled as in MAIL-040, during a folder scan as in MAIL-041. Both are at least one second; a
+  smaller value fails the startup and names the property.
 
 ### Which messages are picked up
 
@@ -75,8 +82,14 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 - **MAIL-001** Given the scan rate `10s`, when the application has been running for 30 seconds,
   then at least three scans have started. Given the scan rate `0s`, when the application starts,
   then it fails with an error naming `invoice-watcher.mail-producer.scheduler.rate`.
+- **MAIL-010** Given an IMAPS server whose certificate is trusted but issued for another host,
+  when a connection is made to it, then connecting fails.
 - **MAIL-012** Given a folder with unread messages, when it is scanned, then the messages are
   still unread on the server.
+- **MAIL-013** Given a server that accepts TCP connections and never answers, and a read timeout
+  of 1 s, when a connection is made, then it fails within a few seconds. Given the read timeout
+  `0s`, when the application starts, then it fails with an error naming
+  `invoice-watcher.mail-connector.imap.read-timeout`.
 - **MAIL-020** Given a folder with position (V, 12) and messages with UIDs 10–15, when it is
   scanned, then the messages 13, 14 and 15 are published in that order — also when message 14 has
   an older sent date than message 13.
@@ -97,6 +110,7 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 Properties, their types, defaults and meaning are listed in the generated reference:
 
 - [`invoice-watcher.mail-producer.scheduler`](../../reference/configuration.md#invoice-watcher-mail-producer-scheduler)
+- [`invoice-watcher.mail-connector.imap`](../../reference/configuration.md#invoice-watcher-mail-connector-imap)
 
 ## Out of scope
 
