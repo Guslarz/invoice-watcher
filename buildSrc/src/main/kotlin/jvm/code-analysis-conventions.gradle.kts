@@ -8,7 +8,7 @@ plugins {
 }
 
 checkstyle {
-  toolVersion = "11.0.0"
+  toolVersion = versionCatalogs.named("libs").findVersion("checkstyle").get().requiredVersion
   maxWarnings = 0
 }
 

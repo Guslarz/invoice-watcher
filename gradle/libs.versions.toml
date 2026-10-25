@@ -1,20 +1,31 @@
+[versions]
+axion-release = "1.21.4"
+checkstyle = "11.0.0"
+gradle-docker-plugin = "10.0.0"
+lombok-plugin = "9.8.2"
+picocli = "4.7.7"
+spotbugs-gradle-plugin = "6.5.8"
+spring-boot = "4.1.1"
+spring-cloud-gcp = "8.0.4"
+spring-dependency-management-plugin = "1.1.7"
+
 [plugins]
-axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.21.4" }
+axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
 
 [libraries]
 angus-mail = { group = "org.eclipse.angus", name = "angus-mail" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version = "3.27.7" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3" }
-gradle-docker-plugin = { group = "com.bmuschko", name = "gradle-docker-plugin", version = "10.0.0" }
+gradle-docker-plugin = { group = "com.bmuschko", name = "gradle-docker-plugin", version.ref = "gradle-docker-plugin" }
 h2 = { group = "com.h2database", name = "h2" }
 jackson-databind = { group = "tools.jackson.core", name = "jackson-databind" }
 jakarta-annotations = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
 jspecify = { group = "org.jspecify", name = "jspecify" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
-lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version = "9.8.2" }
-picocli = { group = "info.picocli", name = "picocli", version = "4.7.7" }
-spotbugs-gradle-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-gradle-plugin", version = "6.5.8" }
-spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version = "4.1.1" }
+lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version.ref = "lombok-plugin" }
+picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
+spotbugs-gradle-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-gradle-plugin", version.ref = "spotbugs-gradle-plugin" }
+spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version.ref = "spring-boot" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 spring-boot = { group = "org.springframework.boot", name = "spring-boot" }
 spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure" }
@@ -24,10 +35,9 @@ spring-boot-starter-data-jpa = { group = "org.springframework.boot", name = "spr
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
 spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
-spring-cloud-gcp-dependencies = { group = "com.google.cloud", name = "spring-cloud-gcp-dependencies", version = "8.0.4" }
+spring-cloud-gcp-dependencies = { group = "com.google.cloud", name = "spring-cloud-gcp-dependencies", version.ref = "spring-cloud-gcp" }
 spring-cloud-gcp-starter-datastore = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-data-datastore" }
-spring-cloud-gcp-starter-firestore = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-data-firestore" }
 spring-cloud-gcp-starter-sql-postgresql = { group = "com.google.cloud", name = "spring-cloud-gcp-starter-sql-postgresql" }
-spring-dependency-management-plugin = { group = "io.spring.gradle", name = "dependency-management-plugin", version = "1.1.7" }
+spring-dependency-management-plugin = { group = "io.spring.gradle", name = "dependency-management-plugin", version.ref = "spring-dependency-management-plugin" }
 spring-kafka = { group = "org.springframework.kafka", name = "spring-kafka" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api" }

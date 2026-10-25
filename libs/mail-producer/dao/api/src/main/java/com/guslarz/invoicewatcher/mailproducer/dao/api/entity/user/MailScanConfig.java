@@ -4,6 +4,7 @@ import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.MailCredenti
 import lombok.Builder;
 
 import java.util.Collection;
+import java.util.List;
 
 @Builder(toBuilder = true)
 public record MailScanConfig(
@@ -11,4 +12,8 @@ public record MailScanConfig(
     MailCredentials credentials,
     Collection<FolderConfig> folders
 ) {
+
+  public MailScanConfig {
+    folders = folders == null ? null : List.copyOf(folders);
+  }
 }
