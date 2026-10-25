@@ -36,6 +36,10 @@ public record MailProducerMockUserProperties(
     @NotEmpty List<String> folders
 ) {
 
+  public MailProducerMockUserProperties {
+    folders = folders == null ? null : List.copyOf(folders);
+  }
+
   @UtilityClass
   class Constants {
     static final String Prefix = "invoice-watcher.mail-producer.mock.user";

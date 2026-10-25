@@ -10,4 +10,8 @@ public record User(
     String name,
     List<MailScanConfig> scanConfigs
 ) {
+
+  public User {
+    scanConfigs = scanConfigs == null ? null : List.copyOf(scanConfigs);
+  }
 }

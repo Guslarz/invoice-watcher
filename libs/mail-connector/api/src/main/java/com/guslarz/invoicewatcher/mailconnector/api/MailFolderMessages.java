@@ -15,4 +15,8 @@ public record MailFolderMessages(
     long uidValidity,
     List<FolderMessage> messages
 ) {
+
+  public MailFolderMessages {
+    messages = messages == null ? null : List.copyOf(messages);
+  }
 }
