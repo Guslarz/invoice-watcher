@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Event producer selection.
  *
- * @param mode Event backend; the only supported value is `kafka`.
+ * @param mode Required. Event backend; the only supported value is `kafka`.
  */
 @ConfigurationProperties(prefix = EventProducerProperties.Constants.Prefix)
 public record EventProducerProperties(

@@ -54,6 +54,8 @@ encrypted values.
 
 - **SECRET-001** Given a key, when `encrypt` is run twice with the same password, then the two
   printed values differ and both decrypt to the password.
+- **SECRET-003** Given no `invoice-watcher.secret.aes.key`, when the application starts, then it
+  fails with an error naming the property.
 - **SECRET-005** Given a value encrypted with key A, when `decrypt` is run with key B, then the
   tool fails and prints no plaintext.
 - **SECRET-010** Given nothing on standard input, when `generate-key` runs twice, then it prints

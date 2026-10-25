@@ -8,6 +8,7 @@ dependencies {
   api(projects.libs.mailProducerDaoApi)
 
   implementation(libs.spring.boot.autoconfigure)
+  implementation(libs.spring.boot.starter.validation)
   implementation(libs.spring.cloud.gcp.starter.datastore)
 
   implementation(libs.commons.lang3)

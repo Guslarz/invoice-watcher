@@ -8,9 +8,15 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.bind.validation.BindValidationException;
+import org.springframework.boot.context.properties.source.ConfigurationPropertyName;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.core.NestedExceptionUtils;
+import org.springframework.validation.FieldError;
 
 import javax.sql.DataSource;
+import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -20,12 +26,27 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
 
   private static final String Basic = "invoice-watcher.mail-producer.dao.jpa.data-source.basic.";
   private static final String Gcp = "invoice-watcher.mail-producer.dao.jpa.data-source.gcp.";
+  private static final String Jpa = "invoice-watcher.mail-producer.dao.jpa.";
 
   private final ApplicationContextRunner uut = new ApplicationContextRunner()
       .withUserConfiguration(
           PropertiesConfiguration.class,
           MailProducerDaoJpaDataSourceConfiguration.class
+      )
+      .withPropertyValues(
+          Jpa + "ddl-auto=none",
+          Jpa + "dialect=org.hibernate.dialect.H2Dialect"
       );
+
+  private static List<ConfigurationPropertyName> invalidProperties(Throwable startupFailure) {
+    BindValidationException exception =
+        (BindValidationException) NestedExceptionUtils.getRootCause(startupFailure);
+    String prefix = Objects.requireNonNull(exception).getValidationErrors().getName().toString();
+    return exception.getValidationErrors().getAllErrors().stream()
+        .map(error -> ConfigurationPropertyName.adapt(
+            prefix + "." + ((FieldError) error).getField(), '.'))
+        .toList();
+  }
 
   private static CredentialsProvider serviceAccount(String email) {
     ComputeEngineCredentials credentials = mock(ComputeEngineCredentials.class);
@@ -147,6 +168,61 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
       assertThat(context.getStartupFailure())
           .rootCause()
           .hasMessageContaining("service account");
+    });
+  }
+
+  @Test
+  @DisplayName("USER-013: fails to start without ddl-auto")
+  void failsWithoutDdlAuto() {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        Jpa + "ddl-auto=",
+        Basic + "url=jdbc:h2:mem:invoice-watcher"
+    );
+
+    // when
+    runner.run(context -> {
+
+      // then
+      assertThat(context).hasFailed();
+      assertThat(invalidProperties(context.getStartupFailure())).containsExactly(
+          ConfigurationPropertyName.of(Jpa + "ddl-auto"));
+    });
+  }
+
+  @Test
+  @DisplayName("USER-013: fails to start when basic is set without url")
+  void failsWhenBasicIsSetWithoutUrl() {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        Basic + "driver=org.h2.Driver"
+    );
+
+    // when
+    runner.run(context -> {
+
+      // then
+      assertThat(context).hasFailed();
+      assertThat(invalidProperties(context.getStartupFailure())).containsExactly(
+          ConfigurationPropertyName.of(Basic + "url"));
+    });
+  }
+
+  @Test
+  @DisplayName("USER-013: fails to start when gcp is set without database name")
+  void failsWhenGcpIsSetWithoutDatabaseName() {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        Gcp + "instance-connection-name=p:r:i"
+    );
+
+    // when
+    runner.run(context -> {
+
+      // then
+      assertThat(context).hasFailed();
+      assertThat(invalidProperties(context.getStartupFailure())).containsExactly(
+          ConfigurationPropertyName.of(Gcp + "database-name"));
     });
   }
 

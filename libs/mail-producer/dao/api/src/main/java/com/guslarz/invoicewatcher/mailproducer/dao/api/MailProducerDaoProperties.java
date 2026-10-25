@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Storage of users and their mailbox configuration.
  *
- * @param mode Storage backend: `firestore` or `jpa`.
+ * @param mode Required. Storage backend: `firestore` or `jpa`.
  */
 @ConfigurationProperties(prefix = MailProducerDaoProperties.Constants.Prefix)
 public record MailProducerDaoProperties(

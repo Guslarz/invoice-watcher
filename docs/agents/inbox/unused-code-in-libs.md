@@ -13,9 +13,7 @@ Found by grep, no callers or readers:
   `FirestoreMapper.java:114` calls `accept` directly. `MailCredentialsMapper` both extends
   `BaseMailCredentialsVisitor<MailCredentialsEntity>` and implements
   `MailCredentialsEntityVisitor<MailCredentials>` — two `visit` overloads in opposite directions.
-- `SecretAesProperties` (comment "Only used to generate metadata file") and `SecretKeyConverter`
-  decode the key into a record nobody injects; `SecretFactoryAesImpl` reads the same key again via
-  `@Value`. `SecretFactoryAesImpl` is annotated `@ConfigurationPropertiesBinding` without being a
+- `SecretFactoryAesImpl` is annotated `@ConfigurationPropertiesBinding` without being a
   converter.
 - `MailProducerMockUserProperties.enabled` — only `@ConditionalOnBooleanProperty` uses the key.
 - `@RequiredArgsConstructor` on `SecretHelperRunner`, which has no fields.

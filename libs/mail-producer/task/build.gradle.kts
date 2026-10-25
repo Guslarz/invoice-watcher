@@ -11,6 +11,7 @@ dependencies {
   api(projects.libs.eventProducerApi)
 
   implementation(libs.spring.boot.autoconfigure)
+  implementation(libs.spring.boot.starter.validation)
 
   implementation(libs.slf4j.api)
 }

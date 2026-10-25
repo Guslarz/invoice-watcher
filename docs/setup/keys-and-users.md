@@ -81,9 +81,11 @@ application configuration as the **mock user**:
 when [`invoice-watcher.mail-producer.mock.user.enabled`](../reference/configuration.md#invoice-watcher-mail-producer-mock-user)
 is `true`, the application creates the user at startup, or replaces it if it exists, from the
 `...mock.user.*` properties: the e-mail address (also used as the mailbox username), host, port
-(default 993), encrypted password and a comma-separated list of folders. Every start resets the
-user's folders: their start date is set to ten days before the start and their scan position is
-cleared.
+(default 993), encrypted password and a comma-separated list of folders. With the mock user
+enabled, the address, host, password and at least one folder are required and the port must be
+between 1 and 65535; otherwise the application does not start and names the property. Every start
+resets the user's folders: their start date is set to ten days before the start and their scan
+position is cleared.
 
 For the dev environment that means adding to
 `deployments/k8s-apps/apps/mail-producer/overlays/dev/config/.env` (and merging it to `master`):

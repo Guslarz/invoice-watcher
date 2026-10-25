@@ -9,6 +9,7 @@ dependencies {
   api(projects.libs.secretApi)
 
   implementation(libs.spring.boot.autoconfigure)
+  implementation(libs.spring.boot.starter.validation)
 
   implementation(libs.jakarta.annotations)
 }

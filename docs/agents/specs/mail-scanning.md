@@ -25,7 +25,9 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 ### Schedule
 
 - **MAIL-001** The mail producer runs a scan at a fixed rate, by default every hour. The first
-  scan starts when the application starts.
+  scan starts when the application starts. The rate
+  (`invoice-watcher.mail-producer.scheduler.rate`) is at least one second; a smaller value fails
+  the startup and names the property.
 - **MAIL-002** A scan processes every user, every mailbox configuration of that user and every
   configured folder of that mailbox, one after another.
 
@@ -71,7 +73,8 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 ## Acceptance
 
 - **MAIL-001** Given the scan rate `10s`, when the application has been running for 30 seconds,
-  then at least three scans have started.
+  then at least three scans have started. Given the scan rate `0s`, when the application starts,
+  then it fails with an error naming `invoice-watcher.mail-producer.scheduler.rate`.
 - **MAIL-012** Given a folder with unread messages, when it is scanned, then the messages are
   still unread on the server.
 - **MAIL-020** Given a folder with position (V, 12) and messages with UIDs 10–15, when it is
