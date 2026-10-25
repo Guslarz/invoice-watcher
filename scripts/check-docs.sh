@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Structural checks for docs/ and AGENTS.md. Link checking is done by `zensical build --strict`.
+# Structural checks for docs/ and AGENTS.md. Whether links and anchors resolve is checked by
+# `zensical build --strict`; this script checks that published pages are in the nav and links have
+# a form zensical validates.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -75,6 +77,38 @@ while IFS=: read -r file path; do
 done < <(grep -oE '`(docs|scripts|apps|libs|images|buildSrc|config|deployments|\.github)/[^`<>* ]*`' \
   --with-filename AGENTS.md docs/agents/protocols/*.md docs/agents/guidelines/*.md docs/agents/specs/*.md docs/agents/adr/*.md \
   | tr -d '`' | sed -E 's#/$##' | sort -u)
+
+# Published pages: listed in the nav.
+mapfile -t pages < <(find docs -name '*.md' -not -path 'docs/agents/*' | sort)
+for page in "${pages[@]}"; do
+  grep -qF "\"${page#docs/}\"" zensical.toml || fail "$page: not listed in nav in zensical.toml"
+done
+
+# Published pages: relative links (not images) point to Markdown files; zensical checks that they
+# resolve.
+while IFS=: read -r file line target; do
+  [[ "$target" =~ ^([a-z][a-z0-9+.-]*:|#) ]] && continue
+  [[ "$target" =~ ^[^#?]+\.md(#.*)?$ ]] || fail "$file:$line: link '$target' must point to a .md file"
+done < <(awk '
+  FNR == 1 { fence = "" }
+  /^[ ]*(```|~~~)/ {
+    match($0, /(```|~~~)/); marker = substr($0, RSTART, 3)
+    if (fence == "") fence = marker; else if (marker == fence) fence = ""
+    next
+  }
+  fence != "" { next }
+  {
+    text = $0
+    gsub(/`[^`]*`/, "", text)
+    gsub(/!\[[^]]*\]\([^)]*\)/, "", text)
+    while (match(text, /\]\([^)]*\)/)) {
+      target = substr(text, RSTART + 2, RLENGTH - 3)
+      sub(/[ ]+"[^"]*"$/, "", target)
+      print FILENAME ":" FNR ":" target
+      text = substr(text, RSTART + RLENGTH)
+    }
+  }
+' "${pages[@]}")
 
 if ((errors > 0)); then
   echo "check-docs: $errors problem(s)" >&2
