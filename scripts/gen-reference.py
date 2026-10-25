@@ -132,11 +132,14 @@ def modules_page(modules):
     for module in modules:
         lines.append(f"| `{module['path']}` | `{module['dir']}` "
                      f"| {cell(module['description'])} |")
-    lines += ["", "## Dependencies", "", "```mermaid", "flowchart LR"]
-    for kind in ("apps", "images", "libs"):
-        lines.append(f"  subgraph {kind}")
+    lines += ["", "## Dependencies", "", "Click the diagram to enlarge it.", "",
+              # The default layout places the layer subgraphs side by side; elk stacks them
+              # (registered by docs/javascripts/mermaid.mjs).
+              "```mermaid", "---", "config:", "  layout: elk", "---", "flowchart TB"]
+    for group in ("images", "apps", "impl", "api"):
+        lines.append(f"  subgraph {group}")
         for module in modules:
-            if module["path"].startswith(f":{kind}:"):
+            if layer(module["path"]) == group:
                 lines.append(f"    {node(module['path'])}[\"{module['path'].split(':')[-1]}\"]")
         lines.append("  end")
     for module in modules:
@@ -144,6 +147,13 @@ def modules_page(modules):
             lines.append(f"  {node(module['path'])} --> {node(dependency)}")
     lines += ["```", ""]
     return "\n".join(lines)
+
+
+def layer(path):
+    kind = path.split(":")[1]
+    if kind != "libs":
+        return kind
+    return "api" if path.endswith("-api") else "impl"
 
 
 def node(path):
