@@ -108,6 +108,7 @@ In the repository open **Settings → Secrets and variables → Actions** and ad
 | `GCP_GKE_CLUSTER_NAME` | variable | the cluster name, e.g. `invoice-watcher-cluster` — OpenTofu creates the cluster under it and `k8s-install` looks for it there |
 | `GCP_ZONE` | variable | a zone in `europe-west1`, e.g. `europe-west1-b` — OpenTofu creates the cluster in it and `k8s-install` looks for it there |
 | `CLOUDFLARE_ZONE_ID` | variable | the Zone ID from step 2 |
+| `PAGES_ENABLED` | variable | `true` — the `Docs` workflow publishes the documentation site only when it is set |
 | `PAT` | secret | the token from step 3 |
 | `CLOUDFLARE_API_TOKEN` | secret | the token from step 2 |
 | `AES_KEY` | secret | a new key from `secret-helper generate-key` ([keys and users](keys-and-users.md#1-generate-the-key)) |
@@ -118,5 +119,22 @@ workflow's own `GITHUB_TOKEN`.
 In **Settings → Advanced Security** enable **Dependabot security updates**, so that Dependabot
 opens pull requests fixing reported vulnerable dependencies. Weekly version updates need no
 setting; they are configured in `.github/dependabot.yml`.
+
+In **Settings → Pages** set **Source** to **GitHub Actions** (or run
+`gh api -X POST repos/<owner>/<repository>/pages -f build_type=workflow`). From then on every push
+to `master` publishes the documentation site at `https://<owner>.github.io/<repository>/`; set
+`site_url` in `zensical.toml` to that address. GitHub Pages for a private repository needs a paid
+GitHub plan.
+
+Protect `master` with the ruleset committed in `.github/rulesets/master.json`:
+
+```shell
+gh api -X POST repos/<owner>/<repository>/rulesets --input .github/rulesets/master.json
+```
+
+From then on `master` changes only by merging a pull request whose checks passed — nobody, not
+even an administrator, can push to it directly, force-push or delete it. A pull request needs no
+approving review, so a single maintainer can merge their own. Rulesets for a private repository
+need a paid GitHub plan.
 
 Next: [create the environment](environment.md).

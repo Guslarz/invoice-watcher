@@ -86,7 +86,8 @@ pointing at it.
 
 `scripts/verify.sh` installs the pinned site generator (Zensical) into `.venv-docs/` in the
 working tree and builds the site; it needs `python3` with `venv` (`python3-venv` on Debian/Ubuntu)
-or `virtualenv`. After one run, preview the site with live reload:
+or `virtualenv`. The `Docs` workflow publishes the site from `master` on every push. After one
+run, preview the site with live reload:
 
 ```shell
 scripts/verify.sh
