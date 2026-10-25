@@ -1,4 +1,4 @@
-package spring
+package springboot
 
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
 

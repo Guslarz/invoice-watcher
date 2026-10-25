@@ -1,5 +1,5 @@
 plugins {
-  id("spring.boot-lib-conventions")
+  id("springboot.lib-conventions")
 }
 
 description = "Event producer that sends events to Kafka."

@@ -1,5 +1,5 @@
 plugins {
-  id("spring.boot-lib-conventions")
+  id("springboot.lib-conventions")
 }
 
 description = "Storage interfaces for users, mailbox configurations and folders."

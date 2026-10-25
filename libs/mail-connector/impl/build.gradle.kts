@@ -1,5 +1,5 @@
 plugins {
-  id("spring.boot-lib-conventions")
+  id("springboot.lib-conventions")
 }
 
 description = "IMAP mailbox connection based on Angus Mail, scanning folders by UID."

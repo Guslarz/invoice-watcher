@@ -1,10 +1,10 @@
-package spring
+package springboot
 
 import docker.DockerImageResourceCategoryName
 import docker.DockerImageResourceType
 
 plugins {
-  id("spring.boot-common-conventions")
+  id("springboot.common-conventions")
   id("org.springframework.boot")
 }
 

@@ -1,5 +1,5 @@
 plugins {
-  id("spring.boot-app-conventions")
+  id("springboot.app-conventions")
 }
 
 description = "Command-line tool that generates AES keys and encrypts and decrypts secrets."

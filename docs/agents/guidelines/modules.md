@@ -50,7 +50,7 @@
   classpath Spring silently ignores `@Validated`. A `mode` record is an enum component with
   `@NotNull`, bound by its `api` module, so a missing or unknown value fails the startup even
   when no implementation matches.
-- The configuration processor (enabled in `spring.boot-common-conventions`) generates metadata
+- The configuration processor (enabled in `springboot.common-conventions`) generates metadata
   that feeds the published configuration reference. Every record (also nested ones) needs Javadoc
   with a `@param` per component — it becomes the property description, and a property without
   one fails the docs build (`scripts/gen-reference.py`). Every description starts with

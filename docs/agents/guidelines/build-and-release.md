@@ -4,8 +4,8 @@
   tests; `build` runs them too (through `check`). Any Checkstyle violation fails the build
   (`maxWarnings = 0`).
 - Convention plugins live in `buildSrc/src/main/kotlin`, grouped by package, so the ID is
-  `<package>.<name>-conventions` (`jvm`, `spring`, `docker`; not `java`, which the JVM reserves).
-  Module build files only pick one (`spring.boot-app-conventions`, `spring.boot-lib-conventions`,
+  `<package>.<name>-conventions` (`jvm`, `springboot`, `docker`; not `java`, which the JVM reserves).
+  Module build files only pick one (`springboot.app-conventions`, `springboot.lib-conventions`,
   `jvm.lib-conventions`, `docker.image-conventions`) and list dependencies. Shared build logic
   goes to `buildSrc`, not to module build files. Precompiled scripts read the catalog with
   `versionCatalogs.named("libs")`.
