@@ -13,7 +13,7 @@ checkstyle {
 }
 
 spotbugs {
-  excludeFilter = rootProject.file("config/spotbugs/exclude.xml")
+  excludeFilter = isolated.rootProject.projectDirectory.file("config/spotbugs/exclude.xml").asFile
 }
 
 // Static analysis only, without tests; `check` (and so `build`) runs the same tasks.

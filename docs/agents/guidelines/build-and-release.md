@@ -12,6 +12,14 @@
 - Settings plugins live in the included build `gradle/build-logic/settings` (wired through
   `pluginManagement { includeBuild(...) }`, because `buildSrc` is built after settings) and are
   tested with Gradle TestKit; the root `check` runs their tests.
+- The configuration cache is on (`gradle.properties`); a problem it reports fails the build. Build
+  logic must not read or configure other projects (no `allprojects`/`subprojects`, `rootProject`
+  only through `isolated.rootProject`), so the build can move to Isolated Projects. The one
+  exception, the version in the root `build.gradle.kts`, and the plugins that still block
+  Isolated Projects are listed in `docs/agents/inbox/isolated-projects.md`.
+- `docs.reference-conventions` (applied by `jvm.common-conventions` and `docker.image-conventions`)
+  gives every module a `docsReference` task, which writes the module's facts to
+  `build/docs-reference/` for `scripts/gen-reference.py`. `./gradlew docsReference` runs it in all modules.
 - Java 25 via toolchain; repositories only in `dependencyResolutionManagement` of
   `settings.gradle.kts` (project repositories fail the build).
 - Dependency versions live in `gradle/libs.versions.toml`; Spring-managed ones have no version.
