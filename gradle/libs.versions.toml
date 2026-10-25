@@ -2,13 +2,13 @@
 axion-release = { id = "pl.allegro.tech.build.axion-release", version = "1.21.4" }
 
 [libraries]
+angus-mail = { group = "org.eclipse.angus", name = "angus-mail" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version = "3.27.6" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3" }
 gradle-docker-plugin = { group = "com.bmuschko", name = "gradle-docker-plugin", version = "10.0.0" }
 h2 = { group = "com.h2database", name = "h2" }
 jackson-databind = { group = "tools.jackson.core", name = "jackson-databind" }
 jakarta-annotations = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
-jakarta-mail = { group = "com.sun.mail", name = "jakarta.mail", version = "2.0.2" }
 jspecify = { group = "org.jspecify", name = "jspecify" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
 lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version = "9.8.2" }

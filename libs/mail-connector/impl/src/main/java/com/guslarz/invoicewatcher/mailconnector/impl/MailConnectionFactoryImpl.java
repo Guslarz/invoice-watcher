@@ -21,9 +21,11 @@ public class MailConnectionFactoryImpl implements MailConnectionFactory {
 
   private static final String IMAP_PROTOCOL = "imaps";
 
+  private final MailConnectorImapProperties imapProperties;
+
   @Override
   public MailConnection createConnection(MailConnectionProperties properties) {
-    Session session = Session.getInstance(new Properties());
+    Session session = Session.getInstance(sessionProperties());
     try {
       Store store = session.getStore(IMAP_PROTOCOL);
       new ConnectVisitor(store, properties).visit(properties.mailCredentials());
@@ -31,6 +33,21 @@ public class MailConnectionFactoryImpl implements MailConnectionFactory {
     } catch (MessagingException e) {
       throw new MailConnectionException(e);
     }
+  }
+
+  /**
+   * Session settings stated explicitly, independent of the defaults of the mail library. No write
+   * timeout: it costs a thread per connection, and the read timeout covers a server that stops
+   * answering.
+   */
+  Properties sessionProperties() {
+    Properties sessionProperties = new Properties();
+    sessionProperties.setProperty("mail.imaps.ssl.checkserveridentity", "true");
+    sessionProperties.setProperty("mail.imaps.connectiontimeout",
+        String.valueOf(imapProperties.connectTimeout().toMillis()));
+    sessionProperties.setProperty("mail.imaps.timeout",
+        String.valueOf(imapProperties.readTimeout().toMillis()));
+    return sessionProperties;
   }
 
   @RequiredArgsConstructor
