@@ -28,7 +28,7 @@ jobs:
     with:
       action: ${{ inputs.action }}
       environment: ${{ inputs.environment }}
-      module: ephemereal
+      module: ephemeral
     secrets:
       PAT: ${{ secrets.PAT }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

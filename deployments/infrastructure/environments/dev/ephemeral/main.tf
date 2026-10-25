@@ -5,10 +5,16 @@ locals {
 terraform {
   backend "gcs" {
     bucket = local.tfstate_bucket_name
-    prefix = "infrastructure/dev/ephemereal"
+    prefix = "infrastructure/dev/ephemeral"
   }
 
+  required_version = ">= 1.12"
+
   required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "7.43.0"
+    }
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "5.23.0"
@@ -27,9 +33,6 @@ provider "cloudflare" {
 
 module "secret" {
   source               = "../../../modules/secret"
-  gcp_region           = var.gcp_region
-  github_registry      = var.github_registry
-  github_username      = var.github_username
   github_pat           = var.github_pat
   cloudflare_api_token = var.cloudflare_api_token
   aes_key              = var.aes_key

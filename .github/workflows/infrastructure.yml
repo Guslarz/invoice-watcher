@@ -84,7 +84,7 @@ jobs:
           project-number: ${{ vars.GCP_PROJECT_NUMBER }}
 
       - name: Tofu Init
-        run: tofu init -input=false
+        run: tofu init -input=false -lockfile=readonly
 
       # The logged plan (a destroy plan for down) is saved and applied as is
       - name: Tofu Plan

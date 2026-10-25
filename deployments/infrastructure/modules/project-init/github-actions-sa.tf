@@ -38,12 +38,14 @@ resource "google_project_iam_member" "sa_role_editor" {
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+# Creating the Firestore database of the ephemeral environment.
 resource "google_project_iam_member" "sa_role_firestore_develop_admin" {
   project = var.gcp_project_id
   role    = "roles/firebase.developAdmin"
   member  = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
+# IAM bindings for workload identity of the application, which roles/editor cannot set.
 resource "google_project_iam_member" "sa_role_iam_admin" {
   project = var.gcp_project_id
   role    = "roles/iam.securityAdmin"

@@ -21,6 +21,9 @@ bucket.
 
 ## 1. Apply `persistent`
 
+You need OpenTofu 1.12 or later. The provider versions come from the committed
+`.terraform.lock.hcl`, so you get the same builds as the workflows.
+
 Log in with the account that is Owner of the project. OpenTofu uses the application default
 credentials:
 

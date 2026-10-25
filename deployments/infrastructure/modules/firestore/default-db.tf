@@ -6,5 +6,6 @@ resource "google_firestore_database" "db" {
   depends_on = [
     google_project_service.firestore_api
   ]
+  # Intended: the database goes away with the ephemeral environment.
   deletion_policy = "DELETE"
 }
