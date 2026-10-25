@@ -30,9 +30,9 @@ or care who consumes the events.
 
     | Field | Type | Content |
     |-------|------|---------|
-    | `sender` | string | The `From` address, e.g. `Shop <billing@shop.example>` |
+    | `sender` | string | The `From` address, e.g. `Shop <billing@shop.example>`; `null` when the message has no `From` header |
     | `title` | string | Subject |
-    | `date` | date-time | When the message was sent, in UTC |
+    | `date` | date-time | When the message was sent, in UTC; when the message has no valid `Date` header, when the server received it |
     | `content` | string | Message content *(always `null` for now — see MAIL-030)* |
 
 - **EVENT-010** The event backend is selected with `invoice-watcher.event-producer.mode`. The only

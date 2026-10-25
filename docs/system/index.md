@@ -69,10 +69,14 @@ server received since the folder's start date, or every message in the folder wh
 date. If the server renumbers a folder (for example after it was rebuilt), the old position no
 longer means anything; InvoiceWatcher notices this and scans the folder as if for the first time.
 
-For every message InvoiceWatcher reads the sender, the subject and the date it was sent.
+For every message InvoiceWatcher reads the sender, the subject and the date it was sent. A message
+without a sender is still published, without one; a message without a valid sent date gets the
+date the server received it instead.
 
 If a mailbox cannot be reached, or a folder cannot be read, the error is logged and the scan moves
-on to the next mailbox. A folder that fails halfway keeps the position of the last message that
+on to the next mailbox. If a user's configuration cannot be processed, the scan moves on to the
+next user. Each failure is logged once, naming the user, the mailbox host and the folder where it
+applies; credentials never appear in the logs. A folder that fails halfway keeps the position of the last message that
 was published, so the next scan continues with the first one that was not.
 
 !!! warning "Current limitations"
@@ -130,9 +134,9 @@ value is a JSON object:
 
 | Field | Type | Content |
 |-------|------|---------|
-| `sender` | string | The `From` address, e.g. `Shop <billing@shop.example>` |
+| `sender` | string | The `From` address, e.g. `Shop <billing@shop.example>`; `null` when the message has none |
 | `title` | string | Subject |
-| `date` | date-time | When the message was sent, in UTC |
+| `date` | date-time | When the message was sent, in UTC; when the server received it if the message has no valid sent date |
 | `content` | string | Message content — always `null` for now |
 
 A message counts as published once Kafka has confirmed its event. The folder's scan position is

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class FirestoreMapper {
     return User.builder()
         .id(doc.getId())
         .name(doc.getName())
-        .scanConfigs(doc.getScanConfigs().stream()
+        .scanConfigs(Optional.ofNullable(doc.getScanConfigs()).orElse(List.of()).stream()
             .map(scanConfig -> toMailScanConfig(scanConfig, folderDocs))
             .toList())
         .build();

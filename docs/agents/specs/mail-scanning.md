@@ -65,17 +65,22 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 ### What is read from a message
 
 - **MAIL-030** For each picked-up message InvoiceWatcher reads the sender, the subject, the sent
-  date (converted to UTC) and the content. *(gap: content is not read yet —
+  date (converted to UTC) and the content. A message without a `From` header has no sender; a
+  message without a valid `Date` header gets the date the server received it instead. *(gap: content is not read yet —
   `docs/agents/inbox/mail-content-not-read.md`)*
 
 ### Failures
 
-- **MAIL-040** If connecting to a mailbox fails, the error is logged and the scan continues with
-  the next mailbox configuration.
+- **MAIL-040** If connecting to or scanning a mailbox fails outside a single folder, the error is
+  logged and the scan continues with the next mailbox configuration.
 - **MAIL-041** If scanning a folder fails, the error is logged; the remaining folders of the same
   mailbox are skipped in this scan and the scan continues with the next mailbox configuration.
   The failed folder's position moves to the last message handed over before the failure, so the
   next scan continues with the first one that was not.
+- **MAIL-042** A failure while processing one user is logged, and the scan continues with the
+  next user.
+- **MAIL-043** Each failure is logged once, naming the user, the mailbox host and the folder where
+  it applies. Logs never contain credentials.
 
 ## Acceptance
 
@@ -102,8 +107,16 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
   Without a start date, both are published.
 - **MAIL-024** Given a stored UIDVALIDITY V while the server reports W, when the folder is scanned,
   then it is scanned as never scanned and the position is saved with W.
+- **MAIL-030** Given a folder with messages 1–3, where message 2 has no `From` and no `Date`
+  header, when the folder is scanned, then three events are published, event 2 with
+  `sender: null` and the received date as `date`, and the position moves to 3.
 - **MAIL-040** Given two mailbox configurations where the first has a wrong password, when a scan
   runs, then an error is logged for the first and messages of the second are published.
+- **MAIL-042** Given two users where reading the first user's mailbox configuration throws, when a
+  scan runs, then an error is logged for the first and messages of the second are published.
+- **MAIL-043** Given a folder whose scan fails, when a scan runs, then exactly one error line is
+  logged for it, naming the user, host and folder, and containing neither the username nor the
+  password of the mailbox.
 
 ## Configuration
 

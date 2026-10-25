@@ -2,6 +2,7 @@ package com.guslarz.invoicewatcher.mailconnector.impl;
 
 import com.guslarz.invoicewatcher.mailconnector.api.FolderMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailFolderMessages;
+import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
 import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
 import jakarta.mail.Folder;
@@ -127,6 +128,76 @@ class MailConnectionImplTest {
 
     // then
     assertThat(result.uidValidity()).isEqualTo(UID_VALIDITY);
+    assertThat(result.messages()).extracting(FolderMessage::uid).containsExactly(2L);
+  }
+
+  @Test
+  @DisplayName("MAIL-030: a message without From and Date has no sender and the date the server received it")
+  void readsMessageWithoutFromAndDate() throws Exception {
+    // given
+    TestMessage withoutHeaders = message(2, START_DATE.plusHours(1));
+    when(withoutHeaders.message().getFrom()).thenReturn(null);
+    when(withoutHeaders.message().getSentDate()).thenReturn(null);
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
+        message(1, START_DATE),
+        withoutHeaders,
+        message(3, START_DATE.plusHours(2))));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, new ScanPosition(UID_VALIDITY, 0)));
+
+    // then
+    assertThat(result.messages()).extracting(FolderMessage::uid).containsExactly(1L, 2L, 3L);
+    MailMessage message = result.messages().get(1).message();
+    assertThat(message.sender()).isNull();
+    assertThat(message.date()).isEqualTo(START_DATE.plusHours(1));
+  }
+
+  @Test
+  @DisplayName("MAIL-030: a message with an empty From header has no sender")
+  void readsMessageWithEmptyFrom() throws Exception {
+    // given
+    TestMessage withoutSender = message(1, START_DATE);
+    when(withoutSender.message().getFrom()).thenReturn(new InternetAddress[0]);
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(withoutSender));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, null));
+
+    // then
+    assertThat(result.messages()).extracting(message -> message.message().sender()).containsOnlyNulls();
+  }
+
+  @Test
+  @DisplayName("MAIL-030: a message without sent and received date has no date")
+  void readsMessageWithoutAnyDate() throws Exception {
+    // given
+    TestMessage withoutDates = message(1, START_DATE);
+    when(withoutDates.message().getSentDate()).thenReturn(null);
+    when(withoutDates.message().getReceivedDate()).thenReturn(null);
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(withoutDates));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, null));
+
+    // then
+    assertThat(result.messages()).extracting(message -> message.message().date()).containsOnlyNulls();
+  }
+
+  @Test
+  @DisplayName("MAIL-023: a message the start date search selected is kept when it has no received date")
+  void keepsSearchedMessageWithoutReceivedDate() throws Exception {
+    // given
+    TestMessage withoutReceivedDate = message(2, START_DATE.plusDays(1));
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
+        message(1, START_DATE.minusDays(1)),
+        withoutReceivedDate));
+    when(withoutReceivedDate.message().getReceivedDate()).thenReturn(null);
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(START_DATE, null));
+
+    // then
     assertThat(result.messages()).extracting(FolderMessage::uid).containsExactly(2L);
   }
 

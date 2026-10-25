@@ -6,9 +6,13 @@ import com.guslarz.invoicewatcher.mailproducer.dao.api.service.FolderConfigDaoSe
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.entity.FolderConfigEntity;
 import com.guslarz.invoicewatcher.mailproducer.dao.jpa.repository.FolderConfigRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FolderConfigDaoServiceJpaImpl implements FolderConfigDaoService {
@@ -18,9 +22,21 @@ public class FolderConfigDaoServiceJpaImpl implements FolderConfigDaoService {
   @Override
   @Transactional
   public void updateScanPosition(FolderConfig folderConfig, ScanPosition position) {
-    FolderConfigEntity entity = folderConfigRepository.findById(Long.parseLong(folderConfig.id())).orElseThrow();
-    entity.uidValidity(position.uidValidity());
-    entity.lastUid(position.lastUid());
-    folderConfigRepository.save(entity);
+    Optional<FolderConfigEntity> entity = id(folderConfig).flatMap(folderConfigRepository::findById);
+    if (entity.isEmpty()) {
+      log.warn("Folder {} no longer exists, its scan position is not saved", folderConfig.name());
+      return;
+    }
+    entity.get().uidValidity(position.uidValidity());
+    entity.get().lastUid(position.lastUid());
+    folderConfigRepository.save(entity.get());
+  }
+
+  private static Optional<Long> id(FolderConfig folderConfig) {
+    try {
+      return Optional.ofNullable(folderConfig.id()).map(Long::parseLong);
+    } catch (NumberFormatException e) {
+      return Optional.empty();
+    }
   }
 }
