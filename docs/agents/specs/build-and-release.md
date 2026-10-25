@@ -40,6 +40,12 @@ the dev environment can run, and a release produces a versioned image and a GitH
   version `0.0.0`.
 - **RELEASE-005** The mail producer image runs the application on Java 25 (Eclipse Temurin JRE)
   and carries OCI labels with the source repository, version and build time.
+- **RELEASE-006** Every push to `master` builds the documentation site and publishes it at
+  https://guslarz.github.io/invoice-watcher/. Every pull request builds the site in strict mode
+  without publishing it; a broken link or a structure check failure blocks the change.
+- **RELEASE-007** `master` changes only by merging a pull request whose checks (RELEASE-001,
+  RELEASE-006) passed or were skipped; direct pushes, force pushes and deleting `master` are
+  rejected, also for repository administrators.
 
 ## Acceptance
 
@@ -70,6 +76,14 @@ the dev environment can run, and a release produces a versioned image and a GitH
   the build.
 - **RELEASE-003** Given the latest release is `v1.2.0`, when `Release` runs with `minor`, then
   tag `v1.3.0`, image tag `1.3.0` and GitHub release `v1.3.0` exist.
+- **RELEASE-006** Given a change to a page under `docs/` is merged, when the `Docs` workflow
+  finishes, then the page at https://guslarz.github.io/invoice-watcher/ shows the change.
+- **RELEASE-006** Given a pull request with a broken link in `docs/`, when it is opened, then the
+  `Docs` workflow fails and nothing is published.
+- **RELEASE-007** Given a local commit on `master`, when it is pushed to GitHub, then the push is
+  rejected.
+- **RELEASE-007** Given a pull request whose `build` check failed, when it is viewed on GitHub,
+  then it cannot be merged.
 
 ## Out of scope
 

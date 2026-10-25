@@ -13,7 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Named site, not build: required checks are matched by job name and Build and analyze has a build job
+  site:
     runs-on: ubuntu-26.04
     steps:
       - name: Checkout sources
@@ -42,9 +43,9 @@ jobs:
           path: site
 
   deploy:
-    # Pages is enabled later (docs/agents/inbox/make-repo-public-and-enable-pages.md)
+    # Skipped in copies of the repository without GitHub Pages (docs/setup/one-time.md)
     if: ${{ vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
-    needs: build
+    needs: site
     runs-on: ubuntu-26.04
     permissions:
       pages: write
