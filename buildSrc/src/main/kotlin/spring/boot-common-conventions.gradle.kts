@@ -17,6 +17,12 @@ dependencyManagement {
   }
 }
 
+// The configuration processor reads property descriptions from Javadoc, which a type that was not
+// recompiled no longer has: an incremental compile would write metadata without them.
+tasks.named<JavaCompile>("compileJava") {
+  options.isIncremental = false
+}
+
 dependencies {
   annotationProcessor(libs.findLibrary("spring-boot-configuration-processor").get())
 
