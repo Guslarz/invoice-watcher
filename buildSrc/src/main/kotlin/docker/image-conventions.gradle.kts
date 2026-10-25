@@ -2,17 +2,14 @@ package docker
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
-import com.bmuschko.gradle.docker.tasks.image.DockerSaveImage
-import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.api.attributes.Category
 import org.gradle.api.tasks.Copy
-import org.gradle.kotlin.dsl.filter
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.of
 import org.gradle.kotlin.dsl.register
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 plugins {
+  base
   id("com.bmuschko.docker-remote-api")
 }
 
@@ -23,11 +20,14 @@ val dockerProperties = providers.gradlePropertiesPrefixedBy(propertyPrefix).map 
 val registryProperty = dockerProperties.map { it["registry"] }
 
 val resourcesDir = layout.buildDirectory.dir("resources")
-val imageVersion = dockerProperties.map { it["tag"] ?: version }
-val image = dockerProperties.map {
-  "${it["registry"]?.plus("/") ?: "" }${it["namespace"]?.plus("/") ?: ""}${name}:${imageVersion.get()}"
+val imageName = name
+val projectVersion = providers.provider { version.toString() }
+val imageVersion = dockerProperties.zip(projectVersion) { properties, version ->
+  properties["tag"] ?: version
 }
-val imageFile = layout.buildDirectory.file("${name}-${imageVersion.get()}.tar.gz")
+val image = dockerProperties.zip(imageVersion) { properties, tag ->
+  "${properties["registry"]?.plus("/") ?: ""}${properties["namespace"]?.plus("/") ?: ""}$imageName:$tag"
+}
 
 val dockerImageResource = configurations.dependencyScope("dockerImageResource")
 val resolvableDockerImageResource = configurations.resolvable("resolvableDockerImageResource") {
@@ -52,39 +52,32 @@ docker {
 
 tasks {
   val copySources = register<Copy>("copySources") {
-    from("src") {
-      filter<ReplaceTokens>("tokens" to mapOf(
-        "PROJECT_VERSION" to version,
-        "DATE_NOW" to ZonedDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
-      ))
-    }
+    from("src")
     into(resourcesDir)
   }
 
+  // Dockerfiles copy the application jar as app.jar, independent of the app's name and version.
   val copyDockerImageResource = register<Copy>("copyDockerImageResource") {
     from(resolvableDockerImageResource)
     into(resourcesDir)
+    rename(".*\\.jar", "app.jar")
   }
 
   val dockerBuildImage = register<DockerBuildImage>("dockerBuildImage") {
     dependsOn(copySources, copyDockerImageResource)
     images.add(image)
     inputDir.set(resourcesDir)
-  }
-
-  val dockerSaveImage = register<DockerSaveImage>("dockerSaveImage") {
-    dependsOn(dockerBuildImage)
-    images.add(image)
-    destFile.set(imageFile)
+    buildArgs.put("PROJECT_VERSION", projectVersion)
+    buildArgs.put("BUILD_DATE", providers.of(BuildTimeValueSource::class) {})
   }
 
   val dockerPushImage = register<DockerPushImage>("dockerPushImage") {
-    dependsOn(dockerSaveImage)
+    dependsOn(dockerBuildImage)
     images.add(image)
   }
 
-  register("build") {
-    dependsOn(dockerSaveImage)
+  assemble {
+    dependsOn(dockerBuildImage)
   }
 
   register("publish") {
