@@ -1,0 +1,3 @@
+- op: add
+  path: /spec/template/metadata/labels/version
+  value: 4.3.1

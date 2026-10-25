@@ -35,6 +35,7 @@ Cloudflare origin certificate, so the *Flexible* mode does not work.
 | kubectl | any recent | Optional: inspecting the cluster (`gcloud components install kubectl`); rendering the kustomize environments |
 | [helmfile](https://helmfile.readthedocs.io/) + [helm](https://helm.sh/docs/intro/install/) | 1.7.x / 4.2.x | Optional: rendering the helmfile |
 | [kubeconform](https://github.com/yannh/kubeconform) | 0.8.x | Optional: validating the rendered manifests |
+| [yamllint](https://yamllint.readthedocs.io/) | 1.37.x | Optional: checking the YAML style of the deployment files |
 
 `scripts/check-deployments.sh` (part of `scripts/verify.sh`) skips the checks whose tool is
 missing; CI installs every tool, and there a missing one fails the check.

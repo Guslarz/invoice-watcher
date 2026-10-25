@@ -23,8 +23,14 @@ Rules:
   `tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64`.
 - Secrets never go into the repository — Secret Manager + external-secrets (ADR-0006).
 - Every container declares probes, CPU/memory requests and a memory limit; no CPU limits.
+- The `version` pod label is set by the overlay (`overlays/<env>/deployment-version-patch.yml`),
+  never in `base/`.
+- YAML files end in `.yml`. `.yaml` only where a tool requires the name: `Chart.yaml` and `values.yaml`
+  of a chart, `helmfile.yaml.gotmpl`.
+- YAML style: 2-space indentation, sequences indented under their key, newline at end of file;
+  enforced by yamllint with `deployments/.yamllint.yml`.
 - Changes under `deployments/` are a planning trigger (`AGENTS.md`) and impact `OPERATIONS`.
 - Run `tofu fmt -recursive deployments/infrastructure` before committing.
-- `scripts/check-deployments.sh` runs the same checks as the `deployments` CI job (OpenTofu
-  formatting and validation, helmfile and kustomize rendering, kubeconform schema validation);
+- `scripts/check-deployments.sh` runs the same checks as the `deployments` CI job (YAML style,
+  OpenTofu formatting and validation, helmfile and kustomize rendering, kubeconform schema validation);
   a missing tool skips its check locally and fails it in CI (`CI` set).

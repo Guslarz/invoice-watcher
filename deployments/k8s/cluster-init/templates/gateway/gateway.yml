@@ -10,7 +10,7 @@ spec:
       protocol: HTTPS
       allowedRoutes:
         namespaces:
-            from: All
+          from: All
       tls:
         certificateRefs:
           - name: domain-cert-secret
