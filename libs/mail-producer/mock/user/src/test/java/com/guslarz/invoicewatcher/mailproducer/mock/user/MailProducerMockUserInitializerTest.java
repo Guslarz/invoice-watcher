@@ -7,7 +7,9 @@ import com.guslarz.invoicewatcher.secret.api.Secret;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.boot.DefaultApplicationArguments;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -28,13 +30,13 @@ class MailProducerMockUserInitializerTest {
   );
 
   @Test
-  @DisplayName("USER-031: resets the mock user's folders to a start date ten days back and no position")
+  @DisplayName("USER-031: resets the mock user's folders to a UTC start date ten days back and no position")
   void resetsFoldersToStartDateWithoutPosition() {
     // given
-    final ZonedDateTime tenDaysAgo = ZonedDateTime.now().minusDays(10);
+    final ZonedDateTime tenDaysAgo = ZonedDateTime.now(ZoneOffset.UTC).minusDays(10);
 
     // when
-    uut.upsertMockUser();
+    uut.run(new DefaultApplicationArguments());
 
     // then
     ArgumentCaptor<User> user = ArgumentCaptor.forClass(User.class);
@@ -43,6 +45,7 @@ class MailProducerMockUserInitializerTest {
     assertThat(folders).extracting(FolderConfig::name).containsExactly("INBOX", "Invoices");
     assertThat(folders).allSatisfy(folder -> {
       assertThat(folder.startDate()).isCloseTo(tenDaysAgo, within(1, ChronoUnit.MINUTES));
+      assertThat(folder.startDate().getZone()).isEqualTo(ZoneOffset.UTC);
       assertThat(folder.uidValidity()).isNull();
       assertThat(folder.lastUid()).isNull();
     });
