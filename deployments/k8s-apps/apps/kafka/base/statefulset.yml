@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+spec:
+  replicas: 1
+  serviceName: kafka
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      securityContext:
+        # the apache/kafka image runs as appuser (uid and gid 1000)
+        fsGroup: 1000
+      containers:
+        - name: kafka
+          image: apache/kafka:4.3.1
+          envFrom:
+            - configMapRef:
+                name: kafka-env-config-map
+          env:
+            # a directory below the mount point, so the disk's lost+found is not in the log directory
+            - name: KAFKA_LOG_DIRS
+              value: /var/lib/kafka/data/logs
+          ports:
+            - containerPort: 9092
+            - containerPort: 9093
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka/data
+          startupProbe:
+            tcpSocket:
+              port: 9092
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket:
+              port: 9092
+          readinessProbe:
+            tcpSocket:
+              port: 9092
+          resources:
+            requests:
+              cpu: 200m
+              memory: 768Mi
+            limits:
+              memory: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        # bound to the static volume of the cluster-init chart, never provisioned dynamically
+        storageClassName: ""
+        volumeName: kafka-data
+        resources:
+          requests:
+            # Keep in sync with the disk size in deployments/infrastructure/modules/gke/disk.tf
+            storage: 10Gi

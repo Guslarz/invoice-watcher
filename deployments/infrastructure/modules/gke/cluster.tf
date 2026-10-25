@@ -21,6 +21,13 @@ resource "google_container_cluster" "cluster" {
     channel = "CHANNEL_STANDARD"
   }
 
+  # Kafka's data lives on a Compute Engine disk mounted through this driver
+  addons_config {
+    gce_persistent_disk_csi_driver_config {
+      enabled = true
+    }
+  }
+
   depends_on = [
     google_project_service.gke_api,
   ]

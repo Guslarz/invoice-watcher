@@ -49,13 +49,14 @@ while it is not needed. After it is up, application changes are deployed automat
   `CLOUDFLARE_API_TOKEN` secret is not set.
 - **DEPLOY-008** The workflow logs the OpenTofu plan of the action it runs — a destroy plan for
   `down` — and executes exactly that saved plan.
+- **DEPLOY-038** `down` leaves no disks of the environment behind.
 
 ### Cloud resources (per environment)
 
 - **DEPLOY-010** `up` creates, in region `europe-west1`: a GKE cluster with one preemptible
   `e2-standard-2` node, a Firestore database in Datastore mode, Secret Manager secrets (GitHub
-  token, Cloudflare token, AES key), a global IP address for the gateway,
-  and a proxied wildcard DNS record `*.guslarz.com` in Cloudflare pointing at it.
+  token, Cloudflare token, AES key), a global IP address for the gateway, a 10 GiB persistent
+  disk for Kafka, and a proxied wildcard DNS record `*.guslarz.com` in Cloudflare pointing at it.
 - **DEPLOY-011** The application reaches Firestore through workload identity — no service
   account keys are stored.
 - **DEPLOY-012** OpenTofu creates the cluster in the zone and under the name given by the
@@ -76,7 +77,8 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-030** ArgoCD keeps the namespace `invoice-watcher-<env>` in sync with
   `deployments/k8s-apps/environments/<env>` on `master`, pruning removed resources and reverting
   manual changes.
-- **DEPLOY-031** The dev environment runs Kafka (single node, no persistent storage) and the mail
+- **DEPLOY-031** The dev environment runs Kafka (single node; its data is kept on the persistent
+  disk from DEPLOY-010, so it survives pod and node restarts, and is deleted by `down`) and the mail
   producer using the image tagged `snapshot`, pulled on every start, so restarting the pod picks
   up the latest `master` build.
 - **DEPLOY-032** Application configuration is passed as environment variables generated from
@@ -124,6 +126,10 @@ while it is not needed. After it is up, application changes are deployed automat
   `resources.requests.memory` and `resources.limits.memory`, and no `resources.limits.cpu`.
 - **DEPLOY-036** Given the mail producer is running, when `/actuator/health/liveness` stops
   answering, then the pod is restarted; while it starts, the pod is not Ready.
+- **DEPLOY-031** Given an event published to `all-mails`, when the Kafka pod is deleted and comes
+  back, then the event can still be consumed from the beginning of the topic.
+- **DEPLOY-038** Given the environment is up, when `down` finishes, then
+  `gcloud compute disks list` shows no disk of the environment.
 - **DEPLOY-037** Given Kafka is starting, when port 9092 does not accept connections yet, then the
   pod is not Ready.
 

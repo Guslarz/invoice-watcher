@@ -44,7 +44,7 @@ docker compose -f .run/files/kafka.yml exec kafka \
 In the dev environment, the same tool inside the Kafka pod:
 
 ```shell
-kubectl -n invoice-watcher-dev exec -it deploy/kafka -- \
+kubectl -n invoice-watcher-dev exec -it kafka-0 -- \
   /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 \
   --topic all-mails --from-beginning --property print.key=true
 ```
@@ -97,6 +97,6 @@ kubectl -n invoice-watcher-dev logs deploy/mail-producer -f
 ## ArgoCD
 
 At `https://argocd.<domain>` the application `invoice-watcher-dev` shows the resources of the
-namespace `invoice-watcher-dev`: the `kafka` and `mail-producer` deployments, the Kafka service,
-the generated config maps, the `app-sa` service account and the image pull secret. It is
+namespace `invoice-watcher-dev`: the `kafka` stateful set with its volume claim, the `mail-producer`
+deployment, the Kafka service, the generated config maps, the `app-sa` service account and the image pull secret. It is
 *Synced* when the cluster matches `deployments/k8s-apps/environments/dev` on `master`.

@@ -5,7 +5,7 @@ resources:
 patches:
   - path: deployment-version-patch.yml
     target:
-      kind: Deployment
+      kind: StatefulSet
 configMapGenerator:
   - name: kafka-env-config-map
     behavior: create

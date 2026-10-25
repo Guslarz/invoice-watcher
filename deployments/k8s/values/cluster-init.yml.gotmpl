@@ -1,4 +1,6 @@
 gcpProjectNumber: {{ requiredEnv "GCP_PROJECT_NUMBER" | quote }}
+gcpProjectId: {{ requiredEnv "GCP_PROJECT_ID" | quote }}
+gcpZone: {{ requiredEnv "GCP_ZONE" | quote }}
 domain: {{ .Values.domain }}
 environment: {{ .Values.environment }}
 github:

@@ -2,6 +2,9 @@
 
 # GCP project number, used in Secret Manager resource names of the secret syncs.
 gcpProjectNumber: ""
+# GCP project ID and the zone of the cluster, used in the handle of Kafka's data disk.
+gcpProjectId: ""
+gcpZone: ""
 # Base domain; the origin certificate covers its wildcard (*.<domain>).
 domain: ""
 # Environment name; selects the k8s-apps overlay and the application namespace.
