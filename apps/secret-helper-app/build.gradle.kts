@@ -8,6 +8,8 @@ dependencies {
   implementation(projects.libs.utilAes)
 
   implementation(libs.picocli)
+
+  implementation(libs.jspecify)
 }
 
 // Stable name, so the tool can be run as `java -jar apps/secret-helper-app/build/libs/secret-helper.jar`
