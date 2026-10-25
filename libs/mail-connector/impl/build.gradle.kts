@@ -2,7 +2,7 @@ plugins {
   id("spring.boot-lib-conventions")
 }
 
-description = "IMAP mailbox connection based on Jakarta Mail, with date-based message search."
+description = "IMAP mailbox connection based on Jakarta Mail, scanning folders by UID."
 
 dependencies {
   api(projects.libs.mailConnectorApi)
