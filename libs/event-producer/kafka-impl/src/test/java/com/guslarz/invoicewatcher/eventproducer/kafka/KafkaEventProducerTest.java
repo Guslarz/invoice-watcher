@@ -11,8 +11,8 @@ import org.springframework.kafka.support.SendResult;
 
 import java.util.concurrent.CompletableFuture;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -30,8 +30,11 @@ class KafkaEventProducerTest {
     when(kafkaTemplate.send(any(ProducerRecord.class)))
         .thenReturn(CompletableFuture.completedFuture(mock(SendResult.class)));
 
-    // when / then
-    assertThatCode(() -> uut.send("all-mails", event())).doesNotThrowAnyException();
+    // when
+    Throwable thrown = catchThrowable(() -> uut.send("all-mails", event()));
+
+    // then
+    assertThat(thrown).isNull();
   }
 
   @Test
@@ -42,8 +45,11 @@ class KafkaEventProducerTest {
     when(kafkaTemplate.send(any(ProducerRecord.class)))
         .thenReturn(CompletableFuture.failedFuture(cause));
 
-    // when / then
-    assertThatThrownBy(() -> uut.send("all-mails", event()))
+    // when
+    Throwable thrown = catchThrowable(() -> uut.send("all-mails", event()));
+
+    // then
+    assertThat(thrown)
         .isInstanceOf(EventDeliveryException.class)
         .hasCause(cause);
   }

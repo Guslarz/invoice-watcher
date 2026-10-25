@@ -35,7 +35,7 @@ class MailConnectionImplTest {
 
   @Test
   @DisplayName("MAIL-020: picks up messages with a higher UID than the position, in UID order")
-  void shouldReturnMessagesAfterPositionInUidOrder() throws Exception {
+  void returnsMessagesAfterPositionInUidOrder() throws Exception {
     // given
     MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
         message(10, START_DATE),
@@ -57,7 +57,7 @@ class MailConnectionImplTest {
 
   @Test
   @DisplayName("MAIL-022: an empty folder yields nothing")
-  void shouldReturnNothingForEmptyFolder() throws Exception {
+  void returnsNothingForEmptyFolder() throws Exception {
     // given
     MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages());
 
@@ -70,7 +70,7 @@ class MailConnectionImplTest {
 
   @Test
   @DisplayName("MAIL-022: a folder whose last UID equals the position yields nothing")
-  void shouldReturnNothingWhenLastUidEqualsPosition() throws Exception {
+  void returnsNothingWhenLastUidEqualsPosition() throws Exception {
     // given
     MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
         message(11, START_DATE),
@@ -85,7 +85,7 @@ class MailConnectionImplTest {
 
   @Test
   @DisplayName("MAIL-023: a folder without position picks up messages received at or after the start date")
-  void shouldReturnMessagesReceivedSinceStartDateWithoutPosition() throws Exception {
+  void returnsMessagesReceivedSinceStartDateWithoutPosition() throws Exception {
     // given
     MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
         message(1, START_DATE.minusDays(1)),
@@ -101,7 +101,7 @@ class MailConnectionImplTest {
 
   @Test
   @DisplayName("MAIL-023: a folder without position and start date picks up all messages")
-  void shouldReturnAllMessagesWithoutPositionAndStartDate() throws Exception {
+  void returnsAllMessagesWithoutPositionAndStartDate() throws Exception {
     // given
     MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
         message(1, START_DATE.minusDays(1)),
@@ -116,7 +116,7 @@ class MailConnectionImplTest {
 
   @Test
   @DisplayName("MAIL-024: a changed UIDVALIDITY discards the position and scans from the start date")
-  void shouldScanFromStartDateWhenUidValidityChanged() throws Exception {
+  void scansFromStartDateWhenUidValidityChanged() throws Exception {
     // given
     MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
         message(1, START_DATE.minusDays(1)),

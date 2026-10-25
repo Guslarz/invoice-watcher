@@ -10,7 +10,7 @@ import javax.crypto.SecretKey;
 import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 class AesUtilTest {
 
@@ -20,7 +20,7 @@ class AesUtilTest {
       AesUtil.decodeSecretKey("Qk9Hk2m1xv8n0pYt3cR7sLw5aZ9eJ4uF6hD2gB8iK0M=");
 
   @Test
-  void testEncryptAndDecrypt() {
+  void decryptsWhatWasEncrypted() {
     // given
     String input = "dummyTextąść:/";
 
@@ -68,16 +68,23 @@ class AesUtilTest {
     // given
     String encrypted = AesUtil.encrypt("password", KEY);
 
-    // when / then
-    assertThatThrownBy(() -> AesUtil.decrypt(encrypted, OTHER_KEY))
-        .isInstanceOf(AEADBadTagException.class);
+    // when
+    Throwable thrown = catchThrowable(() -> AesUtil.decrypt(encrypted, OTHER_KEY));
+
+    // then
+    assertThat(thrown).isInstanceOf(AEADBadTagException.class);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"", "abc", "AAAAAAAAAAAAAAAA"})
   void decryptRejectsTooShortInput(String input) {
-    // when / then
-    assertThatThrownBy(() -> AesUtil.decrypt(input, KEY))
+    // given input from the parameter
+
+    // when
+    Throwable thrown = catchThrowable(() -> AesUtil.decrypt(input, KEY));
+
+    // then
+    assertThat(thrown)
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("too short");
   }

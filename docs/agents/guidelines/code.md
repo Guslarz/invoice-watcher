@@ -5,6 +5,8 @@
 - Lombok is applied to every module (`jvm.common-conventions`). Prefer records +
   `@Builder` for data, `@RequiredArgsConstructor` for injection, `@Slf4j` for logging,
   `@UtilityClass` for constant holders.
+- Nullness annotations come from jspecify (`org.jspecify.annotations`), declared as
+  `implementation(libs.jspecify)` in every module that uses them; not JSR-305 `javax.annotation`.
 - Logging: `log.info("> Start ...")` / `log.info("< Finished ...")` brackets around units of work;
   never log credentials or decrypted secrets.
 - Secrets (passwords, tokens) are held as `Secret` from `libs/secret/api`, never as plain `String`
@@ -13,6 +15,10 @@
 ## Tests
 
 - JUnit 5 (+ `@ParameterizedTest` with `@MethodSource` for tables) and AssertJ.
+- Method names describe the behavior in third person, without a `should` or `test` prefix:
+  `savesPositionOnceWhenAllEventsConfirmed`.
 - Body structured with `// given`, `// when`, `// then`; the object under test is named `uut`.
+  `when` and `then` stay separate — capture an expected exception with `catchThrowable` and assert
+  on it under `// then`.
 - Tests that verify a spec clause name it: `@DisplayName("MAIL-004: ...")`.
 - Pure unit tests by default; Spring context tests only for auto-configuration wiring.
