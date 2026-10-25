@@ -4,7 +4,7 @@ resources:
   - ../../base
 images:
   - name: invoice-watcher/mail-producer
-    newName: ghcr.io/guslarz/invoice-watcher/mail-producer-docker
+    newName: ghcr.io/guslarz/invoice-watcher/mail-producer
     newTag: snapshot
 patches:
   - path: deployment-version-patch.yml
