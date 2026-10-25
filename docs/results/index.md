@@ -67,16 +67,26 @@ INFO  [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : < Finished processing u
 INFO  [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : < Finished mail producer task
 ```
 
-A mailbox that cannot be reached is logged and skipped; the scan goes on with the next one
-(MAIL-040):
+A mailbox that cannot be reached is logged and skipped; the scan goes on with the next one:
 
 ```text
-ERROR [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : Error processing scan config: MailScanConfig[server=MailServer[host=imap.example.com, port=993], ...]
+ERROR [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : Error scanning mailbox imap.example.com of user jan@example.com
 com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException: org.eclipse.angus.mail.util.MailConnectException: Couldn't connect to host, port: imap.example.com, 993; ...
-INFO  [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : < Finished scanning for config: imap.example.com
 ```
 
-The password is never logged, neither in plain text nor encrypted.
+A folder that cannot be read is logged once, with the folder, mailbox and user; the remaining
+folders of that mailbox wait for the next scan:
+
+```text
+ERROR [scheduling-1] c.g.i.m.task.MailProducerTaskImpl : Error scanning folder Invoices of mailbox imap.example.com of user jan@example.com
+com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException: jakarta.mail.FolderNotFoundException: Invoices not found
+```
+
+A user whose configuration cannot be read is logged as `Error processing user <name>` and the scan
+goes on with the next user.
+
+Neither the mailbox username nor the password is logged, the password neither in plain text nor
+encrypted.
 
 In the cluster:
 

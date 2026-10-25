@@ -35,34 +35,69 @@ public class MailProducerTaskImpl implements MailProducerTask {
   }
 
   private void processUser(User user) {
-    log.info("> Processing user: {}", user.name());
-    user.scanConfigs().forEach(scanConfig -> scan(user, scanConfig));
-    log.info("< Finished processing user: {}", user.name());
+    try {
+      log.info("> Processing user: {}", user.name());
+      user.scanConfigs().forEach(scanConfig -> scan(user, scanConfig));
+      log.info("< Finished processing user: {}", user.name());
+    } catch (Exception e) {
+      log.error("Error processing user {}", user.name(), e);
+    }
   }
 
   private void scan(User user, MailScanConfig scanConfig) {
-    log.info("> Scanning for config: {}", scanConfig.server().host());
-    try (MailConnection mailConnection = mailConnectionFactory.createConnection(connectionProperties(scanConfig))) {
-      scanConfig.folders().forEach(folderConfig -> scanFolder(mailConnection, MailProcessorContext.builder()
+    try {
+      log.info("> Scanning for config: {}", scanConfig.server().host());
+      MailConnection mailConnection = mailConnectionFactory.createConnection(connectionProperties(scanConfig));
+      try {
+        scanFolders(mailConnection, user, scanConfig);
+      } finally {
+        close(mailConnection, user, scanConfig);
+      }
+      log.info("< Finished scanning for config: {}", scanConfig.server().host());
+    } catch (Exception e) {
+      log.error("Error scanning mailbox {} of user {}", host(scanConfig), user.name(), e);
+    }
+  }
+
+  /**
+   * Scans the folders in order; the first failed folder skips the remaining ones.
+   */
+  private void scanFolders(MailConnection mailConnection, User user, MailScanConfig scanConfig) {
+    for (FolderConfig folderConfig : scanConfig.folders()) {
+      boolean scanned = scanFolder(mailConnection, MailProcessorContext.builder()
           .user(user)
           .scanConfig(scanConfig)
           .folderConfig(folderConfig)
-          .build()));
-    } catch (Exception e) {
-      log.error("Error processing scan config: {}", scanConfig, e);
+          .build());
+      if (!scanned) {
+        return;
+      }
     }
-    log.info("< Finished scanning for config: {}", scanConfig.server().host());
   }
 
-  private void scanFolder(MailConnection mailConnection, MailProcessorContext context) {
+  private boolean scanFolder(MailConnection mailConnection, MailProcessorContext context) {
     try {
       log.info("> Scanning folder: {}", context.folderConfig().name());
       processEmailMessages(context, mailConnection.getEmailMessages(query(context.folderConfig())));
       log.info("< Finished scanning folder: {}", context.folderConfig().name());
+      return true;
     } catch (Exception e) {
-      log.error("Error scanning folder: {}", context.folderConfig(), e);
-      throw e;
+      log.error("Error scanning folder {} of mailbox {} of user {}", context.folderConfig().name(),
+          host(context.scanConfig()), context.user().name(), e);
+      return false;
     }
+  }
+
+  private void close(MailConnection mailConnection, User user, MailScanConfig scanConfig) {
+    try {
+      mailConnection.close();
+    } catch (Exception e) {
+      log.warn("Error closing connection to mailbox {} of user {}", host(scanConfig), user.name(), e);
+    }
+  }
+
+  private static String host(MailScanConfig scanConfig) {
+    return scanConfig.server() != null ? scanConfig.server().host() : null;
   }
 
   /**

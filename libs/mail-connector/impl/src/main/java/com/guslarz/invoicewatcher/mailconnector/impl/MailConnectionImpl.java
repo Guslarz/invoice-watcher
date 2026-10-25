@@ -8,6 +8,7 @@ import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
 import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
 import com.guslarz.invoicewatcher.mailconnector.impl.util.DateUtil;
+import jakarta.mail.Address;
 import jakarta.mail.FetchProfile;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
@@ -18,6 +19,7 @@ import jakarta.mail.search.ComparisonTerm;
 import jakarta.mail.search.ReceivedDateTerm;
 import lombok.RequiredArgsConstructor;
 
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -76,7 +78,8 @@ public class MailConnectionImpl implements MailConnection {
 
   /**
    * Returns the messages the server received at or after the query's start date, or all messages
-   * without a start date. IMAP searches by day only, so the search result is filtered to the second.
+   * without a start date. IMAP searches by day only, so the search result is filtered to the second;
+   * a message without a received date is kept, as the server's search already selected it.
    */
   private List<FolderMessage> messagesReceivedSince(UIDFolder uidFolder, Folder folder, MailQuery query)
       throws MessagingException {
@@ -86,7 +89,7 @@ public class MailConnectionImpl implements MailConnection {
     Date startDate = DateUtil.toDate(query.startDate());
     Message[] messages = folder.search(new ReceivedDateTerm(ComparisonTerm.GE, startDate));
     return toFolderMessages(uidFolder, folder, Stream.of(messages)
-        .filter(message -> !receivedDate(message).before(startDate))
+        .filter(message -> receivedDate(message) == null || !receivedDate(message).before(startDate))
         .toArray(Message[]::new))
         .toList();
   }
@@ -124,12 +127,29 @@ public class MailConnectionImpl implements MailConnection {
   private MailMessage toMessage(Message message) {
     try {
       return MailMessage.builder()
-          .sender(message.getFrom()[0].toString())
+          .sender(sender(message))
           .title(message.getSubject())
-          .date(DateUtil.toZonedDateTime(message.getSentDate()))
+          .date(date(message))
           .build();
     } catch (MessagingException e) {
       throw new MailConnectionException(e);
     }
+  }
+
+  /**
+   * Returns the first {@code From} address, or {@code null} when the message has none.
+   */
+  private String sender(Message message) throws MessagingException {
+    Address[] from = message.getFrom();
+    return from == null || from.length == 0 ? null : from[0].toString();
+  }
+
+  /**
+   * Returns the sent date, or the date the server received the message when it has no valid
+   * {@code Date} header, or {@code null} when neither is known.
+   */
+  private ZonedDateTime date(Message message) throws MessagingException {
+    Date date = message.getSentDate() != null ? message.getSentDate() : message.getReceivedDate();
+    return date == null ? null : DateUtil.toZonedDateTime(date);
   }
 }
