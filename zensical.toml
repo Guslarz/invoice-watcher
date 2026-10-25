@@ -36,6 +36,10 @@ nav = [
   ] },
 ]
 
+# Mermaid with the elk layout and click-to-enlarge diagrams
+extra_javascript = [{ path = "javascripts/mermaid.mjs", type = "module" }]
+extra_css = ["stylesheets/mermaid.css"]
+
 [project.theme]
 features = [
   "navigation.tabs",

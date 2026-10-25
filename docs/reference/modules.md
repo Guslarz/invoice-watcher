@@ -27,30 +27,38 @@ and `libs/` that contains a `build.gradle.kts`.
 
 ## Dependencies
 
+Click the diagram to enlarge it.
+
 ```mermaid
-flowchart LR
+---
+config:
+  layout: elk
+---
+flowchart TB
+  subgraph images
+    images_mail_producer_docker["mail-producer-docker"]
+  end
   subgraph apps
     apps_mail_producer_app["mail-producer-app"]
     apps_secret_helper_app["secret-helper-app"]
   end
-  subgraph images
-    images_mail_producer_docker["mail-producer-docker"]
-  end
-  subgraph libs
-    libs_event_producer_api["event-producer-api"]
+  subgraph impl
     libs_event_producer_kafka_impl["event-producer-kafka-impl"]
-    libs_mail_connector_api["mail-connector-api"]
     libs_mail_connector_impl["mail-connector-impl"]
-    libs_mail_producer_dao_api["mail-producer-dao-api"]
     libs_mail_producer_dao_firestore_impl["mail-producer-dao-firestore-impl"]
     libs_mail_producer_dao_jpa_impl["mail-producer-dao-jpa-impl"]
     libs_mail_producer_mock_user["mail-producer-mock-user"]
-    libs_mail_producer_scheduler_api["mail-producer-scheduler-api"]
     libs_mail_producer_scheduler_impl["mail-producer-scheduler-impl"]
     libs_mail_producer_task["mail-producer-task"]
     libs_secret_aes["secret-aes"]
-    libs_secret_api["secret-api"]
     libs_util_aes["util-aes"]
+  end
+  subgraph api
+    libs_event_producer_api["event-producer-api"]
+    libs_mail_connector_api["mail-connector-api"]
+    libs_mail_producer_dao_api["mail-producer-dao-api"]
+    libs_mail_producer_scheduler_api["mail-producer-scheduler-api"]
+    libs_secret_api["secret-api"]
   end
   apps_mail_producer_app --> libs_event_producer_kafka_impl
   apps_mail_producer_app --> libs_mail_connector_impl

@@ -1,0 +1,15 @@
+/* Click-to-enlarge for Mermaid diagrams, toggled by docs/javascripts/mermaid.mjs. */
+div.mermaid {
+  cursor: zoom-in;
+}
+
+div.mermaid.mermaid--zoomed {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 2rem;
+  overflow: auto;
+  background-color: var(--md-default-bg-color);
+  cursor: zoom-out;
+}
