@@ -2,8 +2,9 @@
 
 ## Layout
 
-- Modules are discovered automatically by `settings.gradle.kts`: every directory under `apps/`,
-  `images/`, `libs/` containing a `build.gradle.kts` becomes a project. Path
+- Modules are discovered automatically by the `settings.module-discovery` settings plugin
+  (`gradle/build-logic/settings`): every directory under `apps/`, `images/`, `libs/` containing a
+  `build.gradle.kts` becomes a project. Path
   `libs/mail-producer/dao/api` → project `:libs:mail-producer-dao-api` → type-safe accessor
   `projects.libs.mailProducerDaoApi`. Never edit `settings.gradle.kts` to add a module.
 - Every `build.gradle.kts` sets a one-line `description`; it is published in the generated module

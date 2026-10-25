@@ -1,5 +1,11 @@
 plugins {
+  base
   alias(libs.plugins.axion.release)
+}
+
+// Included builds are not part of the task graph on their own: run the settings plugin tests in `check`.
+tasks.check {
+  dependsOn(gradle.includedBuild("settings").task(":check"))
 }
 
 allprojects {
