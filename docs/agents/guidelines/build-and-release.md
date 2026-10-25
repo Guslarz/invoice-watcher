@@ -9,6 +9,9 @@
   `jvm.lib-conventions`, `docker.image-conventions`) and list dependencies. Shared build logic
   goes to `buildSrc`, not to module build files. Precompiled scripts read the catalog with
   `versionCatalogs.named("libs")`.
+- Settings plugins live in the included build `gradle/build-logic/settings` (wired through
+  `pluginManagement { includeBuild(...) }`, because `buildSrc` is built after settings) and are
+  tested with Gradle TestKit; the root `check` runs their tests.
 - Java 25 via toolchain; repositories only in `dependencyResolutionManagement` of
   `settings.gradle.kts` (project repositories fail the build).
 - Dependency versions live in `gradle/libs.versions.toml`; Spring-managed ones have no version.
