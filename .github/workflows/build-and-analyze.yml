@@ -73,6 +73,9 @@ jobs:
           rm kubeconform.tar.gz
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
+      - name: Setup yamllint
+        run: pipx install yamllint==1.37.1
+
       - name: Check deployment files
         run: scripts/check-deployments.sh
 

@@ -1,0 +1,10 @@
+# YAML style of the deployment files, checked by scripts/check-deployments.sh
+extends: default
+rules:
+  document-start: disable
+  line-length: disable
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  truthy:
+    check-keys: false

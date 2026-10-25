@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deployment file checks, run by CI (Build and analyze / deployments) and scripts/verify.sh:
-# OpenTofu formatting and validation, rendering of the helmfile and the kustomize environments,
+# YAML style (yamllint), OpenTofu formatting and validation, rendering of the helmfile and the kustomize environments,
 # Kubernetes schema validation of the rendered manifests, the local Kafka image matching the cluster one,
 # names shared by OpenTofu, the manifests and the workflows matching (scripts/check-names.sh).
 # A missing tool skips its check locally and fails it in CI (when CI is set).
@@ -45,6 +45,25 @@ fi
 
 echo "==> Shared names"
 scripts/check-names.sh
+
+echo "==> YAML style"
+# Helm and helmfile templates hold inline {{ ... }} expressions, which are not YAML; they are replaced
+# by a placeholder so the templates are linted too, with their line numbers kept.
+if command -v yamllint >/dev/null 2>&1; then
+  yaml_failed=0
+  while IFS= read -r file; do
+    sed -E 's/\{\{[^}]*\}\}/x/g' "$file" \
+      | yamllint --strict --format parsable --config-file deployments/.yamllint.yml - \
+      | sed "s|^stdin:|$file:|" || yaml_failed=1
+  done < <(find deployments \( -name '*.yml' -o -name '*.yaml' -o -name '*.gotmpl' \) \
+    -not -path '*/.terraform/*' | sort)
+  if [[ "$yaml_failed" -ne 0 ]]; then
+    echo "FAIL: YAML style - see deployments/.yamllint.yml" >&2
+    exit 1
+  fi
+else
+  missing_tool yamllint
+fi
 
 echo "==> OpenTofu"
 if command -v tofu >/dev/null 2>&1; then
