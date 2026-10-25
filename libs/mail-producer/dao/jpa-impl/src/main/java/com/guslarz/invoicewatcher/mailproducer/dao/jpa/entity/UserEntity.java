@@ -28,6 +28,6 @@ public class UserEntity {
   @Column(unique = true)
   private String name;
 
-  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
+  @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
   private List<MailScanConfigEntity> scanConfigs;
 }

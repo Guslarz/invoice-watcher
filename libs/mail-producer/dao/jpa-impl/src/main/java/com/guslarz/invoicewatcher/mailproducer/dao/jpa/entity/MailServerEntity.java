@@ -14,9 +14,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MailServerEntity {
 
-  @Column
+  @Column(nullable = false)
   private String host;
 
-  @Column
-  private Integer port;
+  @Column(nullable = false)
+  private int port;
 }
