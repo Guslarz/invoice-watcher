@@ -34,11 +34,18 @@ cliCommands.forEach { command ->
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass = "com.guslarz.invoicewatcher.secret.helper.app.SecretHelperApp"
     args = listOf(command, "--help").filter { it.isNotEmpty() }
-    val output = rootProject.layout.buildDirectory.file("docs-reference/cli/$name.txt")
+    val output = layout.buildDirectory.file("docs-reference/cli/$name.txt")
     outputs.file(output)
     doFirst {
       standardOutput = output.get().asFile.outputStream()
     }
+    doLast {
+      standardOutput.close()
+    }
   }
   cliReference.configure { dependsOn(task) }
+}
+
+tasks.named("docsReference") {
+  dependsOn(cliReference)
 }

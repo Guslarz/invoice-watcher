@@ -3,6 +3,7 @@ package jvm
 plugins {
   java
   id("jvm.code-analysis-conventions")
+  id("docs.reference-conventions")
   id("io.freefair.lombok")
 }
 

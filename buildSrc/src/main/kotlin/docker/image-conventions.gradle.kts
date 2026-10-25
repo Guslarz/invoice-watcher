@@ -11,6 +11,7 @@ import org.gradle.kotlin.dsl.register
 plugins {
   base
   id("com.bmuschko.docker-remote-api")
+  id("docs.reference-conventions")
 }
 
 val propertyPrefix = "com.guslarz.invoicewatcher.docker"
