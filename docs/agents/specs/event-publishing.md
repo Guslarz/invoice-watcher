@@ -38,7 +38,8 @@ or care who consumes the events.
 - **EVENT-010** The event backend is selected with `invoice-watcher.event-producer.mode`. The only
   supported value is `kafka`; with it, events are sent to the brokers in
   `invoice-watcher.event-producer.kafka.bootstrap-servers`, keys as strings, values as JSON.
-  `invoice-watcher.event-producer.kafka.bootstrap-servers` is required in `kafka` mode.
+  `invoice-watcher.event-producer.kafka.bootstrap-servers` is required in `kafka` mode. A missing
+  or unknown value fails the startup with an error naming the property.
 - **EVENT-011** A message is considered handed over once the event backend confirms it has stored
   the event. The folder's scan position is saved once, after all messages of the folder are handed
   over.
@@ -58,6 +59,10 @@ or care who consumes the events.
 - **EVENT-004** Given a message from `billing@shop.example` with subject `Invoice 10/2026`, when it
   is published, then the event value has `sender` containing `billing@shop.example` and `title`
   `Invoice 10/2026`.
+- **EVENT-010** Given no `invoice-watcher.event-producer.mode`, when the application starts, then
+  it fails with an error naming `invoice-watcher.event-producer.mode`. Given
+  `invoice-watcher.event-producer.mode=rabbit`, when the application starts, then it fails with an
+  error naming that property.
 - **EVENT-011** Given the backend confirms every event, when a folder with two new messages is
   scanned, then the position is saved once, at the second message.
 - **EVENT-012** Given the backend rejects the second of three events, when the folder is scanned,
