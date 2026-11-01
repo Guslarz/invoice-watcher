@@ -1,4 +1,4 @@
-rootProject.name = "buildSrc"
+rootProject.name = "conventions"
 
 dependencyResolutionManagement {
   repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
@@ -7,7 +7,7 @@ dependencyResolutionManagement {
   }
   versionCatalogs {
     create("libs") {
-      from(files("../gradle/libs.versions.toml"))
+      from(files("../../libs.versions.toml"))
     }
   }
 }

@@ -3,15 +3,15 @@
 - Use the wrapper: `./gradlew build analyze`. `analyze` = Checkstyle + SpotBugs only, without
   tests; `build` runs them too (through `check`). Any Checkstyle violation fails the build
   (`maxWarnings = 0`).
-- Convention plugins live in `buildSrc/src/main/kotlin`, grouped by package, so the ID is
+- Convention plugins live in `gradle/build-logic/conventions/src/main/kotlin`, grouped by package, so the ID is
   `<package>.<name>-conventions` (`jvm`, `springboot`, `docker`; not `java`, which the JVM reserves).
   Module build files only pick one (`springboot.app-conventions`, `springboot.lib-conventions`,
   `jvm.lib-conventions`, `docker.image-conventions`) and list dependencies. Shared build logic
-  goes to `buildSrc`, not to module build files. Precompiled scripts read the catalog with
+  goes to the conventions included build, not to module build files. Precompiled scripts read the catalog with
   `versionCatalogs.named("libs")`.
-- Settings plugins live in the included build `gradle/build-logic/settings` (wired through
-  `pluginManagement { includeBuild(...) }`, because `buildSrc` is built after settings) and are
-  tested with Gradle TestKit; the root `check` runs their tests.
+- Settings plugins live in the included build `gradle/build-logic/settings` and are tested with
+  Gradle TestKit; the root `check` runs their tests. Both build-logic builds are wired through
+  `pluginManagement { includeBuild(...) }`.
 - The configuration cache is on (`gradle.properties`); a problem it reports fails the build. Build
   logic must not read or configure other projects (no `allprojects`/`subprojects`, `rootProject`
   only through `isolated.rootProject`), so the build can move to Isolated Projects. The one
