@@ -3,6 +3,9 @@ title: Replace illustrative examples in the docs with captures from the running 
 kind: idea
 area: docs
 added: 2026-10-13
+status: later
+size: S
+blocked-by: [user-registration-app]
 ---
 
 `docs/results/index.md` shows a published event, scan logs and the ArgoCD view as illustrative

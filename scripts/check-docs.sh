@@ -65,10 +65,23 @@ for plan in docs/agents/projects/*.md; do
   [[ "$source" == none || -f "$source" ]] || fail "$plan: source '$source' does not exist"
 done
 
-# Inbox notes: frontmatter.
+# Inbox notes: frontmatter, triage fields, blocked-by points to existing notes.
 for note in docs/agents/inbox/*.md; do
   [[ "$note" == docs/agents/inbox/README.md ]] && continue
-  require_keys "$note" title kind area added
+  require_keys "$note" title kind area added status size blocked-by
+  status=$(frontmatter "$note" status)
+  [[ "$status" =~ ^(ready|waiting|later)$ ]] || fail "$note: status must be ready|waiting|later"
+  [[ "$(frontmatter "$note" size)" =~ ^(S|M|L)$ ]] || fail "$note: size must be S|M|L"
+  blocked_by=$(frontmatter "$note" blocked-by)
+  [[ "$blocked_by" =~ ^\[.*\]$ ]] || fail "$note: blocked-by must be a list like [slug, slug]"
+  blocked_by=${blocked_by#[}
+  blocked_by=${blocked_by%]}
+  for slug in ${blocked_by//,/ }; do
+    [[ -f "docs/agents/inbox/$slug.md" ]] || fail "$note: blocked-by '$slug' is not an inbox note"
+  done
+  [[ "$status" != ready || -z "${blocked_by// /}" ]] || fail "$note: a ready note cannot be blocked by other notes"
+  [[ "$status" != waiting || -n "$(frontmatter "$note" waiting-for)" ]] \
+    || fail "$note: a waiting note needs waiting-for"
 done
 
 # Repository paths mentioned in agent docs must exist.

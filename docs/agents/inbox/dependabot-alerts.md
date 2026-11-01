@@ -3,6 +3,10 @@ title: Resolve Dependabot alerts that Dependabot cannot fix
 kind: tech-debt
 area: build
 added: 2026-10-24
+status: waiting
+size: M
+blocked-by: []
+waiting-for: Spring Boot, Spring Cloud GCP or Kotlin releases that contain the fixed versions
 ---
 
 On 2026-10-24 GitHub reports 37 open Dependabot alerts on `master`

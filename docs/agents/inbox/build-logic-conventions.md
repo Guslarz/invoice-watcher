@@ -3,6 +3,9 @@ title: Move the buildSrc conventions to gradle/build-logic
 kind: tech-debt
 area: build
 added: 2026-10-24
+status: ready
+size: M
+blocked-by: []
 ---
 
 Module discovery already lives in the included build `gradle/build-logic/settings`. The convention

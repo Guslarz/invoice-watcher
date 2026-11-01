@@ -3,6 +3,9 @@ title: Research how to keep several frontend apps visually consistent
 kind: idea
 area: docs
 added: 2026-10-25
+status: later
+size: M
+blocked-by: []
 ---
 
 The project will get several frontend apps (first: user registration, `user-registration-app.md`).

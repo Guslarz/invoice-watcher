@@ -3,6 +3,9 @@ title: Managed Kafka for a production environment
 kind: idea
 area: deployment
 added: 2026-10-25
+status: later
+size: L
+blocked-by: []
 ---
 
 A production environment could use Google Cloud Managed Service for Apache Kafka instead of the

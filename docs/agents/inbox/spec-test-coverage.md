@@ -3,6 +3,9 @@ title: Cover existing spec clauses with tests
 kind: tech-debt
 area: build
 added: 2026-10-13
+status: ready
+size: L
+blocked-by: []
 ---
 
 The retrofitted specs (`docs/agents/specs/`) describe behavior that is almost untested: there are five

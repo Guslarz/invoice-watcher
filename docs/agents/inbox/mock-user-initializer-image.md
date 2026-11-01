@@ -3,6 +3,9 @@ title: Mock user initializer image that registers users through the registration
 kind: idea
 area: deployment
 added: 2026-10-25
+status: later
+size: M
+blocked-by: [user-registration-app]
 ---
 
 Once the registration backend exists (`user-registration-app.md`), replace the `mock/user` module
