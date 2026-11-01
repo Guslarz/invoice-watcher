@@ -22,9 +22,10 @@ runs:
         REGISTRY_PASSWORD: ${{ inputs.password }}
         TAG: ${{ inputs.tag }}
       run: |
+        namespace=$(python3 -c 'import json; print(json.load(open("deployments/installations/dev.json"))["repository"].lower())')
         ./gradlew build analyze publish \
           -Pcom.guslarz.invoicewatcher.docker.registry=ghcr.io \
-          -Pcom.guslarz.invoicewatcher.docker.namespace=guslarz/invoice-watcher \
+          -Pcom.guslarz.invoicewatcher.docker.namespace="$namespace" \
           -Pcom.guslarz.invoicewatcher.docker.username="$REGISTRY_USERNAME" \
           -Pcom.guslarz.invoicewatcher.docker.password="$REGISTRY_PASSWORD" \
           ${TAG:+-Pcom.guslarz.invoicewatcher.docker.tag="$TAG"}

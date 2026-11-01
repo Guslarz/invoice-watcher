@@ -16,6 +16,9 @@ scripts/check-docs.sh
 echo "==> Agent workflow tests"
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -v
 
+echo "==> Installation configuration"
+python3 scripts/generate-installation.py --check
+
 echo "==> Generated reference"
 scripts/gen-reference.sh
 

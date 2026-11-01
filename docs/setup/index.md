@@ -42,17 +42,21 @@ missing; CI installs every tool, and there a missing one fails the check.
 
 ## Values to adapt in the repository
 
-The repository is set up for one installation: GitHub user `Guslarz`, domain `guslarz.com`,
-region `europe-west1`. To reproduce it under another account or domain, change these values
-(everything else comes from GitHub variables and secrets):
+Edit `deployments/installations/dev.json` for your fork: set `repository` to `owner/name`,
+`registry_username` to the owner of the PAT used to read the repository and pull images, and set
+`domain`, `region`, `zone` and `cluster_name` for your installation. The image is published as
+`ghcr.io/<owner>/<repository>/mail-producer`. The zone must belong to the region. The file contains
+no secrets; project IDs, Cloudflare zone ID and credentials remain in external settings.
 
-| Value | Where |
-|-------|-------|
-| GitHub repository `owner/name` | `deployments/infrastructure/environments/dev/persistent/variables.tf` (`github_repository`) |
-| GitHub user name | `deployments/k8s/values/cluster-init.yml.gotmpl` (`github.username`, `github.orgUrl`), `deployments/k8s-apps/components/app-identity/image-pull-secret.yml` |
-| Image name `ghcr.io/<owner>/invoice-watcher/mail-producer` | `deployments/k8s-apps/apps/mail-producer/overlays/dev/kustomization.yml` |
-| Domain | `deployments/infrastructure/environments/dev/ephemeral/variables.tf` (`domain_name`), `deployments/k8s/environments/dev.yml.gotmpl` (`domain`) |
-| Region | `deployments/infrastructure/environments/dev/ephemeral/variables.tf` (`gcp_region`) |
-| Zone, cluster name | the `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME` GitHub variables ([one-time setup](one-time.md#4-configure-the-github-repository)); `gcp_zone` and `gcp_gke_cluster_name` in the same `variables.tf` are used only when you run OpenTofu locally |
+Regenerate and commit the outputs alongside the installation file:
+
+```shell
+python3 scripts/generate-installation.py
+python3 scripts/generate-installation.py --check
+```
+
+Do this before applying the one-time setup. CI and `scripts/verify.sh` reject stale outputs.
+After infrastructure or bootstrap values change, apply `persistent` again if its values changed,
+and rerun `Environment` with `up` after merging the generated changes.
 
 On the pages that follow, `<project-id>` and `<domain>` stand for your values.

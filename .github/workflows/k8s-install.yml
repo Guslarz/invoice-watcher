@@ -17,6 +17,15 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Read installation location
+        id: installation
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          file="deployments/installations/$ENVIRONMENT.json"
+          echo "cluster=$(jq -r .cluster_name "$file")" >> "$GITHUB_OUTPUT"
+          echo "zone=$(jq -r .zone "$file")" >> "$GITHUB_OUTPUT"
+
       - name: Authenticate to Google Cloud
         uses: ./.github/actions/gcp-auth
         with:
@@ -35,14 +44,14 @@ jobs:
             sleep 30
           done
         env:
-          CLUSTER: ${{ vars.GCP_GKE_CLUSTER_NAME }}
-          LOCATION: ${{ vars.GCP_ZONE }}
+          CLUSTER: ${{ steps.installation.outputs.cluster }}
+          LOCATION: ${{ steps.installation.outputs.zone }}
 
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@3da1e46a907576cefaa90c484278bb5b259dd395 # v3.0.0
         with:
-          cluster_name: ${{ vars.GCP_GKE_CLUSTER_NAME }}
-          location: ${{ vars.GCP_ZONE }}
+          cluster_name: ${{ steps.installation.outputs.cluster }}
+          location: ${{ steps.installation.outputs.zone }}
 
       - name: Setup helmfile
         uses: ./.github/actions/setup-deploy-tools
@@ -57,4 +66,3 @@ jobs:
           ENVIRONMENT: ${{ inputs.environment }}
           GCP_PROJECT_NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          GCP_ZONE: ${{ vars.GCP_ZONE }}

@@ -16,6 +16,8 @@ Three layers, applied in this order by the `Environment` workflow (`.github/work
    `components/`.
 
 Rules:
+- Edit `deployments/installations/dev.json` for non-secret installation values, then run
+  `python3 scripts/generate-installation.py` and commit its outputs; `--check` detects drift.
 - Pin every chart, provider and action version. OpenTofu: root configurations
   (`environments/<env>/*`) declare `required_version = ">= 1.12"` and pin exact provider versions;
   modules declare `~> major.minor`. Each root commits its `.terraform.lock.hcl`; after a provider

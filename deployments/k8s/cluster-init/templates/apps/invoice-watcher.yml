@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: '{{ required "github.orgUrl is required" .Values.github.orgUrl }}/invoice-watcher.git'
-    targetRevision: HEAD
+    repoURL: '{{ required "github.repoUrl is required" .Values.github.repoUrl }}.git'
+    targetRevision: master
     path: 'deployments/k8s-apps/environments/{{ required "environment is required" .Values.environment }}'
   destination:
     server: https://kubernetes.default.svc

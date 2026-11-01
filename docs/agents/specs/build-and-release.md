@@ -27,9 +27,9 @@ the dev environment can run, and a release produces a versioned image and a GitH
   configuration reference. Every pull request that changes a file under `deployments/` or
   `.github/workflows/` checks that the names shared by OpenTofu, the Kubernetes manifests and the
   workflows match: the application namespace, the ServiceAccounts bound by workload identity and
-  the gateway address. A failure blocks the change.
+  the gateway address. Every pull request checks installation-configuration drift. A failure blocks the change.
 - **RELEASE-002** Every push to `master` that changes a file outside `docs/` builds and publishes
-  the image `ghcr.io/guslarz/invoice-watcher/mail-producer:snapshot`, replacing the
+  the installation's mail-producer image tagged `snapshot`, replacing the
   previous snapshot.
 - **RELEASE-003** The `Release` workflow (run manually with `major`, `minor` or `patch`) increments
   the version, tags the commit `v<version>`, publishes the image tagged `<version>` and creates
