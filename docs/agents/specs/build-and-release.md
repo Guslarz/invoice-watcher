@@ -4,7 +4,7 @@ title: Build and release
 status: implemented
 audience: [operator, developer]
 modules:
-  - buildSrc
+  - gradle/build-logic/conventions
   - images/mail-producer-docker
 ---
 
