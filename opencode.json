@@ -23,6 +23,11 @@
     },
     {
       "action": "shell",
+      "resource": "python3 scripts/worker.py *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
       "resource": "git add *",
       "effect": "allow"
     },

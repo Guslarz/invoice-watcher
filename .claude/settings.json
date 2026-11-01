@@ -6,6 +6,7 @@
       "Bash(scripts/verify.sh)",
       "Bash(scripts/check-docs.sh)",
       "Bash(scripts/worktree.sh *)",
+      "Bash(python3 scripts/worker.py *)",
       "Bash(git add *)",
       "Bash(git fetch *)",
       "Bash(git rebase origin/master)",

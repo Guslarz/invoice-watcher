@@ -6,16 +6,13 @@ set -euo pipefail
 
 types='feature|fix|docs|chore|infra'
 base=origin/master
-# Number of worktrees besides master from which `prune` starts removing.
-threshold=10
 
 usage() {
   cat >&2 <<EOF
 usage: $0 new <type>/<slug>    create ../<slug> on a new branch from $base
        $0 list                 show worktrees and what they are waiting for
        $0 rm <slug>            remove ../<slug> and its branch (only when nothing would be lost)
-       $0 prune [--all]        at $threshold+ worktrees besides master (always with --all): rm every
-           worktree rm allows and whose background session is done, claude rm those sessions
+       $0 prune [--all]        remove safe worktrees with confirmed finished workers
        $0 hook-create          WorktreeCreate hook: JSON {"name"} on stdin, path on stdout
        $0 hook-remove          WorktreeRemove hook: JSON {"worktree_path"} on stdin
 <type>: ${types//|/, }
@@ -60,7 +57,20 @@ safe_to_remove() {
 }
 
 remove() {
-  local dir=$1 branch
+  local dir=$1 branch registry record
+  registry="$(git rev-parse --path-format=absolute --git-common-dir)/agent-workers"
+  mkdir -p "$registry"
+  exec {worker_lock}>"$registry/lock"
+  flock -x "$worker_lock"
+  for record in "$registry"/*.json; do
+    [[ -e "$record" ]] || continue
+    jq -e --arg dir "$dir" '.worktree | type == "string"' "$record" >/dev/null \
+      || { echo "invalid worker record $record; refusing removal" >&2; exit 1; }
+    if jq -e --arg dir "$dir" '.worktree == $dir' "$record" >/dev/null; then
+      echo "$dir has a registered worker; remove the worker first" >&2
+      exit 1
+    fi
+  done
   branch=$(git -C "$dir" branch --show-current)
   [[ "$branch" != master ]] || { echo "refusing to remove the master worktree" >&2; exit 1; }
   fetch
@@ -83,38 +93,9 @@ worktrees() {
   done
 }
 
-# Removes, without asking, every worktree besides master and the current one that `rm` would remove
-# and whose background session, if any, is done; then deletes those sessions (`claude rm`).
+# The worker registry is locked while worker state and Git safety are checked.
 prune() {
-  local all=$1 current dir branch reason id sessions dirs=()
-  current=$(git rev-parse --show-toplevel)
-  while read -r dir; do
-    [[ "$(git -C "$dir" branch --show-current)" == master ]] || dirs+=("$dir")
-  done < <(worktrees)
-  if [[ "$all" != --all && ${#dirs[@]} -lt $threshold ]]; then
-    echo "${#dirs[@]} worktrees besides master, below the threshold of $threshold: nothing to do" >&2
-    return
-  fi
-  fetch
-  sessions=$(claude agents --json --all 2>/dev/null) \
-    || { echo "WARN: claude agents failed, background sessions are ignored" >&2; sessions='[]'; }
-  for dir in "${dirs[@]}"; do
-    if [[ "$dir" == "$current" ]]; then
-      echo "kept $(basename "$dir"): prune runs in it" >&2
-      continue
-    fi
-    branch=$(git -C "$dir" branch --show-current)
-    reason=$(jq -r --arg cwd "$dir" '[.[] | select(.kind == "background" and .cwd == $cwd
-      and .state != "done")][0] | select(.) | "session \(.id) is \(.state)"' <<<"$sessions")
-    if [[ -z "$reason" ]] && reason=$(safe_to_remove "$dir" "$branch" 2>&1); then
-      delete "$dir" "$branch"
-      for id in $(jq -r --arg cwd "$dir" '.[] | select(.kind == "background" and .cwd == $cwd) | .id' <<<"$sessions"); do
-        claude rm "$id" >&2 || echo "WARN: claude rm $id failed" >&2
-      done
-    else
-      echo "kept $(basename "$dir"): $reason" >&2
-    fi
-  done
+  python3 "$(dirname "$0")/worker.py" prune ${1:+"$1"}
 }
 
 list() {
@@ -156,7 +137,7 @@ case "${1:-}" in
   rm) [[ $# -eq 2 ]] || usage; remove "$root/${2##*/}" ;;
   prune) [[ $# -eq 1 || ( $# -eq 2 && "$2" == --all ) ]] || usage; prune "${2:-}" ;;
   hook-create) create "$(branch_for_name "$(jq -r .name)")" ;;
-  # A worktree already gone (prune removes it before its `claude rm`) needs nothing more.
+# A worktree already gone needs nothing more.
   hook-remove) dir=$(jq -r .worktree_path); [[ ! -e "$dir" ]] || remove "$dir" ;;
   *) usage ;;
 esac
