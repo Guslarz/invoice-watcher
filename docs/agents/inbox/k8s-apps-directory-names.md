@@ -3,6 +3,9 @@ title: Consider renaming subdirectories in deployments/k8s-apps
 kind: tech-debt
 area: deployment
 added: 2026-10-13
+status: ready
+size: S
+blocked-by: []
 ---
 
 Consider renaming the subdirectories of `deployments/k8s-apps` (today: `apps/<app>/{base,overlays/<env>}`,

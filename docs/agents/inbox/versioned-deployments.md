@@ -3,6 +3,9 @@ title: Version the deployment definitions and deploy a released version
 kind: idea
 area: deployment
 added: 2026-10-22
+status: later
+size: L
+blocked-by: []
 ---
 
 Everything under `deployments/` is used straight from a branch: `.github/workflows/environment.yml`

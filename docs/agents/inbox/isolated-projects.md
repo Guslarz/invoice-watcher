@@ -3,6 +3,10 @@ title: Enable Isolated Projects
 kind: tech-debt
 area: build
 added: 2026-10-25
+status: waiting
+size: M
+blocked-by: []
+waiting-for: axion-release, dependency-management or Spring Boot releases that stop reading other projects
 ---
 
 The build's own logic no longer reads other projects (configuration cache is on), but

@@ -3,6 +3,9 @@ title: Checkstyle rejects unnamed pattern variables
 kind: tech-debt
 area: build
 added: 2026-10-25
+status: ready
+size: S
+blocked-by: []
 ---
 
 The Google Checkstyle config's `PatternVariableNameCheck` (`^[a-z]([a-z0-9][a-zA-Z0-9]*)?$`)

@@ -3,6 +3,9 @@ title: Configuration reference shows enum types as binary class names
 kind: idea
 area: docs
 added: 2026-10-25
+status: ready
+size: S
+blocked-by: []
 ---
 
 `scripts/gen-reference.py` (`short_type`) renders nested enum types as their binary name, e.g.

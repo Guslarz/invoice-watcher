@@ -3,6 +3,9 @@ title: Enforce dependency declarations with the dependency-analysis plugin
 kind: idea
 area: build
 added: 2026-10-24
+status: later
+size: M
+blocked-by: []
 ---
 
 `com.autonomousapps.dependency-analysis` 3.19.2 was tried in `jvm.code-analysis-conventions` (with

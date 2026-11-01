@@ -3,6 +3,9 @@ title: Research Gmail OAuth instead of basic authentication
 kind: idea
 area: mail-scanning
 added: 2026-10-25
+status: later
+size: L
+blocked-by: [user-registration-app]
 ---
 
 Mailboxes are reached only with a username and password (MAIL-011); for Gmail that means the user

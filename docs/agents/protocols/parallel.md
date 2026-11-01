@@ -18,8 +18,9 @@ subagents) land in the same layout. Worktree name `<type>-<slug>` gives branch `
 
 ## Dispatcher steps
 
-1. **Triage.** Run `scripts/worktree.sh prune` first and report the worktrees it kept (it does
-   nothing below 10 worktrees besides `master`). For each topic decide the protocol (`AGENTS.md` → Workflow selection). Topics that
+1. **Triage.** Batches of inbox notes are picked from `python3 scripts/inbox.py ready`. Run
+   `scripts/worktree.sh prune` first and report the worktrees it kept (it does nothing below 10
+   worktrees besides `master`). For each topic decide the protocol (`AGENTS.md` → Workflow selection). Topics that
    touch the same files (same spec, module or k8s base) are merged into one topic or queued one
    after another — never run in parallel.
 2. **Lightweight topics** need no discussion. The worker creates its own worktree through the hook:

@@ -3,6 +3,9 @@ title: User registration app with its own backend
 kind: idea
 area: persistence
 added: 2026-10-25
+status: later
+size: L
+blocked-by: [frontend-design-system]
 ---
 
 Today the only way to define a user is the mock user (USER-030/031: one user, one mailbox, scan

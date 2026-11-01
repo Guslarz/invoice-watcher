@@ -3,6 +3,9 @@ title: Firestore upsertUserByName is not transactional
 kind: tech-debt
 area: persistence
 added: 2026-10-25
+status: later
+size: S
+blocked-by: [mock-user-initializer-image]
 ---
 
 `UserDaoServiceFirestoreImpl.upsertUserByName` deletes the user and its folders and then saves them

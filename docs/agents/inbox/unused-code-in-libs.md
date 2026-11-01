@@ -3,6 +3,9 @@ title: Remove unused code in libs
 kind: tech-debt
 area: persistence
 added: 2026-10-24
+status: ready
+size: S
+blocked-by: []
 ---
 
 Found by grep, no callers or readers:

@@ -3,6 +3,9 @@ title: Keep installation-specific values in one place
 kind: tech-debt
 area: deployment
 added: 2026-10-13
+status: ready
+size: M
+blocked-by: []
 ---
 
 The GitHub user (`Guslarz`), the domain (`guslarz.com`), the image name and the region, zone and
