@@ -1,0 +1,8 @@
+{
+  "repository": "Guslarz/invoice-watcher",
+  "registry_username": "Guslarz",
+  "domain": "guslarz.com",
+  "region": "europe-west1",
+  "zone": "europe-west1-b",
+  "cluster_name": "invoice-watcher-cluster"
+}

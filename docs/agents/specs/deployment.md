@@ -53,14 +53,14 @@ while it is not needed. After it is up, application changes are deployed automat
 
 ### Cloud resources (per environment)
 
-- **DEPLOY-010** `up` creates, in region `europe-west1`: a GKE cluster with one preemptible
+- **DEPLOY-010** `up` creates, in the installation's configured region: a GKE cluster with one preemptible
   `e2-standard-2` node, a Firestore database in Datastore mode, Secret Manager secrets (GitHub
   token, Cloudflare token, AES key), a global IP address for the gateway, a 10 GiB persistent
-  disk for Kafka, and a proxied wildcard DNS record `*.guslarz.com` in Cloudflare pointing at it.
+  disk for Kafka, and a proxied wildcard DNS record for the installation's configured domain in Cloudflare pointing at it.
 - **DEPLOY-011** The application reaches Firestore through workload identity — no service
   account keys are stored.
-- **DEPLOY-012** OpenTofu creates the cluster in the zone and under the name given by the
-  repository variables `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME`, the same ones `k8s-install` uses.
+- **DEPLOY-012** OpenTofu creates the cluster in the zone and under the name in the checked-in
+  installation configuration; `k8s-install` uses the same values to connect to it.
 - **DEPLOY-013** The OpenTofu configurations require OpenTofu 1.12 or later. Each root
   configuration pins exact provider versions and commits its `.terraform.lock.hcl`, so CI and
   operators use the same provider builds.
@@ -68,9 +68,9 @@ while it is not needed. After it is up, application changes are deployed automat
 ### Cluster services
 
 - **DEPLOY-020** The cluster runs ArgoCD, cert-manager with the Cloudflare origin CA issuer,
-  external-secrets, and a GKE gateway serving HTTPS for `*.guslarz.com` with a Cloudflare origin
+  external-secrets, and a GKE gateway serving HTTPS for the installation's configured wildcard domain with a Cloudflare origin
   certificate.
-- **DEPLOY-021** ArgoCD is available at `https://argocd.guslarz.com`.
+- **DEPLOY-021** ArgoCD is available at `https://argocd.<configured-domain>`.
 
 ### Applications
 
@@ -93,6 +93,9 @@ while it is not needed. After it is up, application changes are deployed automat
   health probes; Kubernetes restarts it when liveness fails.
 - **DEPLOY-037** Kafka is ready when its client port accepts connections and is restarted when it
   stops accepting them.
+- **DEPLOY-039** The checked-in installation configuration is the source of the non-secret
+  repository, registry, domain and location values used by deployment. Its generated configuration
+  is committed and must match it.
 
 ## Acceptance
 
@@ -100,13 +103,15 @@ while it is not needed. After it is up, application changes are deployed automat
   `persistent` is applied, then the workflow fails to authenticate to Google Cloud; after
   `persistent` is applied and the GitHub variables are set, the same run succeeds.
 - **DEPLOY-002** Given the dev environment is down, when `Environment` runs with `up` / `dev`,
-  then the workflow succeeds, ArgoCD is reachable at `https://argocd.guslarz.com` and the
+  then the workflow succeeds, ArgoCD is reachable at `https://argocd.<configured-domain>` and the
   `mail-producer` pod in `invoice-watcher-dev` is running.
 - **DEPLOY-010** Given the dev environment is down, when `Environment` runs with `up` / `dev`, then
   Secret Manager holds `github_pat`, `cloudflare_api_token` and `aes_key` and no
   `ghcr_docker_config_json`, and the application still pulls its image.
-- **DEPLOY-012** Given `GCP_ZONE` set to a zone other than the OpenTofu default, when `Environment`
-  runs with `up` / `dev`, then the cluster is created in that zone and `k8s-install` finds it.
+- **DEPLOY-012** Given a configured non-default zone and cluster name, when `Environment` runs
+  with `up` / `dev`, then the cluster is created with those values and `k8s-install` finds it.
+- **DEPLOY-039** Given different installation values, when the operator regenerates and commits the
+  outputs, deployment uses those values; verification identifies stale generated configuration.
 - **DEPLOY-013** Given the committed lock files, when `tofu init` runs in
   `environments/dev/ephemeral` or `environments/dev/persistent`, then it succeeds and leaves
   `.terraform.lock.hcl` unchanged.
@@ -140,7 +145,7 @@ GitHub repository settings used by the workflows:
 | Name | Kind | Meaning |
 |------|------|---------|
 | `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER` | variable | Google Cloud project |
-| `GCP_GKE_CLUSTER_NAME`, `GCP_ZONE` | variable | Cluster name and zone |
+| `deployments/installations/dev.json` | file | Repository, registry, domain, region, cluster name and zone |
 | `CLOUDFLARE_ZONE_ID` | variable | Cloudflare zone of the domain |
 | `PAT` | secret | GitHub token used to pull images and read the repository |
 | `CLOUDFLARE_API_TOKEN` | secret | Cloudflare token for DNS and origin certificates |

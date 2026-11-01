@@ -85,6 +85,9 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Check installation configuration
+        run: python3 scripts/generate-installation.py --check
+
       - name: Setup Java and Gradle
         uses: ./.github/actions/setup-gradle
 

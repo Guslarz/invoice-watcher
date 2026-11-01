@@ -12,5 +12,5 @@ environment: ""
 github:
   # User name for the ArgoCD repository credentials.
   username: ""
-  # URL of the GitHub user or organization that owns the invoice-watcher repository.
-  orgUrl: ""
+  # URL of the GitHub repository.
+  repoUrl: ""

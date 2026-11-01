@@ -17,7 +17,7 @@ The workflow has two jobs:
 
 | Job | What it does |
 |-----|--------------|
-| `infrastructure` | Checks that the `AES_KEY`, `PAT` and `CLOUDFLARE_API_TOKEN` secrets are set and stops before touching anything when one is missing. Then OpenTofu plans `deployments/infrastructure/environments/dev/ephemeral`, prints the plan in the log and applies exactly that plan: Secret Manager secrets, Firestore database, GKE cluster and node pool (in the zone and under the name from the `GCP_ZONE` and `GCP_GKE_CLUSTER_NAME` variables), Kafka's 10 GiB data disk `kafka-data` in the same zone, global IP, Cloudflare DNS record. State is kept in the `<project-id>-tfstate` bucket. |
+| `infrastructure` | Checks that the `AES_KEY`, `PAT` and `CLOUDFLARE_API_TOKEN` secrets are set and stops before touching anything when one is missing. Then OpenTofu plans `deployments/infrastructure/environments/dev/ephemeral`, prints the plan in the log and applies exactly that plan: Secret Manager secrets, Firestore database, GKE cluster and node pool (in the configured zone and under the configured name), Kafka's 10 GiB data disk `kafka-data` in the same zone, global IP, Cloudflare DNS record. State is kept in the `<project-id>-tfstate` bucket. |
 | `k8s-install` | Waits for the cluster, then `helmfile sync` installs ArgoCD, cert-manager, origin-ca-issuer, external-secrets and the `cluster-init` chart (gateway, certificate, secret sync, the volume for Kafka's disk, the ArgoCD application). |
 
 From then on ArgoCD deploys the applications from `master` by itself.
@@ -28,8 +28,8 @@ Open `https://argocd.<domain>`. The user is `admin`; the initial password is gen
 cluster:
 
 ```shell
-gcloud container clusters get-credentials invoice-watcher-cluster \
-  --zone europe-west1-b --project <project-id>
+gcloud container clusters get-credentials <cluster-name> \
+  --zone <zone> --project <project-id>
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d
 ```
