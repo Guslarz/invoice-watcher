@@ -9,6 +9,7 @@ and the Build and analyze workflow fails when they are out of date. Inputs:
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +49,21 @@ def anchor(name):
 
 def short_type(java_type):
     return re.sub(r"\b(?:[a-z_][a-z0-9_]*\.)+([A-Z])", r"\1", java_type or "")
+
+
+def property_type(java_type, module_dir):
+    if not java_type:
+        return ""
+    class_file = ROOT / module_dir / "build/classes/java/main" / (java_type.replace(".", "/") + ".class")
+    if class_file.exists():
+        result = subprocess.run(["javap", str(class_file)], check=True, capture_output=True, text=True)
+        if "extends java.lang.Enum<" in result.stdout:
+            constants = re.findall(r"^\s+public static final " + re.escape(java_type)
+                                   + r" (\w+);$", result.stdout, re.M)
+            if not constants:
+                fail(f"no enum constants found for {java_type}")
+            return " / ".join(constant.lower().replace("_", "-") for constant in constants)
+    return short_type(java_type)
 
 
 def env_var(name):
@@ -95,7 +111,7 @@ def configuration_page(modules):
             default = prop.get("defaultValue")
             lines.append(
                 f"| `{prop['name']}`<br>`{env_var(prop['name'])}` "
-                f"| `{cell(short_type(prop.get('type')))}` "
+                f"| `{cell(property_type(prop.get('type'), module['dir']))}` "
                 f"| {'`' + cell(default) + '`' if default is not None else ''} "
                 f"| {cell(prop['description'])} |")
         lines.append("")
@@ -174,7 +190,8 @@ def write(name, content):
     print(f"generated docs/reference/{name}")
 
 
-modules = load_modules()
-write("configuration.md", configuration_page(modules))
-write("cli.md", cli_page())
-write("modules.md", modules_page(modules))
+if __name__ == "__main__":
+    modules = load_modules()
+    write("configuration.md", configuration_page(modules))
+    write("cli.md", cli_page())
+    write("modules.md", modules_page(modules))
