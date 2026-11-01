@@ -78,6 +78,12 @@ an ADR only when relevant), and the guideline for the area you touch (`docs/agen
 
 ## Git workflow
 
+- Agent commands and shell permissions are maintained in `.claude/`; after changing them, run
+  `python3 scripts/sync-agent-config.py` to regenerate `opencode.json`. Do not edit the generated
+  file directly; verification checks for drift. Claude's command argument hints have no OpenCode
+  equivalent. Claude's worktree hooks are not shared: in OpenCode use `scripts/worktree.sh` as
+  instructed below, rather than relying on OpenCode's built-in worktree creation or removal.
+
 - `master` is the main development branch. **Never commit or push directly to `master`.**
 - Every change starts on its own branch created from an up-to-date `master`, in its own worktree
   next to `master/`: `scripts/worktree.sh new <type>/<slug>`
