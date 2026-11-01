@@ -13,6 +13,9 @@ fi
 echo "==> Documentation structure"
 scripts/check-docs.sh
 
+echo "==> Agent workflow tests"
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -v
+
 echo "==> Generated reference"
 scripts/gen-reference.sh
 
