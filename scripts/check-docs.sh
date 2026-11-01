@@ -6,6 +6,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+python3 scripts/sync-agent-config.py --check
+
 errors=0
 fail() {
   echo "FAIL: $*" >&2

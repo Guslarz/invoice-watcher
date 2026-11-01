@@ -1,0 +1,82 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    {
+      "action": "shell",
+      "resource": "./gradlew *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "scripts/verify.sh",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "scripts/check-docs.sh",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "scripts/worktree.sh *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git add *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git fetch *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git rebase origin/master",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git commit *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "git push *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh pr create *",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "gh pr merge *",
+      "effect": "deny"
+    }
+  ],
+  "commands": {
+    "dispatch": {
+      "description": "Start background work on topics following docs/agents/protocols/parallel.md",
+      "template": "Act as the dispatcher from `docs/agents/protocols/parallel.md` exactly, for these topics:\n\n$ARGUMENTS"
+    },
+    "implement": {
+      "description": "Implement an approved plan following docs/agents/protocols/implement.md",
+      "template": "Follow `docs/agents/protocols/implement.md` exactly for the plan:\n\n$ARGUMENTS"
+    },
+    "inbox": {
+      "description": "Add an idea or TODO to docs/agents/inbox",
+      "template": "Add a note to `docs/agents/inbox/` for the idea below, following `docs/agents/inbox/README.md`\nand the template `docs/agents/templates/inbox.md`. Check existing notes first and extend one\ninstead of duplicating it. Do not implement anything and do not create a branch or commit — just\nwrite the note and show its path.\n\n$ARGUMENTS"
+    },
+    "lightweight": {
+      "description": "Small change without a plan, following docs/agents/protocols/lightweight.md",
+      "template": "Follow `docs/agents/protocols/lightweight.md` exactly for this change:\n\n$ARGUMENTS"
+    },
+    "plan": {
+      "description": "Plan a change following docs/agents/protocols/plan.md",
+      "template": "Follow `docs/agents/protocols/plan.md` exactly for this change:\n\n$ARGUMENTS"
+    }
+  }
+}
