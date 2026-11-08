@@ -2,7 +2,7 @@
 axion-release = "1.21.4"
 checkstyle = "11.0.0"
 gradle-docker-plugin = "10.0.0"
-lombok-plugin = "9.8.2"
+lombok-plugin = "9.8.3"
 picocli = "4.7.7"
 spotbugs-gradle-plugin = "6.5.8"
 spring-boot = "4.1.2"
