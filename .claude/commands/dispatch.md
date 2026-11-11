@@ -1,5 +1,5 @@
 ---
-description: Start background work on topics following docs/agents/protocols/parallel.md
+description: Dispatch topics for worker-local discussion, planning and implementation
 argument-hint: <topic | docs/agents/inbox/<note>.md> ...
 ---
 

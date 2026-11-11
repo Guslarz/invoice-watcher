@@ -10,7 +10,11 @@ switch to Protocol plan.
    the printed worktree (plain clone without worktrees: `git switch -c <fix|chore|docs>/<slug>`).
    A parallel worker uses the worktree already created by its dispatcher instead.
 2. Make the change. A bug fix gets a regression test; name the violated clause if there is one.
+   A registered worker first sets `implementing` with `python3 scripts/worker.py update <name> --phase implementing`.
 3. If the change addresses an inbox note, delete the note.
 4. Run `scripts/verify.sh`.
 5. Stop and ask the developer to review the working tree. Only after approval: commit, push,
-   open a pull request to `master`. Never merge it.
+    open a pull request to `master`. Never merge it.
+   Write `.gitmessage` and set `awaiting-commit-review` before stopping. After approved commit,
+   push and PR creation, set `awaiting-merge --pr <PR-URL>` through the update command. Blockers
+   use `blocked --detail <reason>`, not `done`. See Protocol parallel for the lifecycle contract.

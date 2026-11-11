@@ -7,6 +7,8 @@ Output: a pull request to `master` containing spec, code, tests and docs — and
 
 1. Make sure you are on the plan's branch (never on `master`). If missing, create it from an
    up-to-date `master`.
+   A registered worker reuses its assigned worktree and sets `implementing` using
+   `python3 scripts/worker.py update <name> --phase implementing` only after plan approval here.
 2. **Spec first.** Apply the plan's spec changes to `docs/agents/specs/`. Set
    `status: implemented` only at the end, when tests pass.
 3. **Code and tests.** Every changed clause gets at least one test that names it, e.g.
@@ -18,8 +20,12 @@ Output: a pull request to `master` containing spec, code, tests and docs — and
 6. **Delete the plan file** `docs/agents/projects/<slug>.md` and the inbox note it came from,
    if any. Git history keeps both.
 7. Stop and ask the developer to review the working tree (summarize `git status` / diff stat).
+   Write `.gitmessage` and set `awaiting-commit-review` for a registered worker.
    Only after approval: commit, push the branch and open a pull request to `master`
    (`gh pr create --base master`). Never merge it.
+   After PR creation, set `awaiting-merge` with `--pr <PR-URL>`; prune reconciles the merge with
+   `gh` without another worker turn. Set `blocked --detail <reason>` for an interruption, never
+   `done` merely because a model turn ends. See Protocol parallel for the lifecycle contract.
 8. Report with this block:
 
 ```

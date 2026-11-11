@@ -6,12 +6,15 @@ Output: one plan file in `docs/agents/projects/`. **No production code.**
 
 ## Steps
 
-1. Run `scripts/worktree.sh prune` and report the worktrees it kept (it does nothing below 10
+1. An assigned parallel worker reuses its branch/worktree: do not prune or create another.
+   Otherwise run `scripts/worktree.sh prune` and report the worktrees it kept (it does nothing below 10
    worktrees besides `master`). Create the branch: `scripts/worktree.sh new <type>/<slug>` and work
    in the printed worktree
    (plain clone without worktrees: `git switch master && git pull --ff-only && git switch -c <type>/<slug>`).
 2. Load context: affected spec(s) in `docs/agents/specs/`, `docs/agents/adr/index.md`, relevant guideline.
-3. Copy `docs/agents/templates/plan.md` to `docs/agents/projects/<slug>.md` and fill it in:
+3. Discuss requirements and resolve assumptions with the developer in this session. A registered
+   worker sets `discussing`, then `planning`, using `python3 scripts/worker.py update <name> --phase <phase>`.
+   Copy `docs/agents/templates/plan.md` to `docs/agents/projects/<slug>.md` and fill it in:
    - **Goal** — one paragraph, user/operator perspective.
    - **Spec changes** — for each affected spec: clauses added / changed / removed, written exactly
      as they will appear in the spec. A new capability gets a new spec from
@@ -25,4 +28,6 @@ Output: one plan file in `docs/agents/projects/`. **No production code.**
    - **Source** — the inbox note it comes from, if any.
 4. Run `scripts/check-docs.sh`.
 5. Stop. Present the plan path and the open questions to the developer and wait for approval.
-   Do not commit unless the developer asks for it.
+   A registered worker sets `awaiting-plan-approval` with `--plan <path>`. Approval must occur in
+   this worker session; dispatch/resume is not approval. After approval follow Protocol implement
+   in the same worktree/session. Do not commit unless separately approved.

@@ -64,12 +64,12 @@
   ],
   "commands": {
     "dispatch": {
-      "description": "Start background work on topics following docs/agents/protocols/parallel.md",
+      "description": "Dispatch topics for worker-local discussion, planning and implementation",
       "template": "Act as the dispatcher from `docs/agents/protocols/parallel.md` exactly, for these topics:\n\n$ARGUMENTS"
     },
     "implement": {
       "description": "Implement an approved plan following docs/agents/protocols/implement.md",
-      "template": "Follow `docs/agents/protocols/implement.md` exactly for the plan:\n\n$ARGUMENTS"
+      "template": "Follow `docs/agents/protocols/implement.md` exactly for the plan:\n\nFor a registered worker, require explicit plan approval in this worker session, reuse its\nassigned worktree, and maintain lifecycle through `scripts/worker.py update`. Stop uncommitted\nat the separate commit review gate; dispatch/resume never grants approval.\n\n$ARGUMENTS"
     },
     "inbox": {
       "description": "Add an idea or TODO to docs/agents/inbox",
@@ -77,11 +77,11 @@
     },
     "lightweight": {
       "description": "Small change without a plan, following docs/agents/protocols/lightweight.md",
-      "template": "Follow `docs/agents/protocols/lightweight.md` exactly for this change:\n\n$ARGUMENTS"
+      "template": "Follow `docs/agents/protocols/lightweight.md` exactly for this change:\n\nFor a registered worker, reuse its assigned worktree, maintain lifecycle through\n`scripts/worker.py update`, and stop uncommitted at commit review in this worker session.\nIf planning is required, discuss requirements and obtain plan approval here before implementation.\n\n$ARGUMENTS"
     },
     "plan": {
       "description": "Plan a change following docs/agents/protocols/plan.md",
-      "template": "Follow `docs/agents/protocols/plan.md` exactly for this change:\n\n$ARGUMENTS"
+      "template": "Follow `docs/agents/protocols/plan.md` exactly for this change:\n\nIf this is a registered worker, reuse its assigned branch/worktree, maintain its lifecycle\nthrough `scripts/worker.py update`, and discuss requirements and obtain approval here.\nDispatch is not plan or commit approval.\n\n$ARGUMENTS"
     }
   }
 }

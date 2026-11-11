@@ -12,7 +12,7 @@ usage() {
 usage: $0 new <type>/<slug>    create ../<slug> on a new branch from $base
        $0 list                 show worktrees and what they are waiting for
        $0 rm <slug>            remove ../<slug> and its branch (only when nothing would be lost)
-       $0 prune [--all]        remove safe worktrees with confirmed finished workers
+       $0 prune [--all]        remove safe worktrees with done/merged or missing lifecycle status
        $0 hook-create          WorktreeCreate hook: JSON {"name"} on stdin, path on stdout
        $0 hook-remove          WorktreeRemove hook: JSON {"worktree_path"} on stdin
 <type>: ${types//|/, }
@@ -41,56 +41,8 @@ create() {
   echo "$dir"
 }
 
-# Succeeds when removing the worktree and its branch loses nothing: no uncommitted changes and every
-# commit is either in $base or pushed to origin/<branch>.
-safe_to_remove() {
-  local dir=$1 branch=$2
-  if [[ -n "$(git -C "$dir" status --porcelain)" ]]; then
-    echo "$dir has uncommitted changes" >&2
-    return 1
-  fi
-  [[ -z "$branch" ]] && return 0
-  git -C "$root" merge-base --is-ancestor "$branch" "$base" && return 0
-  git -C "$root" merge-base --is-ancestor "$branch" "origin/$branch" 2>/dev/null && return 0
-  echo "$branch has commits that are neither merged into $base nor pushed" >&2
-  return 1
-}
-
 remove() {
-  local dir=$1 branch registry record
-  registry="$(git rev-parse --path-format=absolute --git-common-dir)/agent-workers"
-  mkdir -p "$registry"
-  exec {worker_lock}>"$registry/lock"
-  flock -x "$worker_lock"
-  for record in "$registry"/*.json; do
-    [[ -e "$record" ]] || continue
-    jq -e --arg dir "$dir" '.worktree | type == "string"' "$record" >/dev/null \
-      || { echo "invalid worker record $record; refusing removal" >&2; exit 1; }
-    if jq -e --arg dir "$dir" '.worktree == $dir' "$record" >/dev/null; then
-      echo "$dir has a registered worker; remove the worker first" >&2
-      exit 1
-    fi
-  done
-  branch=$(git -C "$dir" branch --show-current)
-  [[ "$branch" != master ]] || { echo "refusing to remove the master worktree" >&2; exit 1; }
-  fetch
-  safe_to_remove "$dir" "$branch" || exit 1
-  delete "$dir" "$branch"
-}
-
-delete() {
-  local dir=$1 branch=$2
-  git -C "$root" worktree remove "$dir" >&2
-  [[ -z "$branch" ]] || git -C "$root" branch --quiet -D "$branch" >&2
-  echo "removed $dir${branch:+ and branch $branch}" >&2
-}
-
-# Absolute paths of all worktrees (the bare repository itself excluded).
-worktrees() {
-  git -C "$root" worktree list --porcelain | awk '/^worktree /{print substr($0, 10)}' | while read -r dir; do
-    [[ -f "$dir/.git" || -d "$dir/.git" ]] || continue
-    echo "$dir"
-  done
+  python3 "$(dirname "$0")/worker.py" remove-worktree "$1"
 }
 
 # The worker registry is locked while worker state and Git safety are checked.
@@ -99,26 +51,7 @@ prune() {
 }
 
 list() {
-  local gh_ok=false
-  command -v gh >/dev/null 2>&1 && gh_ok=true
-  worktrees | while read -r dir; do
-    local branch state=() ahead pr=""
-    branch=$(git -C "$dir" branch --show-current)
-    [[ -n "$(git -C "$dir" status --porcelain)" ]] && state+=(dirty)
-    compgen -G "$dir/docs/agents/projects/*.md" | grep -qv README.md && state+=(plan)
-    [[ -f "$dir/.gitmessage" ]] && state+=(awaiting-commit)
-    if [[ -n "$branch" && "$branch" != master ]]; then
-      ahead=$(git -C "$dir" rev-list --count "$base..HEAD" 2>/dev/null || echo "?")
-      state+=("ahead:$ahead")
-      if git -C "$dir" rev-parse --verify --quiet "origin/$branch" >/dev/null; then
-        [[ "$(git -C "$dir" rev-parse HEAD)" == "$(git -C "$dir" rev-parse "origin/$branch")" ]] \
-          && state+=(pushed) || state+=(unpushed)
-      fi
-      $gh_ok && pr=$(cd "$dir" && gh pr list --head "$branch" --state all --json state,url \
-        --jq '.[0] | select(.) | "\(.state) \(.url)"' 2>/dev/null || true)
-    fi
-    printf '%-28s %-36s %-40s %s\n' "$(basename "$dir")" "${branch:-(detached)}" "${state[*]:-clean}" "$pr"
-  done
+  python3 "$(dirname "$0")/worker.py" list --worktrees
 }
 
 # Maps a Claude Code worktree name to a branch: "feature-foo" -> feature/foo, anything else -> worktree/<name>.
