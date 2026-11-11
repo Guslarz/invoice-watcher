@@ -29,6 +29,29 @@ Backend integration support and operational alternatives are recorded in the
   cleanup-eligible worker to `discussing` before opening its session. Worker instructions require
   phase updates before further work, including when resumed through native backend tools.
   Resume reuses the same session and worktree; it grants no approval by itself.
+- **WORKER-012** Codex workers use `danger-full-access` by default. `start --sandbox <mode>`
+  selects `read-only`, `workspace-write`, or `danger-full-access` explicitly. The launcher
+  records the effective mode in the registry and lifecycle status, displays it in status
+  reports, and passes it to Codex on start and resume. `resume --sandbox <mode>` changes the
+  recorded selection before attachment when the server applies it. A loaded native task that
+  ignores an override is reported explicitly and retains its previous recorded mode.
+  Legacy Codex records without a selection use the launcher default. Sandbox options are rejected for other backends. Sandbox selection does
+  not grant plan or commit approval and does not bypass approval handling.
+- **WORKER-013** A dispatched worker is discoverable by its recorded identity and readable name
+  in the backend's native session interface. Codex uses native interactive tasks or native
+  subagents, Claude uses named background sessions listed by agent view, and OpenCode uses
+  sessions on the same shared service as its UI. Dispatch does not silently substitute a
+  headless session when native dispatch is unavailable. Visibility verification is part of
+  launch validation and is independent of lifecycle completion.
+- **WORKER-014** Native dispatch protects the assigned worktree before starting a turn and
+  records the returned session identity before further execution. Resume and follow-up reuse
+  that session and worktree, preserve pending approval gates, and provide a backend-native
+  way to reopen the worker. Discovery failures preserve protected status and actionable
+  diagnostics. Native task visibility does not imply a parent/subagent relationship.
+
+`danger-full-access` removes filesystem and network sandbox enforcement. Codex approval
+handling remains separate. Use `--sandbox workspace-write` where host namespace support is
+available and sandboxed execution is desired.
 
 1. For inbox batches use `python3 scripts/inbox.py ready`. Run `scripts/worktree.sh prune` and
    report kept worktrees. Group overlapping topics; never run them in parallel.
@@ -45,10 +68,30 @@ Backend integration support and operational alternatives are recorded in the
    Optional `--model` is independent: OpenCode accepts `provider/model#variant`,
    Claude/Codex accept their own model names. Codex currently supports default-agent operation,
    not named-agent selection; a Codex configuration profile is not an agent.
-   For lightweight work use `/lightweight`; `/implement` requires an already approved plan.
+   Codex uses the existing local shared app-server daemon, with `danger-full-access` by default.
+   Start `codex agents` first if the daemon is unavailable; `--codex-socket` selects another local
+   control socket. The launcher never starts a private server or falls back to `codex exec`.
+   When `CODEX_THREAD_ID` is available, it forks that task to inherit its configuration and
+   completed context; `--parent-session` explicitly selects another source. The worker is an
+   independent interactive task, not a spawned child subagent. Omit `--model` to inherit the source model.
+   Native UI creation tools that cannot assign the required worktree are not a dispatch substitute.
+   Remote WebSocket servers are unsupported by this local-socket adapter; run dispatch on the
+   UI server's host with its control socket instead of silently using a different local daemon.
+   OpenCode defaults to its shared service; `--server <URL>` selects the same service as a UI
+   using an explicit server. The URL is retained for listing, submission, resume, and cleanup.
+   Neither adapter uses a private/standalone server. For lightweight work use `/lightweight`;
+   `/implement` requires an already approved plan.
 4. Give the developer the worker name and `python3 scripts/worker.py resume <name>` command.
    Requirements questions and approvals belong in that worker, not the dispatcher. A failed
    launch remains protected; inspect its diagnostics rather than starting another worker.
+   Open Codex workers in `codex agents`, Claude workers in `claude agents`, and OpenCode workers
+   in its session picker on the same service/project. A directory-filtered OpenCode view may
+   require selecting the assigned worktree. `worker.py resume` also reopens the recorded session.
+   Codex launch checks the default interactive inventory. If native task-list tools are available
+   in the dispatcher, also confirm the returned session in that UI's list before reporting it;
+   a mismatch means the UI and launcher are connected to different servers and must be reported.
+   Existing legacy Codex exec workers stay resumable by their recorded identity; they are not
+   migrated or made visible automatically. Native task creation does not imply subagent parentage.
 5. Keep at most four workers running verification concurrently (dispatcher responsibility).
    Use `python3 scripts/worker.py list`, `status <name>`, and `scripts/worktree.sh list` to inspect
    progress. Status reports workflow phases, not whether a model is generating.
