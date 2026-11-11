@@ -26,12 +26,14 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -295,6 +297,48 @@ class MailProducerTaskImplTest {
     ArgumentCaptor<MailQuery> query = ArgumentCaptor.forClass(MailQuery.class);
     verify(mailConnection).getEmailMessages(query.capture());
     return query.getValue();
+  }
+
+  @Test
+  @DisplayName("EVENT-004: publishes selected bodies and media types unchanged, including absent bodies")
+  void publishesSelectedBodyAndMediaType() {
+    // given
+    givenUserWithFolders(folder("INBOX", null));
+    MailMessage html = MailMessage.builder().content("<p>Invoice</p>").contentType("text/html").build();
+    MailMessage plain = MailMessage.builder().content("Invoice").contentType("text/plain").build();
+    MailMessage absent = MailMessage.builder().build();
+    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(MailFolderMessages.builder()
+        .uidValidity(UID_VALIDITY)
+        .messages(List.of(new FolderMessage(1, html), new FolderMessage(2, plain), new FolderMessage(3, absent)))
+        .build());
+
+    // when
+    uut.execute();
+
+    // then
+    ArgumentCaptor<Event> events = ArgumentCaptor.forClass(Event.class);
+    verify(eventProducer, times(3)).send(eq("all-mails"), events.capture());
+    assertThat(events.getAllValues()).extracting(Event::value).containsExactly(html, plain, absent);
+    assertThat(events.getAllValues()).extracting(Event::key).containsOnly("jan@example.com");
+  }
+
+  @Test
+  @DisplayName("MAIL-032: a body reading failure skips remaining folders and publishes no incomplete messages")
+  void skipsRemainingFoldersWhenBodyReadingFails(CapturedOutput output) {
+    // given
+    FolderConfig inbox = folder("INBOX", new ScanPosition(UID_VALIDITY, 12));
+    givenUserWithFolders(inbox, folder("Invoices", null));
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenThrow(new MailConnectionException(new IOException("Cannot read body")));
+
+    // when
+    uut.execute();
+
+    // then
+    verify(mailConnection).getEmailMessages(any(MailQuery.class));
+    verify(eventProducer, never()).send(any(), any());
+    verify(folderConfigDaoService, never()).updateScanPosition(any(), any());
+    assertThat(output).contains("Error scanning folder INBOX of mailbox imap.example.com of user jan@example.com");
   }
 
   private void givenUserWithFolders(FolderConfig... folders) {

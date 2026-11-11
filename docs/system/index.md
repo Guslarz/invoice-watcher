@@ -23,7 +23,7 @@ sequenceDiagram
     T->>M: connect (IMAPS, decrypted password)
     loop every folder
       T->>M: messages received after the folder's scan position
-      M-->>T: sender, subject, date
+      M-->>T: sender, subject, date, body and media type
       T->>K: one event per message (key = user's e-mail)
       K-->>T: event stored
       T->>D: move the folder's scan position to the last stored event
@@ -69,18 +69,20 @@ server received since the folder's start date, or every message in the folder wh
 date. If the server renumbers a folder (for example after it was rebuilt), the old position no
 longer means anything; InvoiceWatcher notices this and scans the folder as if for the first time.
 
-For every message InvoiceWatcher reads the sender, the subject and the date it was sent. A message
-without a sender is still published, without one; a message without a valid sent date gets the
-date the server received it instead.
+For every message InvoiceWatcher reads the sender, the subject, the date it was sent, the
+message body and its media type. A message without a sender is still published, without one; a
+message without a valid sent date gets the date the server received it instead. HTML is preferred
+over plain text in multipart alternatives and is preserved without conversion or sanitization
+(HTML is untrusted). Related resources, attachments and attached messages are excluded.
+Nested multipart bodies are supported. When no supported body exists the body and media type are
+both null; an empty supported body is published as an empty string with its media type. Body
+reading or decoding errors fail the folder scan.
 
 If a mailbox cannot be reached, or a folder cannot be read, the error is logged and the scan moves
 on to the next mailbox. If a user's configuration cannot be processed, the scan moves on to the
 next user. Each failure is logged once, naming the user, the mailbox host and the folder where it
 applies; credentials never appear in the logs. A folder that fails halfway keeps the position of the last message that
 was published, so the next scan continues with the first one that was not.
-
-!!! warning "Current limitations"
-    - The message content is not read yet; events carry only sender, subject and date.
 
 ## What InvoiceWatcher needs to know
 
@@ -137,7 +139,12 @@ value is a JSON object:
 | `sender` | string | The `From` address, e.g. `Shop <billing@shop.example>`; `null` when the message has none |
 | `title` | string | Subject |
 | `date` | date-time | When the message was sent, in UTC; when the server received it if the message has no valid sent date |
-| `content` | string | Message content — always `null` for now |
+| `content` | string | Decoded selected HTML or plain-text body; `null` when none is supported |
+| `contentType` | string | `text/html`, `text/plain`, or `null` when none is supported |
+
+Other multipart containers select the first supported body in MIME order; alternative bodies are
+not concatenated. Consumers must treat HTML as untrusted and sanitize it before displaying it.
+Historical events have no `contentType` field.
 
 A message counts as published once Kafka has confirmed its event. The folder's scan position is
 saved once, after every event of the folder is confirmed. If an event is not confirmed, the folder

@@ -25,11 +25,16 @@ value:
   "sender": "Example Shop <billing@shop.example>",
   "title": "Invoice 10/2026",
   "date": "2026-10-13T08:15:00Z",
-  "content": null
+  "content": "<p>Invoice for October 2026</p>",
+  "contentType": "text/html"
 }
 ```
 
-`content` is always `null` for now — reading message bodies is a known gap (MAIL-030).
+HTML bodies are preferred in multipart alternatives and preserved without conversion or
+sanitization (HTML is untrusted). Related resources, attachments and attached messages are
+excluded. When no supported body exists, `content` and `contentType` are both `null`; an empty
+supported body is published as an empty string with its media type. Historical events lack
+`contentType`.
 
 ### Watch the topic
 

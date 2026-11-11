@@ -64,10 +64,18 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 
 ### What is read from a message
 
-- **MAIL-030** For each picked-up message InvoiceWatcher reads the sender, the subject, the sent
-  date (converted to UTC) and the content. A message without a `From` header has no sender; a
-  message without a valid `Date` header gets the date the server received it instead. *(gap: content is not read yet —
-  `docs/agents/inbox/mail-content-not-read.md`)*
+- **MAIL-030** For each picked-up message InvoiceWatcher reads the sender, subject, sent date
+  (converted to UTC), body and body media type. A message without a `From` header has no sender;
+  a message without a valid `Date` header gets the date the server received it instead.
+- **MAIL-031** Supported bodies are `text/html` and `text/plain`, decoded using their MIME
+  transfer encoding and charset. HTML is preserved without conversion or sanitization. For
+  multipart alternatives, HTML is preferred over plain text. Nested multipart bodies are
+  supported; related resources, attachments and attached messages are excluded. Other multipart
+  containers select the first supported body in MIME order. Alternative bodies are not
+  concatenated.
+- **MAIL-032** When no supported body exists, content and body media type are both `null`.
+  An empty supported body remains an empty string with its media type. A body-reading or
+  decoding error fails the folder scan under MAIL-041; it is not treated as an absent body.
 
 ### Failures
 
@@ -110,6 +118,14 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 - **MAIL-030** Given a folder with messages 1–3, where message 2 has no `From` and no `Date`
   header, when the folder is scanned, then three events are published, event 2 with
   `sender: null` and the received date as `date`, and the position moves to 3.
+- **MAIL-030** Given a message with a supported body, when scanned, then the body and media type
+  are read alongside the existing metadata.
+- **MAIL-031** Given plain text, HTML, multipart alternatives or nested multipart bodies, when
+  scanned, then the specified body is selected and decoded HTML is preserved. Attachments,
+  related resources and attached messages are not included.
+- **MAIL-032** Given unsupported-only or empty content, when scanned, then absent and empty bodies
+  are distinguished. Given a body-reading or decoding failure, when scanned, then the folder
+  scan fails rather than publishing incomplete content.
 - **MAIL-040** Given two mailbox configurations where the first has a wrong password, when a scan
   runs, then an error is logged for the first and messages of the second are published.
 - **MAIL-042** Given two users where reading the first user's mailbox configuration throws, when a
