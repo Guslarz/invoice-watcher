@@ -80,11 +80,19 @@ an ADR only when relevant), and the guideline for the area you touch (`docs/agen
 
 ## Git workflow
 
-- Agent commands and shell permissions are maintained in `.claude/`; after changing them, run
-  `python3 scripts/sync-agent-config.py` to regenerate `opencode.json`. Do not edit the generated
-  file directly; verification checks for drift. Claude's command argument hints have no OpenCode
-  equivalent. Claude's worktree hooks are not shared: in OpenCode use `scripts/worktree.sh` as
-  instructed below, rather than relying on OpenCode's built-in worktree creation or removal.
+- Keep every harness-specific integration covered for Claude Code, Codex CLI and OpenCode V2
+  according to [ADR-0014](docs/agents/adr/0014-cover-harness-integrations-across-supported-backends.md)
+  and the [compatibility matrix](docs/agents/guidelines/agent-backends.md). In the same change,
+  implement an equivalent, document an explicit alternative, or mark it unsupported with a reason
+  for every backend. Revalidate affected integrations when upgrading a backend.
+- Canonical workflow commands and shell permissions live in `.claude/`. After changing them,
+  update `config/agent-backends.json` and run `python3 scripts/sync-agent-config.py`. This generates
+  `opencode.json`, Codex `.agents/skills/iw-*` skills, and the compatibility matrix; never edit
+  generated files by hand. Codex invocation: `$iw-plan`, `$iw-implement`, `$iw-lightweight`,
+  `$iw-inbox`, `$iw-dispatch` with workflow inputs. Native Claude/OpenCode commands use `/`.
+  Codex permission translation is unsupported; native sandbox/approvals remain in effect.
+  In Codex and OpenCode use `scripts/worktree.sh` for worktree creation/removal; Claude's
+  worktree hooks call the same script. Process approval gates do not enforce shell permissions.
 
 - `master` is the main development branch. **Never commit or push directly to `master`.**
 - Every change starts on its own branch created from an up-to-date `master`, in its own worktree

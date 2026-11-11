@@ -1,0 +1,12 @@
+{
+  ".agents/skills/iw-dispatch/SKILL.md": "31ae4a01e9b899a2d04df0ea87cf610d4f1b0b437a4997fcf4294f2df049ff5f",
+  ".agents/skills/iw-dispatch/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+  ".agents/skills/iw-implement/SKILL.md": "8c8cbccacb3fd0d40b4c340f9555f518107579e5a740a1bfe3d67872924c4260",
+  ".agents/skills/iw-implement/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+  ".agents/skills/iw-inbox/SKILL.md": "01730cfd91e11f81f3f150423e7f03596d79da4c2855e8661e0ae482f52a4b59",
+  ".agents/skills/iw-inbox/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+  ".agents/skills/iw-lightweight/SKILL.md": "3a1dfede09c78580a4fa40953154dbca590d55870c72a3a45deec8e666835c4a",
+  ".agents/skills/iw-lightweight/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+  ".agents/skills/iw-plan/SKILL.md": "da8594b637fbbede0bc36964d19b1ad27c52802867186a133d5e7f53b69f9e9c",
+  ".agents/skills/iw-plan/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94"
+}

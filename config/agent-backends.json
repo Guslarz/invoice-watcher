@@ -1,0 +1,732 @@
+{
+  "version": 1,
+  "backends": [
+    "claude",
+    "codex",
+    "opencode"
+  ],
+  "sources": {
+    "claude-instructions": "https://code.claude.com/docs/en/memory",
+    "claude-commands": "https://code.claude.com/docs/en/slash-commands",
+    "claude-hooks": "https://code.claude.com/docs/en/hooks",
+    "claude-permissions": "https://code.claude.com/docs/en/settings",
+    "codex-instructions": "https://developers.openai.com/codex/guides/agents-md/",
+    "codex-skills": "https://learn.chatgpt.com/docs/build-skills",
+    "codex-rules": "https://learn.chatgpt.com/docs/agent-configuration/rules",
+    "opencode-instructions": "https://opencode.ai/docs/instructions/",
+    "opencode-commands": "https://opencode.ai/docs/commands/",
+    "opencode-permissions": "https://opencode.ai/docs/permissions/",
+    "opencode-schema": "https://opencode.ai/config.json",
+    "repository-tests": "scripts/tests/test_worker.py and scripts/tests/test_worktree_prune.py; CLI/API mocks, not live sessions. Installed audit versions: Claude Code 2.1.322, Codex CLI 0.167.1, OpenCode v2.2.5."
+  },
+  "reviewed_inputs": {
+    ".claude/settings.json": "8dbfba4d85ecdb6ded94679ec80fbd5a7bdcd6bd9ae357e7aa43e4365cc6a047",
+    "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+    "scripts/worktree.sh": "ecb7996f1d63aaa43748d7d54e278eb43ca4fd7d1e44ecb3651200d395aff7a1",
+    "scripts/worker.py": "c12eb33c7af965454a4168b5578c0c940a792abcb475296d4f4be0aa64f3200e"
+  },
+  "integrations": [
+    {
+      "id": "instructions",
+      "name": "Shared repository instructions",
+      "covers": [
+        "instructions",
+        "file:AGENTS.md",
+        "file:CLAUDE.md"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "CLAUDE.md imports AGENTS.md with Claude file-import syntax.",
+          "references": [
+            "CLAUDE.md",
+            "AGENTS.md"
+          ]
+        },
+        "codex": {
+          "status": "native",
+          "detail": "Loads AGENTS.md directly.",
+          "references": [
+            "AGENTS.md"
+          ]
+        },
+        "opencode": {
+          "status": "native",
+          "detail": "Loads AGENTS.md directly.",
+          "references": [
+            "AGENTS.md"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-instructions",
+        "codex-instructions",
+        "opencode-instructions"
+      ]
+    },
+    {
+      "id": "command-dispatch",
+      "name": "Workflow: dispatch",
+      "covers": [
+        "command:dispatch",
+        "file:.claude/commands/dispatch.md"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Invoke /dispatch with workflow inputs.",
+          "references": [
+            ".claude/commands/dispatch.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Invoke $iw-dispatch with workflow inputs; generated explicit-only skill.",
+          "references": [
+            ".agents/skills/iw-dispatch/SKILL.md",
+            ".agents/skills/iw-dispatch/agents/openai.yaml"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Invoke /dispatch; generated V2 command.",
+          "references": [
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands"
+      ]
+    },
+    {
+      "id": "command-implement",
+      "name": "Workflow: implement",
+      "covers": [
+        "command:implement",
+        "file:.claude/commands/implement.md"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Invoke /implement with workflow inputs.",
+          "references": [
+            ".claude/commands/implement.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Invoke $iw-implement with workflow inputs; generated explicit-only skill.",
+          "references": [
+            ".agents/skills/iw-implement/SKILL.md",
+            ".agents/skills/iw-implement/agents/openai.yaml"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Invoke /implement; generated V2 command.",
+          "references": [
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands"
+      ]
+    },
+    {
+      "id": "command-inbox",
+      "name": "Workflow: inbox",
+      "covers": [
+        "command:inbox",
+        "file:.claude/commands/inbox.md"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Invoke /inbox with workflow inputs.",
+          "references": [
+            ".claude/commands/inbox.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Invoke $iw-inbox with workflow inputs; generated explicit-only skill.",
+          "references": [
+            ".agents/skills/iw-inbox/SKILL.md",
+            ".agents/skills/iw-inbox/agents/openai.yaml"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Invoke /inbox; generated V2 command.",
+          "references": [
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands"
+      ]
+    },
+    {
+      "id": "command-lightweight",
+      "name": "Workflow: lightweight",
+      "covers": [
+        "command:lightweight",
+        "file:.claude/commands/lightweight.md"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Invoke /lightweight with workflow inputs.",
+          "references": [
+            ".claude/commands/lightweight.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Invoke $iw-lightweight with workflow inputs; generated explicit-only skill.",
+          "references": [
+            ".agents/skills/iw-lightweight/SKILL.md",
+            ".agents/skills/iw-lightweight/agents/openai.yaml"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Invoke /lightweight; generated V2 command.",
+          "references": [
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands"
+      ]
+    },
+    {
+      "id": "command-plan",
+      "name": "Workflow: plan",
+      "covers": [
+        "command:plan",
+        "file:.claude/commands/plan.md"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Invoke /plan with workflow inputs.",
+          "references": [
+            ".claude/commands/plan.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Invoke $iw-plan with workflow inputs; generated explicit-only skill.",
+          "references": [
+            ".agents/skills/iw-plan/SKILL.md",
+            ".agents/skills/iw-plan/agents/openai.yaml"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Invoke /plan; generated V2 command.",
+          "references": [
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands"
+      ]
+    },
+    {
+      "id": "command-metadata",
+      "name": "Command descriptions and arguments",
+      "covers": [
+        "command-description",
+        "command-arguments"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Description metadata and $ARGUMENTS expansion.",
+          "references": [
+            ".claude/commands/plan.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Description becomes skill metadata; inputs come from the invocation message, without shell or macro expansion.",
+          "references": [
+            ".agents/skills/iw-plan/SKILL.md"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Preserves description and $ARGUMENTS in generated command templates.",
+          "references": [
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands"
+      ]
+    },
+    {
+      "id": "argument-hints",
+      "name": "Command argument hints",
+      "covers": [
+        "command-argument-hint"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "argument-hint metadata.",
+          "references": [
+            ".claude/commands/plan.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Expected inputs appear in the skill body; no command hint UI adapter.",
+          "references": [
+            ".agents/skills/iw-plan/SKILL.md"
+          ]
+        },
+        "opencode": {
+          "status": "unsupported",
+          "detail": "V2 command metadata has no argument-hint field; omitted. Canonical command documents inputs.",
+          "references": [
+            ".claude/commands/plan.md"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands"
+      ]
+    },
+    {
+      "id": "permissions",
+      "name": "Shell allow/deny rules",
+      "covers": [
+        "permissions",
+        "setting:permissions",
+        "permission:allow",
+        "permission:deny"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Bash allow/deny settings. Commit approval remains a separate process requirement.",
+          "references": [
+            ".claude/settings.json",
+            "AGENTS.md"
+          ]
+        },
+        "codex": {
+          "status": "unsupported",
+          "detail": "No repository permission translation. Retains configured native sandbox/approvals; Claude wildcard rules are not equivalent to Codex execution prefixes.",
+          "references": [
+            "AGENTS.md",
+            "scripts/worker.py"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Generated V2 shell rules preserve allow/deny ordering; no rule grants process approval.",
+          "references": [
+            "opencode.json",
+            "AGENTS.md"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-permissions",
+        "codex-rules",
+        "opencode-permissions"
+      ]
+    },
+    {
+      "id": "worktree-create-hook",
+      "name": "Native worktree creation hook",
+      "covers": [
+        "hook:WorktreeCreate"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "WorktreeCreate calls hook-create; Claude JSON name and CLAUDE_PROJECT_DIR feed the shared script.",
+          "references": [
+            ".claude/settings.json",
+            "scripts/worktree.sh"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "No native hook adapter installed. Run scripts/worktree.sh new explicitly.",
+          "references": [
+            "scripts/worktree.sh"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "No native hook adapter installed. Run scripts/worktree.sh new explicitly.",
+          "references": [
+            "scripts/worktree.sh"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-hooks",
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worktree-remove-hook",
+      "name": "Native worktree removal hook",
+      "covers": [
+        "hook:WorktreeRemove"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "WorktreeRemove calls hook-remove with Claude worktree_path JSON.",
+          "references": [
+            ".claude/settings.json",
+            "scripts/worktree.sh"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "No native hook adapter installed. Use scripts/worktree.sh rm/prune for lifecycle and Git safety.",
+          "references": [
+            "scripts/worktree.sh"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "No native hook adapter installed. Use scripts/worktree.sh rm/prune for lifecycle and Git safety.",
+          "references": [
+            "scripts/worktree.sh"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "claude-hooks",
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "configuration",
+      "name": "Backend configuration and generation",
+      "covers": [
+        "setting:$schema",
+        "setting:hooks",
+        "file:.claude/settings.json",
+        "file:opencode.json"
+      ],
+      "backends": {
+        "claude": {
+          "status": "native",
+          "detail": "Canonical commands and settings live under .claude/. Hook definitions remain Claude-specific.",
+          "references": [
+            ".claude/settings.json"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Generator installs repository skills in .agents/skills; no .codex/config.toml or execution rules are installed.",
+          "references": [
+            "scripts/sync-agent-config.py"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Generator writes opencode.json commands and permissions in V2 schema.",
+          "references": [
+            "scripts/sync-agent-config.py",
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "codex-skills",
+        "opencode-schema",
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worktree-script",
+      "name": "Shared worktree layout and cleanup",
+      "covers": [
+        "worktree-script"
+      ],
+      "backends": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Shared script supports explicit operations and Claude hook entry points.",
+          "references": [
+            "scripts/worktree.sh"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Shared script is required for repository worktree operations.",
+          "references": [
+            "scripts/worktree.sh"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Shared script is required for repository worktree operations.",
+          "references": [
+            "scripts/worktree.sh"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worker-launch",
+      "name": "Worker launch and session identity",
+      "covers": [
+        "worker:start",
+        "worker:run_backend",
+        "worker:claude_launch_id",
+        "worker:validate_session"
+      ],
+      "backends": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Launcher uses --bg, --name, --session-id and parses background job identity separately from conversation UUID.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Launcher supervises exec --json, uses workspace-write plus registry --add-dir, and captures thread.started identity.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Launcher creates a session through the V2 API and supervises command submission.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worker-prompts",
+      "name": "Worker workflow dispatch",
+      "covers": [
+        "worker:command_prompt"
+      ],
+      "backends": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Launch prompt expands canonical /plan, /implement, or /lightweight template with worker-local gates.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "exec receives the expanded canonical prompt; worker launch does not depend on skill selection.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "V2 session command endpoint runs the generated command.",
+          "references": [
+            "scripts/worker.py",
+            "opencode.json"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worker-selection",
+      "name": "Worker agent and model selection",
+      "covers": [
+        "worker:opencode_model"
+      ],
+      "backends": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Separate --agent and --model; named background agents require Claude >= 2.1.191 and reject unavailable selections.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "codex": {
+          "status": "unsupported",
+          "detail": "Named-agent selection is unsupported by this launcher and rejected explicitly. Use deliberate --default-agent with optional independent --model.",
+          "references": [
+            "scripts/worker.py",
+            "docs/agents/protocols/parallel.md"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Checks primary-capable named agent and independently forwards provider/model with optional variant.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worker-resume",
+      "name": "Worker resume and attachment",
+      "covers": [
+        "worker:resume"
+      ],
+      "backends": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Protects lifecycle before claude attach with recorded background job ID.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Protects lifecycle before codex resume with recorded thread ID.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Protects lifecycle before opencode --session with recorded session ID.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worker-delete",
+      "name": "Worker session deletion",
+      "covers": [
+        "worker:remove_session"
+      ],
+      "backends": {
+        "claude": {
+          "status": "alternative",
+          "detail": "claude rm deletes the recorded background job; saved conversation transcript is retained.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "codex delete --force targets only the recorded thread UUID.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "V2 DELETE session endpoint targets only the recorded session.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "repository-tests"
+      ]
+    },
+    {
+      "id": "worker-lifecycle",
+      "name": "Worker lifecycle, approval and cleanup",
+      "covers": [
+        "worker-lifecycle"
+      ],
+      "backends": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Shared status file and script checks; approval gates are workflow instructions, not permission enforcement.",
+          "references": [
+            "docs/agents/protocols/parallel.md",
+            "scripts/worker.py"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Shared status file and script checks; approval gates are workflow instructions, not permission enforcement.",
+          "references": [
+            "docs/agents/protocols/parallel.md",
+            "scripts/worker.py"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Shared status file and script checks; approval gates are workflow instructions, not permission enforcement.",
+          "references": [
+            "docs/agents/protocols/parallel.md",
+            "scripts/worker.py"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "repository-tests"
+      ]
+    }
+  ]
+}
