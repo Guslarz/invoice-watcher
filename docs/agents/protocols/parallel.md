@@ -14,8 +14,9 @@ Backend integration support and operational alternatives are recorded in the
   A planning worker uses its assigned worktree without pruning or creating another worktree.
 - **WORKER-002** Workers support Claude Code, OpenCode V2, and Codex CLI. Backend, model, and
   agent selection are separate. An explicit worker agent takes precedence; otherwise the
-  dispatcher propagates its selected agent when reliably known. If neither is known, the
-  dispatcher asks for a named agent or deliberate use of the backend's configured default.
+  dispatcher inherits its current named agent when reliably known and passes it explicitly
+  as `--agent <name>`. If no named agent identity is available, use `--default-agent` without
+  asking. Do not replace a known named agent with the backend default.
   Missing, unsupported, or unavailable named agents never silently fall back. Model names do
   not identify agents. Backend-specific configuration profiles are not implicitly agent names.
 - **WORKER-005** The launcher accepts `/plan`, `/implement`, and `/lightweight`. A plan is
@@ -39,8 +40,9 @@ Backend integration support and operational alternatives are recorded in the
    python3 scripts/worker.py start --backend "$BACKEND" --agent "$AGENT" --name example --worktree /absolute/path/to/worktree --command '/plan description or inbox path'
    ```
 
-   Use `--default-agent` instead of `--agent` only after deliberate developer selection of the
-   backend default. Optional `--model` is independent: OpenCode accepts `provider/model#variant`,
+   Pass the requested agent, or otherwise the dispatcher's current named agent, with `--agent`.
+   Use `--default-agent` without confirmation only when neither named identity is available.
+   Optional `--model` is independent: OpenCode accepts `provider/model#variant`,
    Claude/Codex accept their own model names. Codex currently supports default-agent operation,
    not named-agent selection; a Codex configuration profile is not an agent.
    For lightweight work use `/lightweight`; `/implement` requires an already approved plan.
