@@ -5,7 +5,7 @@ area: mail-scanning
 added: 2026-11-11
 status: later
 size: L
-blocked-by: [mail-content-not-read]
+blocked-by: []
 ---
 
 Prerequisite for invoice/payment recognition stages that depend on attached invoices or remittance

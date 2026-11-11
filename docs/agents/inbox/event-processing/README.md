@@ -13,10 +13,9 @@ establish that the initiative's goals have been met.
 
 - Mail scanning publishes one at-least-once event per picked-up message to a single Kafka topic
   (SPEC-MAIL, SPEC-EVENT). The event key is the user e-mail address; the value contains `sender`,
-  `title`, `date` and `content`.
-- `content` is always `null` today (MAIL-030, gap tracked in
-   [content-reading gap](../mail-content-not-read.md)); attachments are
-  out of scope of scanning. Recognition-quality input is therefore not yet available.
+  `title`, `date`, `content` and `bodyMediaType`.
+- Message bodies are read according to MAIL-030–032 in the
+  [mail-scanning spec](../../specs/mail-scanning.md); attachments remain out of scope of scanning.
 - There are no downstream consumers, recognition modules, matching logic or payment-status storage.
 
 ## Selected direction
@@ -105,7 +104,7 @@ included in this roadmap change.
 
 | Prerequisite | Why | Tracking |
 |---|---|---|
-| Read useful message content (and decide multipart/HTML/attachment-name representation) | Invoice/payment recognition needs evidence beyond sender/title/date | [`mail-content-not-read.md`](../mail-content-not-read.md) |
+| Read useful message content | Invoice/payment recognition needs evidence beyond sender/title/date | Implemented: MAIL-030–032 in the [mail-scanning spec](../../specs/mail-scanning.md); attachments remain a separate prerequisite |
 | Stable mail source identity in ingestion input | Source-level dedup/replay for recognition (ADR-0011) | [`mail-event-source-identity.md`](mail-event-source-identity.md) |
 | Attachment extraction/access strategy | Many invoices and remittance advices are attachments; sensitive-data handling required | [`mail-attachment-extraction.md`](mail-attachment-extraction.md) |
 | Event schema/compatibility convention for new topics/records | Safe evolution across producers/consumers (ADR-0011) | Stage 0 below |

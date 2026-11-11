@@ -11,8 +11,9 @@ date: 2026-11-11
 `mail-producer-app` publishes one event per picked-up mail message (SPEC-EVENT). Downstream
 processing must turn those messages into invoice and payment information and derive invoice payment
 status, but the codebase has no consumers, no recognition logic and no status storage. The design
-must also account for current gaps and constraints: message `content` is not read yet
-(MAIL-030, `docs/agents/inbox/mail-content-not-read.md`), attachments are out of scope of current
+must also account for gaps and constraints at the time of this decision: message `content` is not
+read yet (MAIL-030; subsequently resolved by
+[PR #83](https://github.com/Guslarz/invoice-watcher/pull/83)), attachments are out of scope of current
 scanning, and the current event carries sender, title, UTC date and a null content field only
 (EVENT-004). Published mail events are at-least-once and may arrive again after restarts
 (EVENT-012).

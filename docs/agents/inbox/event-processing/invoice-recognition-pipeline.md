@@ -5,7 +5,7 @@ area: events
 added: 2026-11-11
 status: later
 size: L
-blocked-by: [mail-content-not-read, event-processing/mail-event-source-identity, event-processing/mail-attachment-extraction, event-processing/event-processor-operational-foundations]
+blocked-by: [event-processing/mail-event-source-identity, event-processing/mail-attachment-extraction, event-processing/event-processor-operational-foundations]
 ---
 
 Stage 1 in the [initiative roadmap](README.md) (ADR-0010, ADR-0011). Implement a separate
