@@ -604,7 +604,7 @@
         },
         "codex": {
           "status": "unsupported",
-          "detail": "Named-agent selection is unsupported by this launcher and rejected explicitly. Use deliberate --default-agent with optional independent --model.",
+          "detail": "Named-agent selection is unsupported by this launcher and rejected explicitly. No named Codex agent can be inherited by this launcher. Use explicit --default-agent without a confirmation prompt when no named identity is available; optional --model is independent.",
           "references": [
             "scripts/worker.py",
             "docs/agents/protocols/parallel.md"
