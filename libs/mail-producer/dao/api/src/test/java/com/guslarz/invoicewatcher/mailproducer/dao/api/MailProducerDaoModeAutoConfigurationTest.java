@@ -2,6 +2,8 @@ package com.guslarz.invoicewatcher.mailproducer.dao.api;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.context.properties.bind.BindException;
 import org.springframework.boot.context.properties.bind.validation.BindValidationException;
@@ -10,6 +12,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.validation.FieldError;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,6 +67,22 @@ class MailProducerDaoModeAutoConfigurationTest {
       assertThat(context).hasFailed();
       assertThat(invalidProperties(context.getStartupFailure()))
           .containsExactly(ConfigurationPropertyName.of("invoice-watcher.mail-producer.dao.mode"));
+    });
+  }
+
+  @ParameterizedTest
+  @EnumSource(MailProducerDaoProperties.Mode.class)
+  @DisplayName("USER-010: binds each supported storage backend")
+  void bindsSupportedMode(MailProducerDaoProperties.Mode mode) {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        "invoice-watcher.mail-producer.dao.mode=" + mode.name().toLowerCase(Locale.ROOT));
+
+    // when
+    runner.run(context -> {
+      // then
+      assertThat(context).hasNotFailed();
+      assertThat(context.getBean(MailProducerDaoProperties.class).mode()).isEqualTo(mode);
     });
   }
 }

@@ -1,19 +1,16 @@
 ---
-title: Cover existing spec clauses with tests
+title: Complete clause-named spec coverage and enforce it
 kind: tech-debt
 area: build
-added: 2026-10-13
+added: 2026-11-11
 status: ready
 size: L
 blocked-by: []
 ---
 
-The retrofitted specs (`docs/agents/specs/`) describe behavior that was long under-tested. Clause-named
-coverage has grown since this note was added, but it is still incomplete and uneven across specs.
-
-Current stage (this change): add clause-named tests for existing `SPEC-USER` and `SPEC-SECRET`
-behavior where applicable, including property binding, backend selection and `secret-helper` CLI
-behavior. Do not add mail/event tests or repository-wide coverage enforcement here.
+The user/secret test stage added property binding, validation and CLI coverage. Complete the
+remaining coverage before introducing repository-wide enforcement. Existing tests naming a
+clause may cover only part of its behavior; audit assertions as well as clause references.
 
 Remaining work:
 - Add clause-named tests for the remaining specs and clauses not covered by this stage, including
