@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
  * @param bootstrapServers Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`.
  */
 @Validated
-@ConfigurationProperties(prefix = EventProducerProperties.Constants.Prefix + ".kafka")
+@ConfigurationProperties(prefix = EventProducerProperties.Constants.PREFIX + ".kafka")
 public record KafkaEventProducerProperties(
     @NotBlank String bootstrapServers
 ) {

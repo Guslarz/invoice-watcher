@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
  * @param mode Required. Event backend; the only supported value is `kafka`.
  */
 @Validated
-@ConfigurationProperties(prefix = EventProducerProperties.Constants.Prefix)
+@ConfigurationProperties(prefix = EventProducerProperties.Constants.PREFIX)
 public record EventProducerProperties(
     @NotNull Mode mode
 ) {
@@ -23,7 +23,7 @@ public record EventProducerProperties(
 
   @UtilityClass
   public class Constants {
-    public static final String Prefix = "invoice-watcher.event-producer";
-    public static final String Mode = "mode";
+    public static final String PREFIX = "invoice-watcher.event-producer";
+    public static final String MODE = "mode";
   }
 }

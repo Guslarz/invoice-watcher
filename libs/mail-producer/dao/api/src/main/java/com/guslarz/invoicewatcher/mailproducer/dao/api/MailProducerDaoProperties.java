@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
  * @param mode Required. Storage backend: `firestore` or `jpa`.
  */
 @Validated
-@ConfigurationProperties(prefix = MailProducerDaoProperties.Constants.Prefix)
+@ConfigurationProperties(prefix = MailProducerDaoProperties.Constants.PREFIX)
 public record MailProducerDaoProperties(
     @NotNull Mode mode
 ) {
@@ -24,7 +24,7 @@ public record MailProducerDaoProperties(
 
   @UtilityClass
   public class Constants {
-    public static final String Prefix = "invoice-watcher.mail-producer.dao";
-    public static final String Mode = "mode";
+    public static final String PREFIX = "invoice-watcher.mail-producer.dao";
+    public static final String MODE = "mode";
   }
 }

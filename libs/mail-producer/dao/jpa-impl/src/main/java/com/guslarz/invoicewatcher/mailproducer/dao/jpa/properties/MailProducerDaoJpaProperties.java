@@ -17,7 +17,7 @@ import org.springframework.validation.annotation.Validated;
  *     `org.hibernate.dialect.H2Dialect`.
  */
 @Validated
-@ConfigurationProperties(MailProducerDaoProperties.Constants.Prefix + ".jpa")
+@ConfigurationProperties(MailProducerDaoProperties.Constants.PREFIX + ".jpa")
 public record MailProducerDaoJpaProperties(
     @Valid @NestedConfigurationProperty DataSourceProperties dataSource,
     @NotBlank String ddlAuto,

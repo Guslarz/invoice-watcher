@@ -45,13 +45,13 @@ import org.springframework.context.annotation.Import;
     FirestoreMapper.class
 })
 @EnableDatastoreRepositories(
-    datastoreTemplateRef = MailProducerDaoFirestoreAutoConfiguration.Beans.DatastoreTemplate,
+    datastoreTemplateRef = MailProducerDaoFirestoreAutoConfiguration.Beans.DATASTORE_TEMPLATE,
     datastoreMappingContextRef =
-        MailProducerDaoFirestoreAutoConfiguration.Beans.DatastoreMappingContext
+        MailProducerDaoFirestoreAutoConfiguration.Beans.DATASTORE_MAPPING_CONTEXT
 )
 @ConditionalOnProperty(
-    prefix = MailProducerDaoProperties.Constants.Prefix,
-    name = MailProducerDaoProperties.Constants.Mode,
+    prefix = MailProducerDaoProperties.Constants.PREFIX,
+    name = MailProducerDaoProperties.Constants.MODE,
     havingValue = "firestore"
 )
 @EnableConfigurationProperties(MailProducerDaoFirestoreProperties.class)
@@ -62,21 +62,21 @@ public class MailProducerDaoFirestoreAutoConfiguration {
     log.info("Configuring mail producer dao for firestore");
   }
 
-  @Bean(Beans.ProjectIdProvider)
+  @Bean(Beans.PROJECT_ID_PROVIDER)
   GcpProjectIdProvider projectIdProvider() {
     return new DefaultGcpProjectIdProvider();
   }
 
-  @Bean(Beans.CredentialsProvider)
+  @Bean(Beans.CREDENTIALS_PROVIDER)
   CredentialsProvider credentialsProvider() throws IOException {
     return new DefaultCredentialsProvider(Credentials::new);
   }
 
-  @Bean(Beans.Datastore)
+  @Bean(Beans.DATASTORE)
   Datastore datastore(
       MailProducerDaoFirestoreProperties properties,
-      @Qualifier(Beans.ProjectIdProvider) GcpProjectIdProvider projectIdProvider,
-      @Qualifier(Beans.CredentialsProvider) CredentialsProvider credentialsProvider)
+      @Qualifier(Beans.PROJECT_ID_PROVIDER) GcpProjectIdProvider projectIdProvider,
+      @Qualifier(Beans.CREDENTIALS_PROVIDER) CredentialsProvider credentialsProvider)
       throws IOException {
     DatastoreOptions.Builder builder = DatastoreOptions.newBuilder()
         .setProjectId(projectIdProvider.getProjectId());
@@ -90,74 +90,74 @@ public class MailProducerDaoFirestoreAutoConfiguration {
     return builder.build().getService();
   }
 
-  @Bean(Beans.DatastoreProvider)
-  DatastoreProvider datastoreProvider(@Qualifier(Beans.Datastore) Datastore datastore) {
+  @Bean(Beans.DATASTORE_PROVIDER)
+  DatastoreProvider datastoreProvider(@Qualifier(Beans.DATASTORE) Datastore datastore) {
     return () -> datastore;
   }
 
-  @Bean(Beans.DatastoreMappingContext)
+  @Bean(Beans.DATASTORE_MAPPING_CONTEXT)
   DatastoreMappingContext datastoreMappingContext() {
     return new DatastoreMappingContext();
   }
 
-  @Bean(Beans.DatastoreCustomConversions)
+  @Bean(Beans.DATASTORE_CUSTOM_CONVERSIONS)
   DatastoreCustomConversions datastoreCustomConversions() {
     return new DatastoreCustomConversions();
   }
 
-  @Bean(Beans.ObjectToKeyFactory)
+  @Bean(Beans.OBJECT_TO_KEY_FACTORY)
   ObjectToKeyFactory objectToKeyFactory(
-      @Qualifier(Beans.DatastoreProvider) DatastoreProvider datastoreProvider) {
+      @Qualifier(Beans.DATASTORE_PROVIDER) DatastoreProvider datastoreProvider) {
     return new DatastoreServiceObjectToKeyFactory(datastoreProvider);
   }
 
-  @Bean(Beans.ReadWriteConversions)
+  @Bean(Beans.READ_WRITE_CONVERSIONS)
   ReadWriteConversions readWriteConversions(
-      @Qualifier(Beans.DatastoreCustomConversions) DatastoreCustomConversions customConversions,
-      @Qualifier(Beans.ObjectToKeyFactory) ObjectToKeyFactory objectToKeyFactory,
-      @Qualifier(Beans.DatastoreMappingContext) DatastoreMappingContext mappingContext
+      @Qualifier(Beans.DATASTORE_CUSTOM_CONVERSIONS) DatastoreCustomConversions customConversions,
+      @Qualifier(Beans.OBJECT_TO_KEY_FACTORY) ObjectToKeyFactory objectToKeyFactory,
+      @Qualifier(Beans.DATASTORE_MAPPING_CONTEXT) DatastoreMappingContext mappingContext
   ) {
     return new TwoStepsConversions(customConversions, objectToKeyFactory, mappingContext);
   }
 
-  @Bean(Beans.DatastoreEntityConverter)
+  @Bean(Beans.DATASTORE_ENTITY_CONVERTER)
   DatastoreEntityConverter datastoreEntityConverter(
-      @Qualifier(Beans.DatastoreMappingContext) DatastoreMappingContext datastoreMappingContext,
-      @Qualifier(Beans.ReadWriteConversions) ReadWriteConversions conversions) {
+      @Qualifier(Beans.DATASTORE_MAPPING_CONTEXT) DatastoreMappingContext datastoreMappingContext,
+      @Qualifier(Beans.READ_WRITE_CONVERSIONS) ReadWriteConversions conversions) {
     return new DefaultDatastoreEntityConverter(datastoreMappingContext, conversions);
   }
 
-  @Bean(Beans.DatastoreTemplate)
+  @Bean(Beans.DATASTORE_TEMPLATE)
   DatastoreTemplate datastoreTemplate(
-      @Qualifier(Beans.DatastoreProvider) DatastoreProvider datastoreProvider,
-      @Qualifier(Beans.DatastoreMappingContext) DatastoreMappingContext datastoreMappingContext,
-      @Qualifier(Beans.DatastoreEntityConverter) DatastoreEntityConverter datastoreEntityConverter,
-      @Qualifier(Beans.ObjectToKeyFactory) ObjectToKeyFactory objectToKeyFactory) {
+      @Qualifier(Beans.DATASTORE_PROVIDER) DatastoreProvider datastoreProvider,
+      @Qualifier(Beans.DATASTORE_MAPPING_CONTEXT) DatastoreMappingContext datastoreMappingContext,
+      @Qualifier(Beans.DATASTORE_ENTITY_CONVERTER) DatastoreEntityConverter datastoreEntityConverter,
+      @Qualifier(Beans.OBJECT_TO_KEY_FACTORY) ObjectToKeyFactory objectToKeyFactory) {
     return new DatastoreTemplate(
         datastoreProvider, datastoreEntityConverter, datastoreMappingContext, objectToKeyFactory);
   }
 
-  @Bean(Beans.DatastoreTransactionManager)
+  @Bean(Beans.DATASTORE_TRANSACTION_MANAGER)
   DatastoreTransactionManager transactionManager(
-      @Qualifier(Beans.DatastoreProvider) DatastoreProvider datastoreProvider) {
+      @Qualifier(Beans.DATASTORE_PROVIDER) DatastoreProvider datastoreProvider) {
     return new DatastoreTransactionManager(datastoreProvider);
   }
 
   @UtilityClass
   static class Beans {
 
-    public static final String ProjectIdProvider = "daoFirestoreProjectIdProvider";
-    public static final String CredentialsProvider = "daoFirestoreCredentialsProvider";
-    public static final String Datastore = "daoFirestoreDatastore";
-    public static final String DatastoreProvider = "daoFirestoreDatastoreProvider";
-    public static final String DatastoreMappingContext = "daoFirestoreDatastoreMappingContext";
-    public static final String DatastoreCustomConversions =
+    public static final String PROJECT_ID_PROVIDER = "daoFirestoreProjectIdProvider";
+    public static final String CREDENTIALS_PROVIDER = "daoFirestoreCredentialsProvider";
+    public static final String DATASTORE = "daoFirestoreDatastore";
+    public static final String DATASTORE_PROVIDER = "daoFirestoreDatastoreProvider";
+    public static final String DATASTORE_MAPPING_CONTEXT = "daoFirestoreDatastoreMappingContext";
+    public static final String DATASTORE_CUSTOM_CONVERSIONS =
         "daoFirestoreDatastoreCustomConversions";
-    public static final String ObjectToKeyFactory = "daoFirestoreObjectToKeyFactory";
-    public static final String ReadWriteConversions = "daoFirestoreReadWriteConversions";
-    public static final String DatastoreEntityConverter = "daoFirestoreDatastoreEntityConverter";
-    public static final String DatastoreTemplate = "daoFirestoreDatastoreTemplate";
-    public static final String DatastoreTransactionManager =
+    public static final String OBJECT_TO_KEY_FACTORY = "daoFirestoreObjectToKeyFactory";
+    public static final String READ_WRITE_CONVERSIONS = "daoFirestoreReadWriteConversions";
+    public static final String DATASTORE_ENTITY_CONVERTER = "daoFirestoreDatastoreEntityConverter";
+    public static final String DATASTORE_TEMPLATE = "daoFirestoreDatastoreTemplate";
+    public static final String DATASTORE_TRANSACTION_MANAGER =
         "daoFirestoreDatastoreTransactionManager";
   }
 }

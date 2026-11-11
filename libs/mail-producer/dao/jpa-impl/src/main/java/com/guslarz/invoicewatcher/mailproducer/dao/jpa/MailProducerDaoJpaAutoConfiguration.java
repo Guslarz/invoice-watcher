@@ -38,13 +38,13 @@ import java.util.Objects;
 })
 @EnableConfigurationProperties(MailProducerDaoJpaProperties.class)
 @ConditionalOnProperty(
-    prefix = MailProducerDaoProperties.Constants.Prefix,
-    name = MailProducerDaoProperties.Constants.Mode,
+    prefix = MailProducerDaoProperties.Constants.PREFIX,
+    name = MailProducerDaoProperties.Constants.MODE,
     havingValue = "jpa"
 )
 @EnableJpaRepositories(
-    entityManagerFactoryRef = MailProducerDaoJpaAutoConfiguration.Beans.EntityManagerFactory,
-    transactionManagerRef = MailProducerDaoJpaAutoConfiguration.Beans.TransactionManager
+    entityManagerFactoryRef = MailProducerDaoJpaAutoConfiguration.Beans.ENTITY_MANAGER_FACTORY,
+    transactionManagerRef = MailProducerDaoJpaAutoConfiguration.Beans.TRANSACTION_MANAGER
 )
 public class MailProducerDaoJpaAutoConfiguration {
 
@@ -53,9 +53,9 @@ public class MailProducerDaoJpaAutoConfiguration {
     log.info("Configuring mail producer dao for jpa");
   }
 
-  @Bean(Beans.EntityManagerFactory)
+  @Bean(Beans.ENTITY_MANAGER_FACTORY)
   LocalContainerEntityManagerFactoryBean entityManager(
-      @Qualifier(Beans.DataSource) DataSource dataSource,
+      @Qualifier(Beans.DATA_SOURCE) DataSource dataSource,
       EntityManagerFactoryBuilder builder,
       MailProducerDaoJpaProperties properties) {
     return builder
@@ -68,9 +68,9 @@ public class MailProducerDaoJpaAutoConfiguration {
         .build();
   }
 
-  @Bean(Beans.TransactionManager)
+  @Bean(Beans.TRANSACTION_MANAGER)
   PlatformTransactionManager transactionManager(
-      @Qualifier(Beans.EntityManagerFactory) LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
+      @Qualifier(Beans.ENTITY_MANAGER_FACTORY) LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
     return new JpaTransactionManager(Objects.requireNonNull(
         entityManagerFactoryBean.getObject()
     ));
@@ -78,8 +78,8 @@ public class MailProducerDaoJpaAutoConfiguration {
 
   @UtilityClass
   class Beans {
-    static final String DataSource = "mailProducerDaoJpaDataSource";
-    static final String EntityManagerFactory = "mailProducerDaoJpaEntityManagerFactory";
-    static final String TransactionManager = "mailProducerDaoJpaTransactionManager";
+    static final String DATA_SOURCE = "mailProducerDaoJpaDataSource";
+    static final String ENTITY_MANAGER_FACTORY = "mailProducerDaoJpaEntityManagerFactory";
+    static final String TRANSACTION_MANAGER = "mailProducerDaoJpaTransactionManager";
   }
 }

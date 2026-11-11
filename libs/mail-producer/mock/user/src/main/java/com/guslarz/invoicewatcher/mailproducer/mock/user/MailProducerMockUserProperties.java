@@ -26,11 +26,11 @@ import java.util.List;
  * @param folders Required when enabled, at least one. Folders to scan, e.g. `INBOX`, `Invoices`.
  */
 @Validated
-@ConfigurationProperties(prefix = MailProducerMockUserProperties.Constants.Prefix)
+@ConfigurationProperties(prefix = MailProducerMockUserProperties.Constants.PREFIX)
 public record MailProducerMockUserProperties(
     Boolean enabled,
     @NotBlank String host,
-    @Min(1) @Max(65535) @DefaultValue(Defaults.Port) int port,
+    @Min(1) @Max(65535) @DefaultValue(Defaults.PORT) int port,
     @NotBlank String email,
     @NotNull Secret password,
     @NotEmpty List<String> folders
@@ -42,11 +42,11 @@ public record MailProducerMockUserProperties(
 
   @UtilityClass
   class Constants {
-    static final String Prefix = "invoice-watcher.mail-producer.mock.user";
+    static final String PREFIX = "invoice-watcher.mail-producer.mock.user";
   }
 
   @UtilityClass
   class Defaults {
-    static final String Port = "993";
+    static final String PORT = "993";
   }
 }

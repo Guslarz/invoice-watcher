@@ -19,8 +19,8 @@ import java.util.Map;
 @Import(KafkaEventProducer.class)
 @EnableConfigurationProperties(KafkaEventProducerProperties.class)
 @ConditionalOnProperty(
-    prefix = EventProducerProperties.Constants.Prefix,
-    name = EventProducerProperties.Constants.Mode,
+    prefix = EventProducerProperties.Constants.PREFIX,
+    name = EventProducerProperties.Constants.MODE,
     havingValue = "kafka"
 )
 public class KafkaEventProducerAutoConfiguration {

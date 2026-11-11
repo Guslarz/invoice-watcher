@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
 )
 public class GenerateKeyCommand implements Callable<Integer> {
 
-  private static final int KeyLength = 32;
+  private static final int KEY_LENGTH = 32;
 
   @Override
   public Integer call() {
@@ -22,8 +22,8 @@ public class GenerateKeyCommand implements Callable<Integer> {
   }
 
   private SecretKey generateSecretKey() {
-    byte[] key = new byte[KeyLength];
-    AesUtil.RandomGenerator.nextBytes(key);
+    byte[] key = new byte[KEY_LENGTH];
+    AesUtil.fillRandomBytes(key);
     return AesUtil.toSecretKey(key);
   }
 }

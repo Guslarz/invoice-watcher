@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
 
 class MailProducerMockUserAutoConfigurationTest {
 
-  private static final String Prefix = "invoice-watcher.mail-producer.mock.user.";
+  private static final String PREFIX = "invoice-watcher.mail-producer.mock.user.";
 
   private final ApplicationContextRunner uut = new ApplicationContextRunner()
       .withConfiguration(AutoConfigurations.of(MailProducerMockUserAutoConfiguration.class))
@@ -39,9 +39,9 @@ class MailProducerMockUserAutoConfigurationTest {
   void failsWhenEnabledWithoutHost() {
     // given
     ApplicationContextRunner runner = uut.withPropertyValues(
-        Prefix + "enabled=true",
-        Prefix + "email=jan@example.com",
-        Prefix + "folders=INBOX"
+        PREFIX + "enabled=true",
+        PREFIX + "email=jan@example.com",
+        PREFIX + "folders=INBOX"
     );
 
     // when
@@ -50,8 +50,8 @@ class MailProducerMockUserAutoConfigurationTest {
       // then
       assertThat(context).hasFailed();
       assertThat(invalidProperties(context.getStartupFailure()))
-          .contains(ConfigurationPropertyName.of(Prefix + "host"))
-          .doesNotContain(ConfigurationPropertyName.of(Prefix + "email"));
+          .contains(ConfigurationPropertyName.of(PREFIX + "host"))
+          .doesNotContain(ConfigurationPropertyName.of(PREFIX + "email"));
     });
   }
 
@@ -60,8 +60,8 @@ class MailProducerMockUserAutoConfigurationTest {
   void failsWhenPortIsOutOfRange() {
     // given
     ApplicationContextRunner runner = uut.withPropertyValues(
-        Prefix + "enabled=true",
-        Prefix + "port=0"
+        PREFIX + "enabled=true",
+        PREFIX + "port=0"
     );
 
     // when
@@ -70,7 +70,7 @@ class MailProducerMockUserAutoConfigurationTest {
       // then
       assertThat(context).hasFailed();
       assertThat(invalidProperties(context.getStartupFailure()))
-          .contains(ConfigurationPropertyName.of(Prefix + "port"));
+          .contains(ConfigurationPropertyName.of(PREFIX + "port"));
     });
   }
 
@@ -78,7 +78,7 @@ class MailProducerMockUserAutoConfigurationTest {
   @DisplayName("USER-030: starts without other mock user properties when the mock user is disabled")
   void startsWhenDisabled() {
     // given
-    ApplicationContextRunner runner = uut.withPropertyValues(Prefix + "enabled=false");
+    ApplicationContextRunner runner = uut.withPropertyValues(PREFIX + "enabled=false");
 
     // when
     runner.run(context -> {

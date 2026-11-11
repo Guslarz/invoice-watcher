@@ -7,6 +7,15 @@
   `@UtilityClass` for constant holders.
 - Nullness annotations come from jspecify (`org.jspecify.annotations`), declared as
   `implementation(libs.jspecify)` in every module that uses them; not JSR-305 `javax.annotation`.
+- Constants use `UPPER_SNAKE_CASE`, following
+  [Google Java style](https://google.github.io/styleguide/javaguide.html#s5.2.4-constant-names):
+  `static final` fields must be deeply immutable with no detectable method side effects.
+  Non-constant fields use `lowerCamelCase`, even when `static final` (for example, random
+  generators, streams and non-empty arrays).
+- Checkstyle `ConstantName` checks static final names; `StaticVariableName` checks non-final
+  static names. Checkstyle cannot determine deep immutability: suppress `ConstantName` only on
+  an individual non-constant static final field, with a comment explaining why, and review its
+  `lowerCamelCase` name. Enum constants use `UPPER_SNAKE_CASE` too.
 - Logging: `log.info("> Start ...")` / `log.info("< Finished ...")` brackets around units of work;
   never log credentials or decrypted secrets.
 - Secrets (passwords, tokens) are held as `Secret` from `libs/secret/api`, never as plain `String`

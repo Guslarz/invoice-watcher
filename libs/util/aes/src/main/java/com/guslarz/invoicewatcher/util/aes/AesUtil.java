@@ -16,11 +16,18 @@ import java.util.Random;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AesUtil {
 
-  public static final Random RandomGenerator = new SecureRandom();
+  // The generator has mutable state, so it is not a Google-style constant.
+  @SuppressWarnings("checkstyle:ConstantName")
+  private static final Random randomGenerator = new SecureRandom();
 
   static final int IV_LENGTH = 12;
   static final int IV_BASE64_LENGTH = 16;
   private static final int TAG_LENGTH_BITS = 128;
+
+  /** Fills the supplied array with cryptographically secure random bytes. */
+  public static void fillRandomBytes(byte[] bytes) {
+    randomGenerator.nextBytes(bytes);
+  }
 
   public static String encodeSecretKey(SecretKey secretKey) {
     return encode(secretKey.getEncoded());
@@ -65,7 +72,7 @@ public class AesUtil {
 
   private static GCMParameterSpec generateIv() {
     byte[] iv = new byte[IV_LENGTH];
-    RandomGenerator.nextBytes(iv);
+    fillRandomBytes(iv);
     return toIv(iv);
   }
 
