@@ -33,7 +33,8 @@ or care who consumes the events.
     | `sender` | string | The `From` address, e.g. `Shop <billing@shop.example>`; `null` when the message has no `From` header |
     | `title` | string | Subject |
     | `date` | date-time | When the message was sent, in UTC; when the message has no valid `Date` header, when the server received it |
-    | `content` | string | Message content *(always `null` for now — see MAIL-030)* |
+    | `content` | string | Decoded selected body, or `null` when no supported body exists |
+    | `contentType` | string | `text/html`, `text/plain`, or `null` when no supported body exists |
 
 - **EVENT-010** The event backend is selected with `invoice-watcher.event-producer.mode`. The only
   supported value is `kafka`; with it, events are sent to the brokers in
@@ -59,6 +60,8 @@ or care who consumes the events.
 - **EVENT-004** Given a message from `billing@shop.example` with subject `Invoice 10/2026`, when it
   is published, then the event value has `sender` containing `billing@shop.example` and `title`
   `Invoice 10/2026`.
+- **EVENT-004** Given messages with supported or absent bodies, when published, then the JSON
+  includes the selected body and matching `contentType`, including the null case.
 - **EVENT-010** Given no `invoice-watcher.event-producer.mode`, when the application starts, then
   it fails with an error naming `invoice-watcher.event-producer.mode`. Given
   `invoice-watcher.event-producer.mode=rabbit`, when the application starts, then it fails with an

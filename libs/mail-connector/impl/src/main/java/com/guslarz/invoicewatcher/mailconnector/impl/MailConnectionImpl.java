@@ -19,6 +19,7 @@ import jakarta.mail.search.ComparisonTerm;
 import jakarta.mail.search.ReceivedDateTerm;
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Date;
@@ -71,9 +72,10 @@ public class MailConnectionImpl implements MailConnection {
   private List<FolderMessage> messagesAfter(UIDFolder uidFolder, Folder folder, long lastUid)
       throws MessagingException {
     Message[] messages = uidFolder.getMessagesByUID(lastUid + 1, UIDFolder.LASTUID);
-    return toFolderMessages(uidFolder, folder, messages)
-        .filter(message -> message.uid() > lastUid)
-        .toList();
+    Message[] newMessages = Stream.of(messages)
+        .filter(message -> uid(uidFolder, message) > lastUid)
+        .toArray(Message[]::new);
+    return toFolderMessages(uidFolder, folder, newMessages).toList();
   }
 
   /**
@@ -126,12 +128,15 @@ public class MailConnectionImpl implements MailConnection {
 
   private MailMessage toMessage(Message message) {
     try {
+      MimeBodyReader.Body body = new MimeBodyReader().read(message);
       return MailMessage.builder()
           .sender(sender(message))
           .title(message.getSubject())
           .date(date(message))
+          .content(body.content())
+          .contentType(body.contentType())
           .build();
-    } catch (MessagingException e) {
+    } catch (MessagingException | IOException e) {
       throw new MailConnectionException(e);
     }
   }

@@ -1,30 +1,43 @@
 package com.guslarz.invoicewatcher.mailconnector.impl;
 
 import com.guslarz.invoicewatcher.mailconnector.api.FolderMessage;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException;
 import com.guslarz.invoicewatcher.mailconnector.api.MailFolderMessages;
 import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
 import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
+import jakarta.mail.BodyPart;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
+import jakarta.mail.Multipart;
+import jakarta.mail.Session;
 import jakarta.mail.Store;
 import jakarta.mail.UIDFolder;
 import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.search.ReceivedDateTerm;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
@@ -82,6 +95,22 @@ class MailConnectionImplTest {
 
     // then
     assertThat(result.messages()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("MAIL-022: an already scanned message returned by IMAP does not have its body read again")
+  void skipsBodyOfAlreadyScannedMessage() throws Exception {
+    // given
+    TestMessage old = textMessage(12, START_DATE, "old body");
+    when(old.message().getContent()).thenThrow(new IOException("Old body is unavailable"));
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(old));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, new ScanPosition(UID_VALIDITY, 12)));
+
+    // then
+    assertThat(result.messages()).isEmpty();
+    verify(old.message(), never()).getContent();
   }
 
   @Test
@@ -201,6 +230,90 @@ class MailConnectionImplTest {
     assertThat(result.messages()).extracting(FolderMessage::uid).containsExactly(2L);
   }
 
+  @Test
+  @DisplayName("MAIL-030: a message with a supported body reads the body alongside the existing metadata")
+  void readsMessageWithSupportedBody() throws Exception {
+    // given
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(textMessage(1, START_DATE, "Hello world")));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, null));
+
+    // then
+    MailMessage message = result.messages().get(0).message();
+    assertThat(message.sender()).isEqualTo("sender@example.com");
+    assertThat(message.title()).isEqualTo("message 1");
+    assertThat(message.date()).isNotNull();
+    assertThat(message.content()).isEqualTo("Hello world");
+    assertThat(message.contentType()).isEqualTo("text/plain");
+  }
+
+  @Test
+  @DisplayName("MAIL-031: multipart alternatives prefer HTML over plain text")
+  void multipartAlternativePrefersHtml() throws Exception {
+    // given
+    Date received = Date.from(START_DATE.toInstant());
+    Message message = mock(Message.class);
+    when(message.getReceivedDate()).thenReturn(received);
+    when(message.getSentDate()).thenReturn(received);
+    when(message.getSubject()).thenReturn("message 1");
+    when(message.getFrom()).thenReturn(new InternetAddress[]{new InternetAddress("sender@example.com")});
+    when(message.isMimeType("multipart/alternative")).thenReturn(true);
+    when(message.isMimeType("multipart/*")).thenReturn(true);
+
+    Multipart multipart = mock(Multipart.class);
+    when(multipart.getCount()).thenReturn(2);
+    BodyPart textPart = mock(BodyPart.class);
+    BodyPart htmlPart = mock(BodyPart.class);
+    when(multipart.getBodyPart(0)).thenReturn(textPart);
+    when(multipart.getBodyPart(1)).thenReturn(htmlPart);
+    when(textPart.isMimeType("text/plain")).thenReturn(true);
+    when(htmlPart.isMimeType("text/html")).thenReturn(true);
+    when(textPart.getContent()).thenReturn("plain");
+    when(htmlPart.getContent()).thenReturn("<p>html</p>");
+    when(message.getContent()).thenReturn(multipart);
+
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(new TestMessage(1, received, message)));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, null));
+
+    // then
+    MailMessage msg = result.messages().get(0).message();
+    assertThat(msg.content()).isEqualTo("<p>html</p>");
+    assertThat(msg.contentType()).isEqualTo("text/html");
+  }
+
+  @Test
+  @DisplayName("MAIL-032: when no supported body exists, content and contentType are both null")
+  void noSupportedBodyGivesNulls() throws Exception {
+    // given
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(message(1, START_DATE)));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, null));
+
+    // then
+    MailMessage msg = result.messages().get(0).message();
+    assertThat(msg.content()).isNull();
+    assertThat(msg.contentType()).isNull();
+  }
+
+  @Test
+  @DisplayName("MAIL-032: an empty supported body remains an empty string with its media type")
+  void emptySupportedBodyPreserved() throws Exception {
+    // given
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(textMessage(1, START_DATE, "")));
+
+    // when
+    MailFolderMessages result = uut.getEmailMessages(query(null, null));
+
+    // then
+    MailMessage msg = result.messages().get(0).message();
+    assertThat(msg.content()).isEmpty();
+    assertThat(msg.contentType()).isEqualTo("text/plain");
+  }
+
   private static MailQuery query(ZonedDateTime startDate, ScanPosition position) {
     return MailQuery.builder()
         .folder(FOLDER)
@@ -262,6 +375,53 @@ class MailConnectionImplTest {
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  private static TestMessage textMessage(long uid, ZonedDateTime date, String content) throws Exception {
+    Date received = Date.from(date.toInstant());
+    Message message = mock(Message.class);
+    when(message.getReceivedDate()).thenReturn(received);
+    when(message.getSentDate()).thenReturn(received);
+    when(message.getSubject()).thenReturn("message " + uid);
+    when(message.getFrom()).thenReturn(new InternetAddress[]{ new InternetAddress("sender@example.com") });
+    when(message.isMimeType("text/plain")).thenReturn(true);
+    when(message.getContent()).thenReturn(content);
+    when(message.getContentType()).thenReturn("text/plain");
+    return new TestMessage(uid, received, message);
+  }
+
+  @Test
+  @DisplayName("MAIL-032: a body reading failure fails the folder scan instead of returning incomplete messages")
+  void failsFolderWhenBodyCannotBeRead() throws Exception {
+    // given
+    TestMessage broken = textMessage(2, START_DATE, "body");
+    IOException failure = new IOException("Cannot read body");
+    when(broken.message().getContent()).thenThrow(failure);
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(message(1, START_DATE), broken));
+
+    // when
+    Throwable thrown = catchThrowable(() -> uut.getEmailMessages(query(null, null)));
+
+    // then
+    assertThat(thrown).isInstanceOf(MailConnectionException.class).hasCause(failure);
+  }
+
+  @Test
+  @DisplayName("MAIL-032: a charset decoding failure fails the folder scan")
+  void failsFolderWhenBodyCannotBeDecoded() throws Exception {
+    // given
+    String raw = "Content-Type: text/plain; charset=no-such-charset\r\n\r\nbody";
+    MimeMessage message = new MimeMessage(Session.getInstance(new Properties()),
+        new ByteArrayInputStream(raw.getBytes(StandardCharsets.US_ASCII)));
+    MailConnectionImpl uut = new MailConnectionImpl(storeWithMessages(
+        new TestMessage(1, Date.from(START_DATE.toInstant()), message)));
+
+    // when
+    Throwable thrown = catchThrowable(() -> uut.getEmailMessages(query(null, null)));
+
+    // then
+    assertThat(thrown).isInstanceOf(MailConnectionException.class)
+        .hasCauseInstanceOf(UnsupportedEncodingException.class);
   }
 
   private record TestMessage(long uid, Date receivedDate, Message message) {
