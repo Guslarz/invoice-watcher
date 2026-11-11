@@ -88,4 +88,38 @@ class MailProducerMockUserAutoConfigurationTest {
       assertThat(context).doesNotHaveBean(MailProducerMockUserInitializer.class);
     });
   }
+
+  @Test
+  @DisplayName("USER-030: names all missing required mock user properties")
+  void namesMissingRequiredProperties() {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(PREFIX + "enabled=true");
+
+    // when
+    runner.run(context -> {
+      // then
+      assertThat(context).hasFailed();
+      assertThat(invalidProperties(context.getStartupFailure())).containsExactlyInAnyOrder(
+          ConfigurationPropertyName.of(PREFIX + "host"),
+          ConfigurationPropertyName.of(PREFIX + "email"),
+          ConfigurationPropertyName.of(PREFIX + "password"),
+          ConfigurationPropertyName.of(PREFIX + "folders"));
+    });
+  }
+
+  @Test
+  @DisplayName("USER-030: rejects a mock user port above 65535")
+  void rejectsPortAboveMaximum() {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        PREFIX + "enabled=true", PREFIX + "port=65536");
+
+    // when
+    runner.run(context -> {
+      // then
+      assertThat(context).hasFailed();
+      assertThat(invalidProperties(context.getStartupFailure()))
+          .contains(ConfigurationPropertyName.of(PREFIX + "port"));
+    });
+  }
 }
