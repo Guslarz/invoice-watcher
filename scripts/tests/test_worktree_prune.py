@@ -1,81 +1,57 @@
-"""Regression tests for conservative worktree pruning."""
+"""WORKER integration tests for the worktree shell entry points."""
 
-import os
-import json
-import shutil
 from pathlib import Path
+import shutil
 import subprocess
-import tempfile
 import unittest
 
+from test_worker import RepositoryTest, worker
 
-SCRIPT = Path(__file__).resolve().parents[1] / "worktree.sh"
 
+class WorktreeEntryTest(RepositoryTest):
+    def install_scripts(self):
+        self.root = self.repo
+        scripts = self.repo / "scripts"
+        scripts.mkdir()
+        for name in ("worktree.sh", "worker.py"):
+            shutil.copyfile(worker.ROOT / "scripts" / name, scripts / name)
+        # Keep installed test tooling out of Git safety checks on the master fixture.
+        (self.repo / ".git/info/exclude").write_text("/scripts/\n")
+        return scripts / "worktree.sh"
 
-class PruneSessionDiscoveryTest(unittest.TestCase):
-    def test_failed_or_invalid_session_query_never_removes_worktrees(self):
-        for response in ("exit 1", "printf 'not-json'", "printf '{}' "):
-            with self.subTest(response=response), tempfile.TemporaryDirectory() as tmp:
-                root = Path(tmp)
-                (root / ".bare").mkdir()
-                (root / "master" / ".git").mkdir(parents=True)
-                (root / "worker" / ".git").mkdir(parents=True)
-                bin_dir = root / "bin"
-                bin_dir.mkdir()
-                git = bin_dir / "git"
-                git.write_text(
-                    "#!/bin/bash\n"
-                    'case "$*" in\n'
-                    '  *"rev-parse --path-format=absolute --git-common-dir"*) '
-                    'echo "$TEST_ROOT/.bare" ;;\n'
-                    '  *"rev-parse --show-toplevel"*) echo "$TEST_ROOT/master" ;;\n'
-                    '  *"worktree list --porcelain"*) '
-                    'printf "worktree %s/master\\nworktree %s/worker\\n" '
-                    '"$TEST_ROOT" "$TEST_ROOT" ;;\n'
-                    '  *"master branch --show-current"*) echo master ;;\n'
-                    '  *"worker branch --show-current"*) echo fix/worker ;;\n'
-                    '  *"worktree remove"*) touch "$TEST_ROOT/removed" ;;\n'
-                    'esac\n'
-                )
-                git.chmod(0o755)
-                claude = bin_dir / "claude"
-                claude.write_text(f"#!/bin/bash\n{response}\n")
-                claude.chmod(0o755)
-                env = os.environ | {"PATH": f"{bin_dir}:{os.environ['PATH']}", "TEST_ROOT": tmp}
+    def test_WORKER_007_009_legacy_unregistered_worktree_is_removable(self):
+        script = self.install_scripts()
+        path, _ = self.tree(registered=False)
+        result = subprocess.run(["bash", str(script), "rm", path.name], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(path.exists())
 
-                result = subprocess.run(
-                    ["bash", str(SCRIPT), "prune", "--all"],
-                    cwd=root,
-                    env=env,
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
+    def test_WORKER_004_registered_active_worktree_blocks_explicit_removal(self):
+        script = self.install_scripts()
+        path, _ = self.tree(phase="awaiting-plan-approval")
+        result = subprocess.run(["bash", str(script), "rm", path.name], capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("awaiting-plan-approval", result.stderr)
+        self.assertTrue(path.exists())
 
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertIn("kept worker", result.stdout)
-                self.assertFalse((root / "removed").exists())
+    def test_WORKER_011_list_includes_legacy_and_active_file_status(self):
+        script = self.install_scripts()
+        self.tree("legacy", registered=False)
+        self.tree("active", phase="implementing")
+        result = subprocess.run(["bash", str(script), "list"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("done (legacy", result.stdout)
+        self.assertIn("implementing", result.stdout)
+        self.assertIn("resume active", result.stdout)
 
-    def test_registered_worker_blocks_explicit_worktree_removal(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            def git(*args):
-                return subprocess.run(["git", "-C", tmp, *args], check=True, capture_output=True, text=True)
-
-            git("init", "-b", "master")
-            git("-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "--allow-empty", "-m", "initial")
-            git("worktree", "add", "-b", "fix/worker", str(root / "worker"))
-            (root / "scripts").mkdir()
-            shutil.copyfile(SCRIPT, root / "scripts" / "worktree.sh")
-            registry = root / ".git" / "agent-workers"
-            registry.mkdir()
-            (registry / "worker.json").write_text(json.dumps({"worktree": str(root / "worker")}))
-
-            result = subprocess.run(["bash", str(root / "scripts" / "worktree.sh"), "rm", "worker"], cwd=root, capture_output=True, text=True)
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("registered worker", result.stderr)
-            self.assertTrue((root / "worker" / ".git").exists())
+    def test_WORKER_009_prune_preserves_dirty_legacy_worktree(self):
+        script = self.install_scripts()
+        path, _ = self.tree(registered=False)
+        (path / "untracked").write_text("work")
+        result = subprocess.run(["bash", str(script), "prune", "--all"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("uncommitted changes", result.stdout)
+        self.assertTrue(path.exists())
 
 
 if __name__ == "__main__":

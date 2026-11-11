@@ -54,3 +54,4 @@ site/
 
 ### Proposed commit message (AGENTS.md, Git workflow) ###
 .gitmessage
+.worker-status.json

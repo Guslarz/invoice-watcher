@@ -62,8 +62,10 @@ Everything else (fixes that restore spec'd behavior, refactors, dependency bumps
 **Protocol lightweight** (`docs/agents/protocols/lightweight.md`).
 
 Several independent topics at once (e.g. a batch of inbox notes) are run with **Protocol parallel**
-(`docs/agents/protocols/parallel.md`): requirements are discussed in the dispatcher session, approved
-work runs in background workers, one worktree per topic.
+(`docs/agents/protocols/parallel.md`): the dispatcher triages and launches; requirements, planning,
+approval and implementation happen in each worker, one worktree per grouped topic. Workers keep
+their gitignored `.worker-status.json` current through `scripts/worker.py update`; it is the sole
+lifecycle authority for cleanup. Protect status before resuming work, even through native tools.
 
 When unsure, ask the developer which protocol applies.
 
