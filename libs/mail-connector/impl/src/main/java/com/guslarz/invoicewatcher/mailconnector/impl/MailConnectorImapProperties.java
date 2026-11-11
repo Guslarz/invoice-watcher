@@ -20,13 +20,13 @@ import java.time.Duration;
 @Validated
 @ConfigurationProperties("invoice-watcher.mail-connector.imap")
 public record MailConnectorImapProperties(
-    @NotNull @DurationMin(seconds = 1) @DefaultValue(Defaults.ConnectTimeout) Duration connectTimeout,
-    @NotNull @DurationMin(seconds = 1) @DefaultValue(Defaults.ReadTimeout) Duration readTimeout
+    @NotNull @DurationMin(seconds = 1) @DefaultValue(Defaults.CONNECT_TIMEOUT) Duration connectTimeout,
+    @NotNull @DurationMin(seconds = 1) @DefaultValue(Defaults.READ_TIMEOUT) Duration readTimeout
 ) {
 
   @UtilityClass
   static class Defaults {
-    static final String ConnectTimeout = "30s";
-    static final String ReadTimeout = "60s";
+    static final String CONNECT_TIMEOUT = "30s";
+    static final String READ_TIMEOUT = "60s";
   }
 }

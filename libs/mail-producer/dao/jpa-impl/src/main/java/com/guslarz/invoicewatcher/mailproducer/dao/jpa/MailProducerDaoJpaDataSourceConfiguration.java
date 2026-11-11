@@ -24,12 +24,12 @@ import javax.sql.DataSource;
 @Configuration(proxyBeanMethods = false)
 class MailProducerDaoJpaDataSourceConfiguration {
 
-  private static final String DataSourcePrefix =
-      MailProducerDaoProperties.Constants.Prefix + ".jpa.data-source";
+  private static final String DATA_SOURCE_PREFIX =
+      MailProducerDaoProperties.Constants.PREFIX + ".jpa.data-source";
 
-  private static final String ServiceAccountSuffix = ".gserviceaccount.com";
+  private static final String SERVICE_ACCOUNT_SUFFIX = ".gserviceaccount.com";
 
-  @Bean(MailProducerDaoJpaAutoConfiguration.Beans.DataSource)
+  @Bean(MailProducerDaoJpaAutoConfiguration.Beans.DATA_SOURCE)
   DataSource dataSource(
       MailProducerDaoJpaProperties properties,
       ObjectProvider<CredentialsProvider> credentialsProvider) throws IOException {
@@ -52,7 +52,7 @@ class MailProducerDaoJpaDataSourceConfiguration {
     boolean bothSet = basicSet && gcpSet;
     if (neitherSet || bothSet) {
       throw new IllegalStateException("Exactly one of %s.basic and %s.gcp must be set"
-          .formatted(DataSourcePrefix, DataSourcePrefix));
+          .formatted(DATA_SOURCE_PREFIX, DATA_SOURCE_PREFIX));
     }
   }
 
@@ -63,8 +63,8 @@ class MailProducerDaoJpaDataSourceConfiguration {
               .formatted(credentials.getClass().getName()));
     }
     String account = serviceAccount.getAccount();
-    return account.endsWith(ServiceAccountSuffix)
-        ? account.substring(0, account.length() - ServiceAccountSuffix.length())
+    return account.endsWith(SERVICE_ACCOUNT_SUFFIX)
+        ? account.substring(0, account.length() - SERVICE_ACCOUNT_SUFFIX.length())
         : account;
   }
 

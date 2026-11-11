@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param databaseId Optional. Id of the Firestore database (in Datastore mode).
  * @param host Optional. Emulator `host:port`; when set, the emulator is used without credentials.
  */
-@ConfigurationProperties(MailProducerDaoProperties.Constants.Prefix + ".firestore")
+@ConfigurationProperties(MailProducerDaoProperties.Constants.PREFIX + ".firestore")
 public record MailProducerDaoFirestoreProperties(
         String databaseId,
         String host

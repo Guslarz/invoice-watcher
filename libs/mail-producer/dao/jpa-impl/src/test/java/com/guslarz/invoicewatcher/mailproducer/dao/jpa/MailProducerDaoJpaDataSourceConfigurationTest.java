@@ -24,9 +24,9 @@ import static org.mockito.Mockito.when;
 
 class MailProducerDaoJpaDataSourceConfigurationTest {
 
-  private static final String Basic = "invoice-watcher.mail-producer.dao.jpa.data-source.basic.";
-  private static final String Gcp = "invoice-watcher.mail-producer.dao.jpa.data-source.gcp.";
-  private static final String Jpa = "invoice-watcher.mail-producer.dao.jpa.";
+  private static final String BASIC = "invoice-watcher.mail-producer.dao.jpa.data-source.basic.";
+  private static final String GCP = "invoice-watcher.mail-producer.dao.jpa.data-source.gcp.";
+  private static final String JPA = "invoice-watcher.mail-producer.dao.jpa.";
 
   private final ApplicationContextRunner uut = new ApplicationContextRunner()
       .withUserConfiguration(
@@ -34,8 +34,8 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
           MailProducerDaoJpaDataSourceConfiguration.class
       )
       .withPropertyValues(
-          Jpa + "ddl-auto=none",
-          Jpa + "dialect=org.hibernate.dialect.H2Dialect"
+          JPA + "ddl-auto=none",
+          JPA + "dialect=org.hibernate.dialect.H2Dialect"
       );
 
   private static List<ConfigurationPropertyName> invalidProperties(Throwable startupFailure) {
@@ -62,8 +62,8 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
         .withBean(CredentialsProvider.class,
             () -> serviceAccount("app-sa@proj.iam.gserviceaccount.com"))
         .withPropertyValues(
-            Gcp + "instance-connection-name=p:r:i",
-            Gcp + "database-name=iw"
+            GCP + "instance-connection-name=p:r:i",
+            GCP + "database-name=iw"
         );
 
     // when
@@ -88,10 +88,10 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
   void usesBasicDataSourceWhenBasicIsSet() {
     // given
     ApplicationContextRunner runner = uut.withPropertyValues(
-        Basic + "url=jdbc:h2:mem:invoice-watcher",
-        Basic + "username=sa",
-        Basic + "password=secret",
-        Basic + "driver=org.h2.Driver"
+        BASIC + "url=jdbc:h2:mem:invoice-watcher",
+        BASIC + "username=sa",
+        BASIC + "password=secret",
+        BASIC + "driver=org.h2.Driver"
     );
 
     // when
@@ -130,10 +130,10 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
   void failsWhenBothAreSet() {
     // given
     ApplicationContextRunner runner = uut.withPropertyValues(
-        Basic + "url=jdbc:h2:mem:invoice-watcher",
-        Basic + "driver=org.h2.Driver",
-        Gcp + "instance-connection-name=p:r:i",
-        Gcp + "database-name=iw"
+        BASIC + "url=jdbc:h2:mem:invoice-watcher",
+        BASIC + "driver=org.h2.Driver",
+        GCP + "instance-connection-name=p:r:i",
+        GCP + "database-name=iw"
     );
 
     // when
@@ -156,8 +156,8 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
     ApplicationContextRunner runner = uut
         .withBean(CredentialsProvider.class, () -> userCredentials)
         .withPropertyValues(
-            Gcp + "instance-connection-name=p:r:i",
-            Gcp + "database-name=iw"
+            GCP + "instance-connection-name=p:r:i",
+            GCP + "database-name=iw"
         );
 
     // when
@@ -176,8 +176,8 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
   void failsWithoutDdlAuto() {
     // given
     ApplicationContextRunner runner = uut.withPropertyValues(
-        Jpa + "ddl-auto=",
-        Basic + "url=jdbc:h2:mem:invoice-watcher"
+        JPA + "ddl-auto=",
+        BASIC + "url=jdbc:h2:mem:invoice-watcher"
     );
 
     // when
@@ -186,7 +186,7 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
       // then
       assertThat(context).hasFailed();
       assertThat(invalidProperties(context.getStartupFailure())).containsExactly(
-          ConfigurationPropertyName.of(Jpa + "ddl-auto"));
+          ConfigurationPropertyName.of(JPA + "ddl-auto"));
     });
   }
 
@@ -195,7 +195,7 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
   void failsWhenBasicIsSetWithoutUrl() {
     // given
     ApplicationContextRunner runner = uut.withPropertyValues(
-        Basic + "driver=org.h2.Driver"
+        BASIC + "driver=org.h2.Driver"
     );
 
     // when
@@ -204,7 +204,7 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
       // then
       assertThat(context).hasFailed();
       assertThat(invalidProperties(context.getStartupFailure())).containsExactly(
-          ConfigurationPropertyName.of(Basic + "url"));
+          ConfigurationPropertyName.of(BASIC + "url"));
     });
   }
 
@@ -213,7 +213,7 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
   void failsWhenGcpIsSetWithoutDatabaseName() {
     // given
     ApplicationContextRunner runner = uut.withPropertyValues(
-        Gcp + "instance-connection-name=p:r:i"
+        GCP + "instance-connection-name=p:r:i"
     );
 
     // when
@@ -222,7 +222,7 @@ class MailProducerDaoJpaDataSourceConfigurationTest {
       // then
       assertThat(context).hasFailed();
       assertThat(invalidProperties(context.getStartupFailure())).containsExactly(
-          ConfigurationPropertyName.of(Gcp + "database-name"));
+          ConfigurationPropertyName.of(GCP + "database-name"));
     });
   }
 

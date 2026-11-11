@@ -45,7 +45,9 @@ import static org.mockito.Mockito.when;
  */
 class MailConnectionFactoryImplTest {
 
-  private static final char[] KEYSTORE_PASSWORD = "changeit".toCharArray();
+  // A non-empty array is mutable, so this is not a Google-style constant.
+  @SuppressWarnings("checkstyle:ConstantName")
+  private static final char[] keystorePassword = "changeit".toCharArray();
   private static final Duration TIMEOUT = Duration.ofSeconds(1);
   private static final Duration TEST_LIMIT = Duration.ofSeconds(10);
 
@@ -152,11 +154,11 @@ class MailConnectionFactoryImplTest {
     KeyStore keyStore = KeyStore.getInstance("PKCS12");
     try (InputStream keyStoreFile =
              MailConnectionFactoryImplTest.class.getResourceAsStream("/tls/" + host + ".p12")) {
-      keyStore.load(keyStoreFile, KEYSTORE_PASSWORD);
+      keyStore.load(keyStoreFile, keystorePassword);
     }
     KeyManagerFactory keyManagers =
         KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    keyManagers.init(keyStore, KEYSTORE_PASSWORD);
+    keyManagers.init(keyStore, keystorePassword);
     SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(keyManagers.getKeyManagers(), null, null);
     return (SSLServerSocket) sslContext.getServerSocketFactory()

@@ -28,8 +28,8 @@ import static org.mockito.Mockito.when;
 
 class MailProducerDaoJpaAutoConfigurationTest {
 
-  private static final String Dao = "invoice-watcher.mail-producer.dao.";
-  private static final String Jpa = Dao + "jpa.";
+  private static final String DAO = "invoice-watcher.mail-producer.dao.";
+  private static final String JPA = DAO + "jpa.";
 
   private final ApplicationContextRunner uut = new ApplicationContextRunner()
       .withConfiguration(AutoConfigurations.of(
@@ -39,11 +39,11 @@ class MailProducerDaoJpaAutoConfigurationTest {
       ))
       .withBean(SecretFactory.class, MailProducerDaoJpaAutoConfigurationTest::secretFactory)
       .withPropertyValues(
-          Dao + "mode=jpa",
-          Jpa + "ddl-auto=create",
-          Jpa + "dialect=org.hibernate.dialect.H2Dialect",
-          Jpa + "data-source.basic.url=jdbc:h2:mem:" + UUID.randomUUID(),
-          Jpa + "data-source.basic.driver=org.h2.Driver"
+          DAO + "mode=jpa",
+          JPA + "ddl-auto=create",
+          JPA + "dialect=org.hibernate.dialect.H2Dialect",
+          JPA + "data-source.basic.url=jdbc:h2:mem:" + UUID.randomUUID(),
+          JPA + "data-source.basic.driver=org.h2.Driver"
       );
 
   private static SecretFactory secretFactory() {

@@ -20,18 +20,22 @@ class SecretHelperRunnerTest {
   private static final String OTHER_KEY = "Qk9Hk2m1xv8n0pYt3cR7sLw5aZ9eJ4uF6hD2gB8iK0M=";
   private static final String PLAINTEXT = "mailbox-password";
 
-  private static final InputStream ORIGINAL_IN = System.in;
-  private static final PrintStream ORIGINAL_OUT = System.out;
-  private static final PrintStream ORIGINAL_ERR = System.err;
+  // Streams have mutable state, so these saved references are not constants.
+  @SuppressWarnings("checkstyle:ConstantName")
+  private static final InputStream originalIn = System.in;
+  @SuppressWarnings("checkstyle:ConstantName")
+  private static final PrintStream originalOut = System.out;
+  @SuppressWarnings("checkstyle:ConstantName")
+  private static final PrintStream originalErr = System.err;
 
   private ByteArrayOutputStream out;
   private ByteArrayOutputStream err;
 
   @AfterEach
   void restoreStreams() {
-    System.setIn(ORIGINAL_IN);
-    System.setOut(ORIGINAL_OUT);
-    System.setErr(ORIGINAL_ERR);
+    System.setIn(originalIn);
+    System.setOut(originalOut);
+    System.setErr(originalErr);
   }
 
   @Test

@@ -15,7 +15,7 @@ import picocli.CommandLine;
 @RequiredArgsConstructor
 public class SecretHelperRunner implements CommandLineRunner {
 
-  private static final String SpringArgumentPrefix = "--spring.";
+  private static final String SPRING_ARGUMENT_PREFIX = "--spring.";
 
   @Override
   @SuppressFBWarnings("DM_EXIT")
@@ -28,7 +28,7 @@ public class SecretHelperRunner implements CommandLineRunner {
    */
   static int execute(String... args) {
     String[] cliArgs = Arrays.stream(args)
-        .filter(arg -> !arg.startsWith(SpringArgumentPrefix))
+        .filter(arg -> !arg.startsWith(SPRING_ARGUMENT_PREFIX))
         .toArray(String[]::new);
     return createCommandLine().execute(cliArgs);
   }

@@ -18,11 +18,11 @@ import java.time.Duration;
 @Validated
 @ConfigurationProperties("invoice-watcher.mail-producer.scheduler")
 public record MailProducerSchedulerProperties(
-    @NotNull @DurationMin(seconds = 1) @DefaultValue(Defaults.Rate) Duration rate
+    @NotNull @DurationMin(seconds = 1) @DefaultValue(Defaults.RATE) Duration rate
 ) {
 
   @UtilityClass
   static class Defaults {
-    static final String Rate = "1h";
+    static final String RATE = "1h";
   }
 }

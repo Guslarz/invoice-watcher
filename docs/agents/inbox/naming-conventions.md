@@ -50,15 +50,11 @@ path and the generated reference; moving a configuration property needs Protocol
   the task prefix (moving it is a configuration change: Protocol plan).
 
 **Static final fields**
-- PascalCase holds most constants: bean-name and property-name holders in the `*AutoConfiguration`
-  and `*Properties` classes (`Prefix`, `Mode`, `DataSource`, …), `GenerateKeyCommand.PasswordMode`
-  and `AesUtil.RandomGenerator`. UPPER_SNAKE_CASE, as in Google Java style, is used in
-  `MailConnectionFactoryImpl.IMAP_PROTOCOL`, `AesUtil.IV_LENGTH` and test fixtures (`NOW`, `KEY`,
-  `FOLDER`).
-- Nothing catches this: `config/checkstyle/checkstyle.xml` has no `ConstantName` module, and the
-  coding guideline does not mention constant naming. Pick one convention (Google style says
-  UPPER_SNAKE_CASE), enable `ConstantName` (and `StaticVariableName` for non-final static fields),
-  then rename the fields that break it. Grep: `static final [A-Za-z<>?, ]+ [A-Z][a-z]`.
-- `AesUtil.RandomGenerator` (`AesUtil.java:18`) is a public `Random` that `GenerateKeyCommand`
-  borrows for its salt, and its name shadows the JDK type `java.util.random.RandomGenerator`. It
-  could be a private `SecureRandom`, with the command owning its own instance.
+- `static final` constants now use `UPPER_SNAKE_CASE` (Google Java style). `ConstantName` and
+  `StaticVariableName` are enabled in `config/checkstyle/checkstyle.xml`, and
+  `docs/agents/guidelines/code.md` documents the rule.
+- Mutable static final references use `lowerCamelCase`, with field-local Checkstyle suppressions
+  explaining why they are not constants. `AesUtil.randomGenerator` is private; AES IV generation
+  and `GenerateKeyCommand` key generation use `AesUtil.fillRandomBytes(byte[])`. The shared
+  `SecureRandom` instance, ownership and algorithm are unchanged. Remaining stages in this note
+  are not addressed.
