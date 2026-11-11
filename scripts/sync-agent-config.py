@@ -17,7 +17,9 @@ BACKENDS = ("claude", "codex", "opencode")
 SKILL_FILE = re.compile(r"\.agents/skills/iw-[a-z0-9]+(?:-[a-z0-9]+)*/(?:SKILL\.md|agents/openai\.yaml)")
 # These functions contain the backend-facing worker operations; their bodies are reviewed below.
 WORKER_OPERATIONS = ("start", "run_backend", "command_prompt", "resume", "remove_session",
-                     "opencode_model", "claude_launch_id", "validate_session")
+                     "opencode_model", "claude_launch_id", "validate_session", "verify_visible", "worker_api",
+                     "CodexClient", "CodexRpcError", "start_native", "native_thread_check", "native_listing",
+                     "native_params", "codex_socket", "sandbox_mode")
 
 
 def digest(data):
@@ -107,7 +109,7 @@ def inventory(root, generated):
                            and any(isinstance(t, ast.Name) and t.id == "BACKENDS" for t in node.targets))
     if set(worker_backends) != set(BACKENDS):
         raise ValueError("Worker backend list changed; review compatibility policy")
-    functions = {node.name for node in tree.body if isinstance(node, ast.FunctionDef)}
+    functions = {node.name for node in tree.body if isinstance(node, (ast.FunctionDef, ast.ClassDef))}
     for operation in WORKER_OPERATIONS:
         if operation not in functions:
             raise ValueError(f"Worker operation changed: {operation}")

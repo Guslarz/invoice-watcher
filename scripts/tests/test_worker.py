@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 SPEC = importlib.util.spec_from_file_location("worker", Path(__file__).resolve().parents[1] / "worker.py")
@@ -22,6 +22,9 @@ class RepositoryTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
+        task_identity = patch.dict(os.environ, {"CODEX_THREAD_ID": ""})
+        task_identity.start()
+        self.addCleanup(task_identity.stop)
         self.root = Path(self.temporary.name)
         self.repo = self.root / "master"
         self.remote = self.root / "remote.git"
@@ -62,6 +65,38 @@ class RepositoryTest(unittest.TestCase):
 
 
 class WorkerTest(RepositoryTest):
+    def setUp(self):
+        super().setUp()
+        self.real_verify_visible = worker.verify_visible
+        visibility = patch.object(worker, "verify_visible")
+        self.mock_visibility = visibility.start()
+        self.addCleanup(visibility.stop)
+
+    def native_result(self, record, **changes):
+        mode = record.get("sandbox", "danger-full-access")
+        policy = {"danger-full-access": "dangerFullAccess", "workspace-write": "workspaceWrite",
+                  "read-only": "readOnly"}[mode]
+        result = {"thread": {"id": record.get("session") or "29fc31a0-e187-4d1d-8efb-6f43e4904caa",
+                  "source": "vscode", "cwd": record["worktree"]}, "cwd": record["worktree"],
+                  "sandbox": {"type": policy}, "approvalPolicy": "on-request", "approvalsReviewer": "auto_review"}
+        result.update(changes)
+        return result
+
+    def native_rpc(self, record):
+        def request(method, params):
+            if method in ("thread/start", "thread/fork", "thread/resume"):
+                result = self.native_result(record)
+                result["sandbox"]["type"] = {"danger-full-access": "dangerFullAccess", "workspace-write": "workspaceWrite",
+                                             "read-only": "readOnly"}[params["sandbox"]]
+                return result
+            if method == "thread/list":
+                return {"data": [{"id": record.get("session") or "29fc31a0-e187-4d1d-8efb-6f43e4904caa",
+                                  "name": record["name"], "cwd": record["worktree"]}], "nextCursor": None}
+            if method == "turn/start":
+                return {"turn": {"id": "turn-test"}}
+            return {}
+        return request
+
     def test_WORKER_001_005_plan_is_accepted_without_worktree_creation_or_pruning(self):
         path, _ = self.tree(registered=False)
         with patch.object(worker, "api", return_value={"data": {"id": "ses_test"}}) as api, \
@@ -268,25 +303,214 @@ class WorkerTest(RepositoryTest):
         self.assertEqual(status["phase"], "awaiting-plan-approval")
         self.assertIn("resume failed", status["detail"])
 
-    def test_WORKER_002_005_codex_launch_supervision_captures_identity_not_done(self):
+    def test_WORKER_002_005_013_codex_native_launch_captures_identity_not_done(self):
         path, _ = self.tree(registered=False)
-        with patch.object(worker, "spawn") as popen:
+        expected = {"worktree": str(path), "name": path.name}
+        with patch.object(worker, "CodexClient") as factory, patch.object(worker, "spawn") as popen:
+            client = factory.return_value
+            client.request.side_effect = self.native_rpc(expected)
             worker.start(self.launch_args(path, backend="codex", model="example"), self.directory)
-        self.assertIn("_codex-run", popen.call_args.args[0])
-        session = "29fc31a0-e187-4d1d-8efb-6f43e4904caa"
-        process = SimpleNamespace(stdout=iter([json.dumps({"type": "thread.started", "thread_id": session}) + "\n",
-                                               '{"type":"turn.completed"}\n']), wait=lambda: 0)
-        with patch.object(worker, "spawn", return_value=process) as popen:
-            worker.run_backend(path.name, self.directory, True)
-        command = popen.call_args.args[0]
-        self.assertEqual(command[:3], ["codex", "exec", "--json"])
-        self.assertEqual(command[command.index("--model") + 1], "example")
-        self.assertNotIn("--ephemeral", command)
-        self.assertEqual(command[command.index("--add-dir") + 1], str(self.directory))
-        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", command)
+        popen.assert_not_called()
+        calls = client.request.call_args_list
+        params = next(c.args[1] for c in calls if c.args[0] == "thread/start")
+        self.assertEqual(params["model"], "example")
+        self.assertEqual(params["approvalPolicy"], "on-request")
+        self.assertEqual(params["approvalsReviewer"], "auto_review")
         status = worker.read_status(path, worker.load(self.directory / "example.json"))
-        self.assertEqual(status["session"], session)
+        self.assertEqual(status["session"], "29fc31a0-e187-4d1d-8efb-6f43e4904caa")
         self.assertEqual(status["phase"], "discussing")
+        self.assertEqual(status["transport"], "native")
+
+    def test_WORKER_012_codex_start_persists_default_and_explicit_sandbox(self):
+        for name, mode in (("default", None), ("restricted", "workspace-write"), ("readonly", "read-only")):
+            with self.subTest(mode=mode):
+                path, _ = self.tree(name=name, registered=False)
+                args = self.launch_args(path, backend="codex")
+                args.sandbox = mode
+                expected = mode or "danger-full-access"
+                with patch.object(worker, "CodexClient") as factory:
+                    client = factory.return_value
+                    client.request.side_effect = self.native_rpc({"worktree": str(path), "name": name, "sandbox": expected})
+                    worker.start(args, self.directory)
+                record = worker.load(self.directory / (name + ".json"))
+                self.assertEqual(record["sandbox"], expected)
+                self.assertEqual(worker.read_status(path, record)["sandbox"], expected)
+                params = next(c.args[1] for c in client.request.call_args_list if c.args[0] == "thread/start")
+                self.assertEqual(params["sandbox"], expected)
+
+
+    def test_WORKER_006_012_resume_migrates_legacy_and_preserves_gate_and_override(self):
+        path, record = self.tree(phase="awaiting-commit-review", backend="codex")
+        command = worker.resume(self.directory, record)
+        self.assertEqual(command, ["codex", "resume", "--sandbox", "danger-full-access", record["session"]])
+        self.assertEqual(worker.load(self.directory / "example.json")["sandbox"], "danger-full-access")
+        self.assertEqual(worker.read_status(path, record)["phase"], "awaiting-commit-review")
+        command = worker.resume(self.directory, record, "workspace-write")
+        self.assertEqual(command[command.index("--sandbox") + 1], "workspace-write")
+        reloaded = worker.load(self.directory / "example.json")
+        self.assertEqual(worker.resume(self.directory, reloaded), command)
+        self.assertEqual(worker.read_status(path, reloaded)["sandbox"], "workspace-write")
+        self.assertEqual(worker.read_status(path, reloaded)["phase"], "awaiting-commit-review")
+        with redirect_stdout(io.StringIO()) as out:
+            worker.show(path, reloaded)
+        self.assertIn("sandbox=workspace-write", out.getvalue())
+
+    def test_WORKER_012_other_backends_reject_sandbox_before_mutation(self):
+        for kind in ("claude", "opencode"):
+            path, record = self.tree(name=kind, backend=kind, phase="awaiting-commit-review")
+            before = (path / worker.STATUS).read_text()
+            with self.assertRaisesRegex(ValueError, "only for Codex"):
+                worker.resume(self.directory, record, "danger-full-access")
+            self.assertEqual((path / worker.STATUS).read_text(), before)
+            new_path, _ = self.tree(name=kind + "-new", registered=False)
+            args = self.launch_args(new_path, backend=kind)
+            args.sandbox = "danger-full-access"
+            with patch.object(worker, "spawn") as popen, patch.object(worker, "api") as api:
+                with self.assertRaisesRegex(ValueError, "only for Codex"):
+                    worker.start(args, self.directory)
+            popen.assert_not_called()
+            api.assert_not_called()
+            self.assertFalse((new_path / worker.STATUS).exists())
+            self.assertFalse((self.directory / (new_path.name + ".json")).exists())
+
+    def test_WORKER_012_invalid_or_conflicting_sandbox_blocks_resume(self):
+        path, record = self.tree(phase="awaiting-commit-review", backend="codex")
+        before = (path / worker.STATUS).read_text()
+        with self.assertRaisesRegex(ValueError, "invalid Codex sandbox"):
+            worker.resume(self.directory, record, "invalid")
+        self.assertEqual((path / worker.STATUS).read_text(), before)
+        status = worker.load(path / worker.STATUS)
+        status["sandbox"] = "workspace-write"
+        worker.save(path / worker.STATUS, status)
+        with self.assertRaisesRegex(ValueError, "sandbox conflict"):
+            worker.resume(self.directory, record)
+        status["sandbox"] = "invalid"
+        worker.save(path / worker.STATUS, status)
+        with self.assertRaisesRegex(ValueError, "invalid Codex sandbox"):
+            worker.read_status(path, record)
+
+    def test_WORKER_013_014_native_launch_failure_retains_identity_without_exec_fallback(self):
+        for kind in ("source", "directory", "sandbox", "approvals", "listing", "unavailable"):
+            with self.subTest(kind=kind):
+                path, _ = self.tree(name=kind, registered=False)
+                record = {"worktree": str(path), "name": kind}
+                rpc = self.native_rpc(record)
+                def request(method, params):
+                    result = rpc(method, params)
+                    if method == "thread/start":
+                        if kind == "source": result["thread"]["source"] = "exec"
+                        if kind == "directory": result["cwd"] = str(self.repo)
+                        if kind == "sandbox": result["sandbox"] = {"type": "workspaceWrite"}
+                        if kind == "approvals": result["approvalPolicy"] = "never"
+                    if method == "thread/list" and kind == "listing":
+                        return {"data": [], "nextCursor": None}
+                    return result
+                with patch.object(worker, "CodexClient") as factory, patch.object(worker, "spawn") as popen, \
+                        patch.object(worker.time, "sleep"):
+                    client = factory.return_value
+                    client.request.side_effect = request
+                    if kind == "unavailable": factory.side_effect = OSError("shared server unavailable")
+                    with self.assertRaises((ValueError, OSError)):
+                        worker.start(self.launch_args(path, backend="codex"), self.directory)
+                popen.assert_not_called()
+                saved = worker.load(self.directory / (kind + ".json"))
+                status = worker.read_status(path, saved)
+                self.assertEqual(status["phase"], "blocked")
+                self.assertEqual(saved["session"] is None, kind == "unavailable")
+                methods = [c.args[0] for c in client.request.call_args_list]
+                if kind == "listing": self.assertIn("turn/interrupt", methods)
+                else: self.assertNotIn("turn/start", methods)
+
+    def test_WORKER_013_014_native_fork_inherits_without_claiming_subagent_relationship(self):
+        path, _ = self.tree(registered=False)
+        args = self.launch_args(path, backend="codex")
+        parent = "19fc31a0-e187-4d1d-8efb-6f43e4904caa"
+        with patch.dict(os.environ, {"CODEX_THREAD_ID": parent}), patch.object(worker, "CodexClient") as factory:
+            client = factory.return_value
+            client.request.side_effect = self.native_rpc({"worktree": str(path), "name": path.name})
+            worker.start(args, self.directory)
+        params = next(c.args[1] for c in client.request.call_args_list if c.args[0] == "thread/fork")
+        self.assertEqual(params["threadId"], parent)
+        self.assertEqual(params["cwd"], str(path))
+        self.assertTrue(params["excludeTurns"])
+        self.assertFalse(any(c.args[0] == "thread/start" for c in client.request.call_args_list))
+
+    def test_WORKER_006_014_native_resume_uses_same_server_directory_and_approval_gate(self):
+        path, record = self.tree(backend="codex", phase="awaiting-plan-approval")
+        worker.update_identity(self.directory, record, transport="native", native_socket="/tmp/codex.sock",
+                               sandbox="danger-full-access")
+        with patch.object(worker, "CodexClient") as factory:
+            factory.return_value.request.side_effect = self.native_rpc(record)
+            command = worker.resume(self.directory, record)
+        self.assertEqual(command, ["codex", "--remote", "unix:///tmp/codex.sock", "resume", record["session"]])
+        self.assertEqual(worker.read_status(path, record)["phase"], "awaiting-plan-approval")
+        factory.assert_called_once_with("/tmp/codex.sock")
+        with patch.object(worker, "CodexClient") as factory:
+            factory.return_value.request.return_value = self.native_result(record)
+            with self.assertRaisesRegex(ValueError, "sandbox mode"):
+                worker.resume(self.directory, record, "workspace-write")
+        self.assertEqual(worker.load(self.directory / "example.json")["sandbox"], "danger-full-access")
+        self.assertEqual(worker.read_status(path, record)["phase"], "awaiting-plan-approval")
+
+    def test_WORKER_013_014_claude_native_listing_checks_job_and_conversation_identity(self):
+        path, record = self.tree(backend="claude", phase="discussing")
+        row = {"id": record["backend_session"], "sessionId": record["session"],
+               "name": record["name"], "cwd": str(path)}
+        with patch.object(worker, "call", return_value=SimpleNamespace(stdout=json.dumps([row]))) as call:
+            self.real_verify_visible(record)
+        self.assertEqual(call.call_args.args[0], ["claude", "agents", "--json", "--all"])
+        for field in ("id", "sessionId", "name", "cwd"):
+            with self.subTest(field=field), patch.object(worker, "call", return_value=
+                    SimpleNamespace(stdout=json.dumps([row | {field: "wrong"}]))):
+                with self.assertRaises(ValueError): self.real_verify_visible(record)
+
+    def test_WORKER_013_014_opencode_native_inventory_is_paginated_and_directory_checked(self):
+        path, record = self.tree(phase="discussing")
+        row = {"id": record["session"], "title": record["name"], "location": {"directory": str(path)}}
+        with patch.object(worker, "api", side_effect=[{"data": row},
+                {"data": [], "cursor": {"next": "next-page"}}, {"data": [row]}]) as api:
+            self.real_verify_visible(record)
+        self.assertIn("cursor=next-page", api.call_args.args[1])
+        for changed in (row | {"location": {"directory": str(self.repo)}}, row | {"parentID": "ses_parent"}):
+            with patch.object(worker, "api", return_value={"data": changed}), self.assertRaises(ValueError):
+                self.real_verify_visible(record)
+        with patch.object(worker, "api", side_effect=[{"data": row}, {"data": []}]), self.assertRaises(ValueError):
+            self.real_verify_visible(record)
+
+    def test_WORKER_014_opencode_custom_server_is_preserved_through_start_resume_and_delete(self):
+        path, _ = self.tree(registered=False)
+        args = self.launch_args(path)
+        args.server = "http://localhost:4444"
+        with patch.object(worker, "api", return_value={"data": {"id": "ses_test"}}) as api, \
+                patch.object(worker, "spawn"):
+            worker.start(args, self.directory)
+        self.assertEqual(api.call_args.kwargs, {"server": args.server})
+        record = worker.load(self.directory / "example.json")
+        self.assertEqual(worker.resume(self.directory, record), ["opencode", "--server", args.server, "--session", "ses_test"])
+        with patch.object(worker, "call", return_value=SimpleNamespace(returncode=0)) as call:
+            worker.remove_session(record)
+        self.assertEqual(call.call_args.args[0][:4], ["opencode", "api", "--server", args.server])
+        with patch.object(worker, "api") as api:
+            worker.run_backend(path.name, self.directory, False)
+        self.assertEqual(api.call_args.kwargs, {"server": args.server})
+
+    def test_WORKER_010_014_native_cleanup_uses_only_recorded_server_and_thread(self):
+        _, record = self.tree(backend="codex", phase="done")
+        record.update(transport="native", native_socket="/tmp/codex.sock")
+        with patch.object(worker, "CodexClient") as factory, patch.object(worker, "call") as call:
+            worker.remove_session(record)
+        factory.assert_called_once_with("/tmp/codex.sock")
+        factory.return_value.request.assert_called_once_with("thread/delete", {"threadId": record["session"]})
+        call.assert_not_called()
+        for code, message, absent in ((-32600, "no rollout found for thread id " + record["session"], True),
+                                      (-32600, "permission denied", False),
+                                      (-32000, "no rollout found for thread id " + record["session"], False)):
+            with patch.object(worker, "CodexClient") as factory:
+                factory.return_value.request.side_effect = worker.CodexRpcError("thread/delete", {"code": code, "message": message})
+                if absent:
+                    worker.remove_session(record)
+                else:
+                    with self.assertRaises(worker.CodexRpcError): worker.remove_session(record)
 
     def test_WORKER_004_codex_missing_identity_or_failed_run_stays_blocked(self):
         path, record = self.tree(phase="discussing", backend="codex", session=None)
@@ -341,6 +565,70 @@ class WorkerTest(RepositoryTest):
         with redirect_stdout(io.StringIO()) as out:
             worker.show(path, record)
         self.assertIn("invalid status", out.getvalue())
+
+
+class NativeTransportTest(unittest.TestCase):
+    def frame(self, value, opcode=1, final=True):
+        payload = json.dumps(value).encode() if not isinstance(value, bytes) else value
+        size = len(payload)
+        header = bytes([(0x80 if final else 0) | opcode])
+        if size < 126: header += bytes([size])
+        elif size < 65536: header += b"\x7e" + worker.struct.pack("!H", size)
+        else: header += b"\x7f" + worker.struct.pack("!Q", size)
+        return header + payload
+
+    def test_WORKER_013_014_native_transport_upgrades_masks_and_handles_fragmentation(self):
+        key = worker.base64.b64encode(b"x" * 16).decode()
+        accepted = worker.base64.b64encode(worker.hashlib.sha1(
+            (key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest())
+        header = b"HTTP/1.1 101 Switching Protocols\r\nSec-WebSocket-Accept: " + accepted + b"\r\n\r\n"
+        response = json.dumps({"id": 2, "result": {"ok": True}}).encode()
+        wire = (header + self.frame({"id": 1, "result": {}}) + self.frame(b"ping", opcode=9)
+                + self.frame(response[:10], final=False) + self.frame(response[10:], opcode=0))
+        chunks = [wire[i:i + 7] for i in range(0, len(wire), 7)]
+        fake = Mock()
+        fake.recv.side_effect = chunks
+        with patch.object(worker.socket, "socket", return_value=fake), \
+                patch.object(worker.os, "urandom", side_effect=lambda n: b"x" * n):
+            client = worker.CodexClient("/tmp/codex.sock")
+            self.assertEqual(client.request("thread/list", {}), {"ok": True})
+            client.close()
+        fake.connect.assert_called_once_with("/tmp/codex.sock")
+        sent = [call.args[0] for call in fake.sendall.call_args_list]
+        self.assertTrue(sent[0].startswith(b"GET / HTTP/1.1"))
+        for frame in sent[1:]: self.assertTrue(frame[1] & 128)
+        self.assertTrue(any(frame[0] == 0x8a for frame in sent[1:]))
+        fake.close.assert_called_once()
+
+    def test_WORKER_014_native_transport_reports_rpc_errors_and_rejects_broken_handshake(self):
+        client = worker.CodexClient.__new__(worker.CodexClient)
+        client.sequence = 0
+        client.send = Mock()
+        client.receive = Mock(side_effect=[{"method": "thread/status/changed", "params": {}},
+            {"id": 1, "error": {"code": -32602, "message": "wrong directory"}}])
+        with self.assertRaisesRegex(ValueError, "wrong directory"):
+            client.request("thread/resume", {})
+        fake = Mock()
+        fake.recv.return_value = b""
+        with patch.object(worker.socket, "socket", return_value=fake):
+            with self.assertRaisesRegex(ValueError, "closed during handshake"):
+                worker.CodexClient("/tmp/codex.sock")
+        fake.close.assert_called_once()
+
+    def test_WORKER_013_native_transport_handles_large_messages_without_unbounded_frames(self):
+        for size in (130, 70000):
+            client = worker.CodexClient.__new__(worker.CodexClient)
+            client.socket = Mock()
+            client.frame(1, b"x" * size)
+            wire = client.socket.sendall.call_args.args[0]
+            self.assertEqual(wire[1] & 127, 126 if size < 65536 else 127)
+            self.assertEqual(len(wire), size + (8 if size < 65536 else 14))
+            client.buffer = self.frame(b"x" * size)
+            self.assertEqual(client.exact(len(client.buffer)), self.frame(b"x" * size))
+        client = worker.CodexClient.__new__(worker.CodexClient)
+        client.buffer = b"\x81\x7f" + worker.struct.pack("!Q", 16777217)
+        with self.assertRaisesRegex(ValueError, "invalid Codex WebSocket frame"):
+            client.receive()
 
 
 class CleanupTest(RepositoryTest):

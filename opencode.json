@@ -65,7 +65,7 @@
   "commands": {
     "dispatch": {
       "description": "Dispatch topics for worker-local discussion, planning and implementation",
-      "template": "Act as the dispatcher from `docs/agents/protocols/parallel.md` exactly, for these topics:\n\n$ARGUMENTS"
+      "template": "Act as the dispatcher from `docs/agents/protocols/parallel.md` exactly, for these topics:\n\n$ARGUMENTS\n\n\nA successful launch must also pass the native session visibility checks in Protocol parallel.\nCodex workers are independent interactive tasks on the shared app-server daemon and appear in\n`codex agents`; do not launch them with `codex exec` or describe them as parent-owned subagents.\nClaude workers appear in `claude agents`; OpenCode workers use the UI's shared session service.\nReport the worker names and how to open their existing conversations for requirements and review."
     },
     "implement": {
       "description": "Implement an approved plan following docs/agents/protocols/implement.md",

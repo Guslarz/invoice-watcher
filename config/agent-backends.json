@@ -17,13 +17,18 @@
     "opencode-commands": "https://opencode.ai/docs/commands/",
     "opencode-permissions": "https://opencode.ai/docs/permissions/",
     "opencode-schema": "https://opencode.ai/config.json",
-    "repository-tests": "scripts/tests/test_worker.py and scripts/tests/test_worktree_prune.py; CLI/API mocks, not live sessions. Installed audit versions: Claude Code 2.1.322, Codex CLI 0.167.1, OpenCode v2.2.5."
+    "repository-tests": "scripts/tests/test_worker.py and scripts/tests/test_worktree_prune.py; CLI/API mocks, not live sessions. Installed audit versions: Claude Code 2.1.322, Codex CLI 0.167.1, OpenCode v2.2.5.",
+    "codex-sandbox": "https://learn.chatgpt.com/docs/sandboxing",
+    "codex-app-server": "https://learn.chatgpt.com/docs/app-server",
+    "claude-agent-view": "https://code.claude.com/docs/en/agent-view",
+    "opencode-sdk": "https://opencode.ai/docs/build/sdk",
+    "worker-live-visibility": "Local smoke evidence on 2026-11-11: Codex native task was listed by the current TUI and executed pwd/branch checks in its assigned worktree; OpenCode created, read, listed, and deleted a sibling-worktree session without a model turn. Claude native listing shape checked against the installed CLI; new launch validation uses mocked regression tests."
   },
   "reviewed_inputs": {
     ".claude/settings.json": "8dbfba4d85ecdb6ded94679ec80fbd5a7bdcd6bd9ae357e7aa43e4365cc6a047",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/worktree.sh": "ecb7996f1d63aaa43748d7d54e278eb43ca4fd7d1e44ecb3651200d395aff7a1",
-    "scripts/worker.py": "c12eb33c7af965454a4168b5578c0c940a792abcb475296d4f4be0aa64f3200e"
+    "scripts/worker.py": "7542e80fcbd9a8d8631396cd608248497c6430c6c259d23e27b64b049f1445f5"
   },
   "integrations": [
     {
@@ -523,26 +528,28 @@
         "worker:start",
         "worker:run_backend",
         "worker:claude_launch_id",
-        "worker:validate_session"
+        "worker:validate_session",
+        "worker:verify_visible",
+        "worker:worker_api"
       ],
       "backends": {
         "claude": {
           "status": "alternative",
-          "detail": "Launcher uses --bg, --name, --session-id and parses background job identity separately from conversation UUID.",
+          "detail": "Uses --bg/--name/--session-id, then validates the returned job ID, conversation UUID, name and worktree in claude agents --json --all.",
           "references": [
             "scripts/worker.py"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Launcher supervises exec --json, uses workspace-write plus registry --add-dir, and captures thread.started identity.",
+          "detail": "Creates an independent interactive task on the existing local shared app-server daemon; binds the returned ID before its first turn and validates native listing visibility, name, cwd, sandbox and approval routing. Never falls back to exec or a private server.",
           "references": [
             "scripts/worker.py"
           ]
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Launcher creates a session through the V2 API and supervises command submission.",
+          "detail": "Creates a top-level V2 session on the UI shared service, verifies its identity/name/worktree and paginated native listing before command submission; optional --server is retained.",
           "references": [
             "scripts/worker.py"
           ]
@@ -550,7 +557,11 @@
       },
       "reviewed": "2026-11-11",
       "evidence": [
-        "repository-tests"
+        "repository-tests",
+        "codex-app-server",
+        "claude-agent-view",
+        "opencode-sdk",
+        "worker-live-visibility"
       ]
     },
     {
@@ -569,7 +580,7 @@
         },
         "codex": {
           "status": "alternative",
-          "detail": "exec receives the expanded canonical prompt; worker launch does not depend on skill selection.",
+          "detail": "Sends the expanded canonical prompt through turn/start on the recorded native task, after worktree protection and identity binding.",
           "references": [
             "scripts/worker.py"
           ]
@@ -592,7 +603,8 @@
       "id": "worker-selection",
       "name": "Worker agent and model selection",
       "covers": [
-        "worker:opencode_model"
+        "worker:opencode_model",
+        "worker:sandbox_mode"
       ],
       "backends": {
         "claude": {
@@ -604,7 +616,7 @@
         },
         "codex": {
           "status": "unsupported",
-          "detail": "Named-agent selection is unsupported by this launcher and rejected explicitly. No named Codex agent can be inherited by this launcher. Use explicit --default-agent without a confirmation prompt when no named identity is available; optional --model is independent.",
+          "detail": "Named-agent selection remains unsupported and is rejected; use explicit --default-agent. CODEX_THREAD_ID or --parent-session inherits the current task configuration/model through a native fork; optional --model overrides it. Forked tasks are independent, not child subagents.",
           "references": [
             "scripts/worker.py",
             "docs/agents/protocols/parallel.md"
@@ -639,14 +651,14 @@
         },
         "codex": {
           "status": "alternative",
-          "detail": "Protects lifecycle before codex resume with recorded thread ID.",
+          "detail": "Protects lifecycle and verifies effective native cwd/sandbox/approval routing, then opens the exact task on its recorded socket using codex --remote. Legacy exec workers retain explicit-ID CLI resume; ignored loaded-task overrides fail without changing the recorded mode.",
           "references": [
             "scripts/worker.py"
           ]
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Protects lifecycle before opencode --session with recorded session ID.",
+          "detail": "Protects lifecycle, verifies native session visibility, and reopens the recorded session on the same shared service, forwarding any recorded --server.",
           "references": [
             "scripts/worker.py"
           ]
@@ -654,7 +666,9 @@
       },
       "reviewed": "2026-11-11",
       "evidence": [
-        "repository-tests"
+        "repository-tests",
+        "codex-app-server",
+        "opencode-sdk"
       ]
     },
     {
@@ -673,14 +687,14 @@
         },
         "codex": {
           "status": "alternative",
-          "detail": "codex delete --force targets only the recorded thread UUID.",
+          "detail": "Native task cleanup sends thread/delete for the exact recorded UUID to its recorded daemon socket. Legacy exec workers retain codex delete --force; no broad session discovery.",
           "references": [
             "scripts/worker.py"
           ]
         },
         "opencode": {
           "status": "alternative",
-          "detail": "V2 DELETE session endpoint targets only the recorded session.",
+          "detail": "V2 DELETE targets only the recorded session, forwarding any recorded --server.",
           "references": [
             "scripts/worker.py"
           ]
@@ -708,7 +722,7 @@
         },
         "codex": {
           "status": "alternative",
-          "detail": "Shared status file and script checks; approval gates are workflow instructions, not permission enforcement.",
+          "detail": "Status validates persisted sandbox and native transport identity against the registry; native execution uses on-request approvals with automatic review. Sandbox danger-full-access removes filesystem/network enforcement; workflow plan/commit gates remain separate.",
           "references": [
             "docs/agents/protocols/parallel.md",
             "scripts/worker.py"
@@ -726,6 +740,49 @@
       "reviewed": "2026-11-11",
       "evidence": [
         "repository-tests"
+      ]
+    },
+    {
+      "id": "worker-codex-native-control",
+      "name": "Native Codex task control transport",
+      "covers": [
+        "worker:CodexClient",
+        "worker:start_native",
+        "worker:native_thread_check",
+        "worker:native_listing",
+        "worker:native_params",
+        "worker:codex_socket",
+        "worker:CodexRpcError"
+      ],
+      "backends": {
+        "codex": {
+          "status": "alternative",
+          "detail": "Local shared-daemon WebSocket JSON-RPC over a Unix control socket; checks native interactive listing after initial user-message persistence. Requires a running UI daemon. Remote WebSocket servers are unsupported: run on the UI server host and select its local socket. UI tasks are independent; no subagent parentage is claimed.",
+          "references": [
+            "scripts/worker.py",
+            "docs/agents/protocols/parallel.md"
+          ]
+        },
+        "claude": {
+          "status": "unsupported",
+          "detail": "Codex-specific transport is not applicable. Claude uses native background sessions and agent view instead.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        },
+        "opencode": {
+          "status": "unsupported",
+          "detail": "Codex-specific transport is not applicable. OpenCode uses its shared V2 service and native session inventory instead.",
+          "references": [
+            "scripts/worker.py"
+          ]
+        }
+      },
+      "reviewed": "2026-11-11",
+      "evidence": [
+        "codex-app-server",
+        "repository-tests",
+        "worker-live-visibility"
       ]
     }
   ]
