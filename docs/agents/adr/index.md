@@ -14,3 +14,6 @@ this list is usually enough; open a record to see why.
 | [0007](0007-keep-specs-and-decisions-out-of-the-published-site.md) | Keep specs and decisions out of the published documentation site | accepted |
 | [0008](0008-build-the-documentation-site-with-zensical.md) | Build the documentation site with Zensical | accepted |
 | [0009](0009-track-scanned-messages-by-imap-uid-not-by-date.md) | Track scanned messages by IMAP UID, not by date | accepted |
+| [0010](0010-separate-invoice-and-payment-recognition-from-matching.md) | Separate invoice and payment recognition from matching | accepted |
+| [0011](0011-identify-documents-and-payments-by-stable-business-keys.md) | Identify documents and payments by stable business keys | accepted |
+| [0012](0012-derive-invoice-payment-status-from-evidence-and-matching.md) | Derive invoice payment status from evidence and matching | accepted |

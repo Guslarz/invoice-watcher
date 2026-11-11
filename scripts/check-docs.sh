@@ -68,8 +68,7 @@ for plan in docs/agents/projects/*.md; do
 done
 
 # Inbox notes: frontmatter, triage fields, blocked-by points to existing notes.
-for note in docs/agents/inbox/*.md; do
-  [[ "$note" == docs/agents/inbox/README.md ]] && continue
+while IFS= read -r note; do
   require_keys "$note" title kind area added status size blocked-by
   status=$(frontmatter "$note" status)
   [[ "$status" =~ ^(ready|waiting|later)$ ]] || fail "$note: status must be ready|waiting|later"
@@ -84,7 +83,7 @@ for note in docs/agents/inbox/*.md; do
   [[ "$status" != ready || -z "${blocked_by// /}" ]] || fail "$note: a ready note cannot be blocked by other notes"
   [[ "$status" != waiting || -n "$(frontmatter "$note" waiting-for)" ]] \
     || fail "$note: a waiting note needs waiting-for"
-done
+done < <(find docs/agents/inbox -type f -name '*.md' ! -name README.md | sort)
 
 # Repository paths mentioned in agent docs must exist.
 while IFS=: read -r file path; do
