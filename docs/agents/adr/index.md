@@ -17,3 +17,4 @@ this list is usually enough; open a record to see why.
 | [0010](0010-separate-invoice-and-payment-recognition-from-matching.md) | Separate invoice and payment recognition from matching | accepted |
 | [0011](0011-identify-documents-and-payments-by-stable-business-keys.md) | Identify documents and payments by stable business keys | accepted |
 | [0012](0012-derive-invoice-payment-status-from-evidence-and-matching.md) | Derive invoice payment status from evidence and matching | accepted |
+| [0013](0013-define-frontend-consistency-through-versioned-design-tokens-and-documentation.md) | Define frontend consistency through versioned design tokens and documentation before shared components | accepted |
