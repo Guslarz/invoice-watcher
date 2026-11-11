@@ -3,6 +3,9 @@
 Use for independent topics that proceed in separate workers. Related topics that touch the same
 files are grouped on one branch. The dispatcher never implements or drafts workers' plans.
 
+Backend integration support and operational alternatives are recorded in the
+[compatibility matrix](../guidelines/agent-backends.md), maintained under ADR-0014.
+
 ## Dispatch and approval
 
 - **WORKER-001** The dispatcher triages and groups overlapping topics, creates the assigned
