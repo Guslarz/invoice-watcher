@@ -68,6 +68,21 @@ class SecretHelperRunnerTest {
   }
 
   @Test
+  @DisplayName("SECRET-012: decrypt prints the value encrypted with a generated key")
+  void decryptPrintsOriginalValue() {
+    // given
+    String key = run("", "generate-key").out();
+    String encrypted = printedValue(run(key + "\n" + PLAINTEXT + "\n", "encrypt").out());
+
+    // when
+    Result result = run(key + "\n" + encrypted + "\n", "decrypt");
+
+    // then
+    assertThat(result.status()).isZero();
+    assertThat(printedValue(result.out())).isEqualTo(PLAINTEXT);
+  }
+
+  @Test
   @DisplayName("SECRET-013: commands read input from standard input and exit with status 0 on success")
   void commandsReadInputAndExitZeroOnSuccess() {
     // given
@@ -81,21 +96,6 @@ class SecretHelperRunnerTest {
     assertThat(decrypt.status()).isZero();
     assertThat(printedValue(decrypt.out())).isEqualTo(PLAINTEXT);
     assertThat(generateKey.status()).isZero();
-  }
-
-  @Test
-  @DisplayName("SECRET-012: decrypt prints the value encrypted with a generated key")
-  void decryptPrintsOriginalValue() {
-    // given
-    String key = run("", "generate-key").out();
-    String encrypted = printedValue(run(key + "\n" + PLAINTEXT + "\n", "encrypt").out());
-
-    // when
-    Result result = run(key + "\n" + encrypted + "\n", "decrypt");
-
-    // then
-    assertThat(result.status()).isZero();
-    assertThat(printedValue(result.out())).isEqualTo(PLAINTEXT);
   }
 
   @Test

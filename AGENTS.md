@@ -37,7 +37,7 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `docs/agents/protocols/` | How to plan / implement / do lightweight changes. | no |
 | `docs/agents/guidelines/` | Coding, module, build and k8s conventions. | no |
 | `docs/agents/projects/` | Temporary plans, one per change; deleted by the PR that implements them. | no |
-| `docs/agents/inbox/` | Ideas and TODOs for later, one note per file (`docs/agents/inbox/README.md`). | no |
+| `docs/agents/inbox/` | Pending work: standalone notes or initiative directories with a temporary roadmap (`docs/agents/inbox/README.md`). | no |
 | `docs/agents/templates/` | Templates for specs, ADRs and plans. | no |
 
 Rules:

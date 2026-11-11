@@ -9,6 +9,7 @@ public record MailMessage(
     String sender,
     String title,
     ZonedDateTime date,
-    String content
+    String content,
+    String contentType
 ) {
 }

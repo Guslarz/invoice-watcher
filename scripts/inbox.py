@@ -30,11 +30,11 @@ def frontmatter(path):
 
 def load_notes():
     notes = []
-    for path in sorted(INBOX.glob("*.md")):
+    for path in sorted(INBOX.rglob("*.md")):
         if path.name == "README.md":
             continue
         note = frontmatter(path)
-        note["slug"] = path.stem
+        note["slug"] = path.relative_to(INBOX).with_suffix("").as_posix()
         note["blocked-by"] = [slug.strip() for slug in note.get("blocked-by", "").strip("[]").split(",")
                               if slug.strip()]
         notes.append(note)
