@@ -11,7 +11,7 @@ blocked-by: []
 Registration currently uses in-memory HttpSession state, one backend replica and Recreate rollout.
 Pod replacement loses browser sessions and pending Google consent flows; additional replicas cannot
 handle each other's sessions. Address this before horizontal scaling or requiring sign-in and
-consent to survive pod replacement. See ADR-0017 and the registration capability.
+consent to survive pod replacement. See ADR-0018 and the registration capability.
 
 Keep secure HttpOnly cookies and backend-held credentials as the starting design. Evaluate shared
 sessions through Spring Session (Redis or JDBC), including operational cost and fit with the dev

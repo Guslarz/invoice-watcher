@@ -3,9 +3,12 @@ package com.guslarz.invoicewatcher.dao.userconfiguration.api;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.context.properties.bind.BindException;
 import org.springframework.boot.context.properties.bind.validation.BindValidationException;
@@ -73,5 +76,21 @@ class UserConfigurationDaoModeAutoConfigurationTest {
               .containsExactly(
                   ConfigurationPropertyName.of("invoice-watcher.user-configuration.dao.mode"));
         });
+  }
+
+  @ParameterizedTest
+  @EnumSource(UserConfigurationDaoProperties.Mode.class)
+  @DisplayName("USER-010: binds each supported storage backend")
+  void bindsSupportedMode(UserConfigurationDaoProperties.Mode mode) {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        "invoice-watcher.user-configuration.dao.mode=" + mode.name().toLowerCase(Locale.ROOT));
+
+    // when
+    runner.run(context -> {
+      // then
+      assertThat(context).hasNotFailed();
+      assertThat(context.getBean(UserConfigurationDaoProperties.class).mode()).isEqualTo(mode);
+    });
   }
 }

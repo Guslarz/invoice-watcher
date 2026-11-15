@@ -139,9 +139,50 @@ Protect `master` with the ruleset committed in `.github/rulesets/master.json`:
 gh api -X POST repos/<owner>/<repository>/rulesets --input .github/rulesets/master.json
 ```
 
-From then on `master` changes only by merging a pull request whose checks passed — nobody, not
-even an administrator, can push to it directly, force-push or delete it. A pull request needs no
-approving review, so a single maintainer can merge their own. Rulesets for a private repository
-need a paid GitHub plan.
+Ordinary changes to `master` require a pull request whose checks passed. Contributors and
+administrators cannot push directly, force-push or delete it. A pull request needs no approving
+review, so a single maintainer can merge their own. Release automation has the dedicated App
+exception configured below. Rulesets for a private repository need a paid GitHub plan.
 
 Next: [create the environment](environment.md).
+
+## Release automation
+
+The Release workflow creates a release commit and a subsequent commit restoring development.
+It requires a dedicated GitHub App to push those commits and their release tag atomically.
+Ordinary contributors, administrators and workflow tokens keep the pull-request requirement.
+
+1. Create a GitHub App in your account or organization settings. Disable webhooks if unused,
+   grant repository **Contents: Read and write**, and install it only on this repository.
+2. Generate a private key. Add its PEM contents as the repository secret
+   `RELEASE_APP_PRIVATE_KEY`, and add the App's client ID as repository variable
+   `RELEASE_APP_CLIENT_ID`. Keep the numeric App ID for the ruleset step.
+3. Add only that App as an **Always allow** bypass actor on the existing master ruleset.
+   The checked-in ruleset has no bypass by default. You can apply the exception with:
+
+```shell
+release_app_id=<numeric-app-id>
+release_ruleset_id=$(gh api repos/<owner>/<repository>/rulesets \
+  --jq '.[] | select(.name == "master") | .id')
+jq --argjson app_id "$release_app_id" \
+  '.bypass_actors = [{"actor_id": $app_id, "actor_type": "Integration", "bypass_mode": "always"}]' \
+  .github/rulesets/master.json > /tmp/invoice-watcher-release-ruleset.json
+gh api --method PUT repos/<owner>/<repository>/rulesets/"$release_ruleset_id" \
+  --input /tmp/invoice-watcher-release-ruleset.json
+```
+
+The token action restricts installation access to this repository and requests contents write
+permission. The App credentials are used for the atomic Git push; the normal workflow token
+publishes the image and GitHub release. Repository configuration is manual; changing repository
+files alone does not install the App or modify the live ruleset. Reapplying the original ruleset
+without the exception disables release pushes.
+
+Run **Release** from master with a major, minor or patch increment. Its release commit contains
+the release's ArgoCD target revision, image tag and pod version label. A later commit restores
+master and snapshot before artifacts are published. Builds still run tests and static analysis.
+The release/restoration commits use the App's explicit bypass rather than pull-request checks.
+
+If publication fails after the Git push, rerun that same failed workflow. It reuses the tag and
+publishes from its original release commit; it never moves the tag. A fresh dispatch makes a new
+release. If another change reached master before preparation, the workflow fails without changing
+remote refs; start a new run from current master. Choose completed GitHub releases for deployment.

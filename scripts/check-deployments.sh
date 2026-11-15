@@ -33,7 +33,7 @@ validate_manifests() {
 echo "==> Local Kafka image"
 # .run/files/kafka.yml takes its environment from the dev overlay, but compose cannot read the image
 # from kustomize - the tag is repeated and must match.
-cluster_kafka=deployments/k8s-apps/apps/kafka/base/statefulset.yml
+cluster_kafka=deployments/k8s-apps/workloads/kafka/base/statefulset.yml
 local_kafka=.run/files/kafka.yml
 kafka_image() { grep -oE 'image: apache/kafka:[^[:space:]]+' "$1" | cut -d' ' -f2 || true; }
 cluster_image=$(kafka_image "$cluster_kafka")

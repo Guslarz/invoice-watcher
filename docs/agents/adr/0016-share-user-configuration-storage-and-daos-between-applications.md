@@ -1,10 +1,10 @@
 ---
-id: ADR-0015
+id: ADR-0016
 status: accepted
 date: 2026-11-12
 ---
 
-# ADR-0015: Share user configuration storage and DAOs between applications
+# ADR-0016: Share user configuration storage and DAOs between applications
 
 ## Context and decision
 

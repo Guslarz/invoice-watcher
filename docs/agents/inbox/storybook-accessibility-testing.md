@@ -22,7 +22,7 @@ the replacement provides equivalent coverage, including actual rendered Shadow D
 Select exact compatible stable Storybook/Angular/Node and runner pins during planning. Confirm
 Angular runner support rather than assuming the React/Vitest path works. Keep Node, pnpm,
 installation and browser setup owned by Gradle's frontend workspace; migrate catalogue serve,
-build, test and baseline commands and update ADR-0017 and developer instructions in the same
+build, test and baseline commands and update ADR-0018 and developer instructions in the same
 change. This migration is explicitly deferred from the current registration work.
 
 [Storybook accessibility testing](https://storybook.js.org/docs/writing-tests/accessibility-testing).

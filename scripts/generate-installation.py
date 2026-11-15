@@ -40,7 +40,7 @@ def generate(config):
         base + "ephemeral/installation.auto.tfvars.json": tfvars({"gcp_region": c["region"], "gcp_zone": c["zone"], "gcp_gke_cluster_name": c["cluster_name"], "domain_name": c["domain"]}),
         "deployments/k8s/environments/dev.yml.gotmpl": f'domain: {c["domain"]}\nenvironment: dev\ngcpZone: {c["zone"]}\ngithubRepository: {c["repository"]}\nregistryUsername: {c["registry_username"]}\n\nargocd:\n  domainPrefix: argocd\n',
         "deployments/k8s-apps/components/app-identity/image-pull-secret.yml": template("image-pull-secret.yml"),
-        "deployments/k8s-apps/apps/mail-producer/overlays/dev/kustomization.yml": template("mail-kustomization.yml"),
+        "deployments/k8s-apps/workloads/mail-producer/overlays/dev/kustomization.yml": template("mail-kustomization.yml"),
         "images/mail-producer-docker/src/Dockerfile": template("Dockerfile"),
     }
 
@@ -49,10 +49,10 @@ def generate(config):
         content = template("mail-kustomization.yml").replace("mail-producer", app)
         if role == "frontend":
             content = content[:content.index("configMapGenerator:")]
-        outputs[f"deployments/k8s-apps/apps/{app}/overlays/dev/kustomization.yml"] = content
+        outputs[f"deployments/k8s-apps/workloads/{app}/overlays/dev/kustomization.yml"] = content
     outputs["images/user-registration-backend-docker/src/Dockerfile"] = template("Dockerfile").replace(
         "Mail Producer", "User Registration Backend")
-    outputs["deployments/k8s-apps/apps/user-registration-backend/overlays/dev/config/.env"] = (
+    outputs["deployments/k8s-apps/workloads/user-registration-backend/overlays/dev/config/.env"] = (
         "INVOICE_WATCHER_USER_CONFIGURATION_DAO_MODE=firestore\n"
         f"INVOICE_WATCHER_USER_REGISTRATION_PUBLIC_BASE_URL=https://register.{c['domain']}\n")
     outputs["deployments/k8s-apps/environments/dev/registration-route.yml"] = template("registration-route.yml")

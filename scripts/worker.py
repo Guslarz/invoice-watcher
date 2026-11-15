@@ -2,6 +2,8 @@
 """Manage worker identity, file-based lifecycle, backend launch/resume and safe cleanup."""
 
 import argparse
+import base64
+import hashlib
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import fcntl
@@ -9,9 +11,12 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
+import struct
 import subprocess
 import sys
-from urllib.parse import urlencode
+import time
+from urllib.parse import urlencode, urlsplit
 import uuid
 
 
@@ -19,6 +24,8 @@ STATUS = ".worker-status.json"
 PHASES = ("discussing", "planning", "awaiting-plan-approval", "implementing",
           "awaiting-commit-review", "awaiting-merge", "done", "blocked")
 BACKENDS = ("claude", "opencode", "codex")
+SANDBOX_MODES = ("read-only", "workspace-write", "danger-full-access")
+DEFAULT_CODEX_SANDBOX = "danger-full-access"
 IDENTITY = ("name", "worktree", "backend", "session", "selected_agent", "agent_policy", "model", "backend_session")
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -31,12 +38,241 @@ def spawn(*args, **kwargs):
     return subprocess.Popen(*args, **kwargs)
 
 
-def api(method, path, body=None):
-    args = ["opencode", "api", method, path]
+def api(method, path, body=None, *, server=None):
+    args = ["opencode", "api"]
+    if server:
+        args += ["--server", server]
+    args += [method, path]
     if body is not None:
         args += ["--data", json.dumps(body)]
     result = call(args).stdout.strip()
     return json.loads(result) if result else None
+
+
+def worker_api(record, method, path, body=None):
+    if record.get("server"):
+        return api(method, path, body, server=record["server"])
+    return api(method, path, body) if body is not None else api(method, path)
+
+
+def verify_visible(record):
+    if backend(record) == "claude":
+        rows = json.loads(call(["claude", "agents", "--json", "--all"]).stdout)
+        row = next((row for row in rows if row.get("id") == record["backend_session"]), None)
+        if not row:
+            raise ValueError("Claude background ID absent from claude agents --json --all")
+        if (row.get("cwd") != record["worktree"] or row.get("name") != record["name"]
+                or row.get("sessionId") != record["session"]):
+            raise ValueError("Claude background listing identity, name, or worktree mismatch")
+    elif backend(record) == "opencode":
+        session = worker_api(record, "get", "/api/session/" + record["session"])["data"]
+        if (session.get("id") != record["session"] or session.get("title") != record["name"]
+                or session.get("location", {}).get("directory") != record["worktree"]
+                or session.get("parentID")):
+            raise ValueError("OpenCode session identity, name, directory, or top-level visibility mismatch")
+        cursor = None
+        while True:
+            query = {"limit": 100, "location[directory]": record["worktree"]}
+            if cursor:
+                query["cursor"] = cursor
+            page = worker_api(record, "get", "/api/session?" + urlencode(query))
+            if any(row["id"] == record["session"] for row in page["data"]):
+                return
+            cursor = (page.get("cursor") or {}).get("next")
+            if not cursor:
+                raise ValueError("OpenCode worker absent from shared-service session listing")
+
+
+class CodexRpcError(ValueError):
+    def __init__(self, method, error):
+        self.code = error.get("code")
+        self.message = error.get("message", "request failed")
+        super().__init__("Codex " + method + ": " + self.message)
+
+
+class CodexClient:
+    """JSON-RPC over the existing daemon's local WebSocket control socket."""
+
+    def __init__(self, path):
+        self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.socket.settimeout(15)
+        self.sequence = 0
+        self.buffer = b""
+        try:
+            try:
+                self.socket.connect(str(path))
+            except OSError as exc:
+                raise ValueError("Shared Codex control socket unavailable at " + str(path)
+                                 + "; open codex agents on this host or supply --codex-socket for the same server") from exc
+            key = base64.b64encode(os.urandom(16)).decode()
+            self.socket.sendall(("GET / HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\n"
+                                 "Connection: Upgrade\r\nSec-WebSocket-Key: " + key
+                                 + "\r\nSec-WebSocket-Version: 13\r\n\r\n").encode())
+            header = b""
+            while b"\r\n\r\n" not in header:
+                chunk = self.socket.recv(4096)
+                if not chunk:
+                    raise ValueError("Codex control socket closed during handshake")
+                header += chunk
+                if len(header) > 65536:
+                    raise ValueError("invalid Codex control socket handshake")
+            header, self.buffer = header.split(b"\r\n\r\n", 1)
+            expected = base64.b64encode(hashlib.sha1((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").encode()).digest())
+            headers = dict(line.split(b":", 1) for line in header.split(b"\r\n")[1:] if b":" in line)
+            headers = {k.strip().lower(): v.strip() for k, v in headers.items()}
+            if not header.startswith(b"HTTP/1.1 101 ") or headers.get(b"sec-websocket-accept") != expected:
+                raise ValueError("Codex control socket refused WebSocket upgrade")
+            self.request("initialize", {"clientInfo": {"name": "invoice_watcher_workers", "version": "1"},
+                                        "capabilities": {"experimentalApi": True}})
+            self.send({"method": "initialized"})
+        except BaseException:
+            self.socket.close()
+            raise
+
+    def close(self):
+        self.socket.close()
+
+    def exact(self, size):
+        while len(self.buffer) < size:
+            chunk = self.socket.recv(max(4096, size - len(self.buffer)))
+            if not chunk:
+                raise ValueError("Codex control socket closed unexpectedly")
+            self.buffer += chunk
+        result, self.buffer = self.buffer[:size], self.buffer[size:]
+        return result
+
+    def frame(self, opcode, payload):
+        size = len(payload)
+        head = bytes([0x80 | opcode])
+        if size < 126:
+            head += bytes([0x80 | size])
+        elif size < 65536:
+            head += b"\xfe" + struct.pack("!H", size)
+        else:
+            head += b"\xff" + struct.pack("!Q", size)
+        mask = os.urandom(4)
+        self.socket.sendall(head + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(payload)))
+
+    def send(self, value):
+        self.frame(1, json.dumps(value).encode())
+
+    def receive(self):
+        message = b""
+        while True:
+            first, second = self.exact(2)
+            opcode, final = first & 15, bool(first & 128)
+            size = second & 127
+            if size == 126:
+                size = struct.unpack("!H", self.exact(2))[0]
+            elif size == 127:
+                size = struct.unpack("!Q", self.exact(8))[0]
+            if first & 0x70 or second & 128 or size + len(message) > 16777216:
+                raise ValueError("invalid Codex WebSocket frame")
+            payload = self.exact(size)
+            if opcode == 8:
+                raise ValueError("Codex control connection closed")
+            if opcode == 9:
+                self.frame(10, payload)
+                continue
+            if opcode == 10:
+                continue
+            if opcode not in (0, 1):
+                raise ValueError("unexpected Codex WebSocket opcode")
+            message += payload
+            if final:
+                return json.loads(message)
+
+    def request(self, method, params):
+        self.sequence += 1
+        request_id = self.sequence
+        self.send({"id": request_id, "method": method, "params": params})
+        while True:
+            event = self.receive()
+            if event.get("id") == request_id:
+                if "error" in event:
+                    raise CodexRpcError(method, event["error"])
+                return event["result"]
+            # Native UI/automatic review owns approval and input requests; never answer them here.
+
+
+def codex_socket(value=None):
+    root = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
+    return str(Path(value or root / "app-server-control/app-server-control.sock").resolve())
+
+
+def native_listing(client, record):
+    cursor = None
+    while True:
+        page = client.request("thread/list", {"limit": 100, "cursor": cursor, "cwd": record["worktree"],
+                                              "modelProviders": []})
+        for thread in page["data"]:
+            if thread["id"] == record["session"]:
+                if thread.get("name") != record["name"] or thread.get("cwd") != record["worktree"]:
+                    raise ValueError("Codex native listing has a different name or worktree")
+                return
+        cursor = page.get("nextCursor")
+        if not cursor:
+            raise ValueError("Codex worker absent from interactive task listing; headless exec is not supported")
+
+
+def native_params(record, directory):
+    params = {"cwd": record["worktree"], "runtimeWorkspaceRoots": [record["worktree"], str(directory)],
+              "sandbox": sandbox_mode(record), "approvalPolicy": "on-request", "approvalsReviewer": "auto_review"}
+    if record.get("model"):
+        params["model"] = record["model"]
+    return params
+
+
+def native_thread_check(result, record):
+    thread = result["thread"]
+    if thread.get("source") not in ("cli", "vscode"):
+        raise ValueError("Codex server did not create an interactive task; headless fallback is forbidden")
+    if thread.get("cwd") != record["worktree"] or result.get("cwd") != record["worktree"]:
+        raise ValueError("Codex did not attach the assigned worktree")
+    if result.get("approvalPolicy") != "on-request" or result.get("approvalsReviewer") != "auto_review":
+        raise ValueError("Codex did not preserve the requested native approval routing")
+    # A loaded native task may ignore resume overrides; never claim a sandbox change succeeded.
+    policy = result.get("sandbox", {})
+    expected = {"danger-full-access": "dangerFullAccess", "workspace-write": "workspaceWrite",
+                "read-only": "readOnly"}[sandbox_mode(record)]
+    if not isinstance(policy, dict) or policy.get("type") != expected:
+        raise ValueError("Codex did not apply the requested sandbox mode; reopen the task with that mode")
+
+
+def start_native(directory, record):
+    client = CodexClient(record["native_socket"])
+    turn_id = None
+    try:
+        params = native_params(record, directory)
+        if record.get("parent_session"):
+            params.update(threadId=record["parent_session"], excludeTurns=True)
+            result = client.request("thread/fork", params)
+        else:
+            result = client.request("thread/start", params)
+        session = result["thread"]["id"]
+        validate_session("codex", session)
+        # Record the real server identity before validation or any model turn, including failures.
+        update_identity(directory, record, session=session)
+        native_thread_check(result, record)
+        client.request("thread/name/set", {"threadId": session, "name": record["name"]})
+        result = client.request("turn/start", {"threadId": session,
+            "input": [{"type": "text", "text": command_prompt(record["command"], record["name"])}]})
+        turn_id = result["turn"]["id"]
+        # Fresh threads enter the native history index with their first user message.
+        for attempt in range(30):
+            try:
+                native_listing(client, record)
+                break
+            except ValueError:
+                if attempt == 29:
+                    raise
+                time.sleep(0.5)
+    except (OSError, ValueError, KeyError):
+        if turn_id is not None:
+            client.request("turn/interrupt", {"threadId": record["session"], "turnId": turn_id})
+        raise
+    finally:
+        client.close()
 
 
 def registry():
@@ -74,6 +310,17 @@ def save(path, data):
 def backend(worker):
     # In legacy records, 'agent' meant the backend, not a named agent profile.
     return worker.get("backend", worker.get("agent"))
+
+
+def sandbox_mode(record, override=None):
+    selected = override if override is not None else record.get("sandbox")
+    if backend(record) != "codex":
+        if selected is not None:
+            raise ValueError("--sandbox is supported only for Codex workers")
+        return None
+    if selected is not None and selected not in SANDBOX_MODES:
+        raise ValueError("invalid Codex sandbox mode")
+    return selected if selected is not None else DEFAULT_CODEX_SANDBOX
 
 
 def validate_session(kind, session):
@@ -141,6 +388,12 @@ def read_status(path, record=None):
     if ((data["agent_policy"] == "named" and not data.get("selected_agent"))
             or (data["agent_policy"] != "named" and data.get("selected_agent") is not None)):
         raise ValueError("agent selection does not match its policy")
+    sandbox_mode(data)
+    for field in ("transport", "native_socket", "parent_session", "server"):
+        if field in data and not isinstance(data[field], str):
+            raise ValueError("invalid worker transport field: " + field)
+    if data.get("transport") is not None and (data["backend"] != "codex" or data["transport"] != "native"):
+        raise ValueError("invalid native worker transport")
     if "pr" in data:
         pr = data["pr"]
         if (not isinstance(pr, dict) or not all(isinstance(pr.get(k), str) for k in ("url", "repository", "head"))
@@ -152,6 +405,12 @@ def read_status(path, record=None):
     if data.get("backend_session") is not None:
         native_id(data["backend_session"])
     if record:
+        sandbox_mode(record)
+        for field in ("transport", "native_socket", "parent_session", "server"):
+            if record.get(field) != data.get(field):
+                raise ValueError("registry/status transport conflict: " + field)
+        if record.get("sandbox") != data.get("sandbox"):
+            raise ValueError("registry/status sandbox conflict")
         expected = dict(record, backend=backend(record))
         for key in IDENTITY:
             if key in expected and expected[key] != data.get(key):
@@ -167,6 +426,11 @@ def write_status(directory, record, phase, **changes):
     data = previous or {key: record.get(key) for key in IDENTITY}
     data.update(backend=backend(record), schema_version=1, branch=branch_at(path),
                 agent_policy=record.get("agent_policy", "legacy-unspecified"))
+    if backend(record) == "codex" and "sandbox" in record:
+        data["sandbox"] = sandbox_mode(record)
+    for field in ("transport", "native_socket", "parent_session", "server"):
+        if field in record:
+            data[field] = record[field]
     data.update(changes)
     data.update(phase=phase, updated_at=datetime.now(timezone.utc).isoformat())
     # Common exclude also covers worktrees on old branches without the new .gitignore entry.
@@ -232,6 +496,18 @@ def claude_launch_id(text):
 
 def start(args, directory):
     kind, _ = command_parts(args.command)
+    sandbox = sandbox_mode({"backend": args.backend}, getattr(args, "sandbox", None))
+    server = getattr(args, "server", None)
+    native_socket_path = getattr(args, "codex_socket", None)
+    if server and (args.backend != "opencode" or urlsplit(server).scheme not in ("http", "https")
+                   or urlsplit(server).username or urlsplit(server).password):
+        raise ValueError("--server requires an OpenCode HTTP(S) server URL without credentials")
+    parent_session = (getattr(args, "parent_session", None)
+                      or (os.environ.get("CODEX_THREAD_ID") if args.backend == "codex" else None))
+    if (native_socket_path or parent_session) and args.backend != "codex":
+        raise ValueError("--codex-socket and --parent-session are supported only for Codex")
+    if parent_session:
+        validate_session("codex", parent_session)
     if args.agent is not None and not args.agent.strip():
         raise ValueError("agent name must not be empty; use --default-agent deliberately")
     model = opencode_model(args.model) if args.backend == "opencode" and args.model else None
@@ -250,13 +526,19 @@ def start(args, directory):
         raise ValueError("worktree already has status; inspect it before starting another worker")
     if args.backend == "opencode" and args.agent:
         query = urlencode({"location[directory]": path})
-        agents = api("get", "/api/agent?" + query)["data"]
+        agents = worker_api({"server": server}, "get", "/api/agent?" + query)["data"]
         if not any(a["id"] == args.agent and not a.get("hidden")
                    and a.get("mode") in ("primary", "all") for a in agents):
             raise ValueError("OpenCode agent unavailable or not primary-capable: " + args.agent)
     record = {"name": args.name, "backend": args.backend, "model": args.model,
               "selected_agent": args.agent, "agent_policy": "named" if args.agent else "default",
               "worktree": path, "session": None, "backend_session": None, "command": args.command}
+    if sandbox is not None:
+        record.update(sandbox=sandbox, transport="native", native_socket=codex_socket(native_socket_path))
+    if server:
+        record["server"] = server
+    if parent_session:
+        record["parent_session"] = parent_session
     save(target, record)
     phase = "discussing" if kind == "plan" else "implementing"
     write_status(directory, record, phase)
@@ -275,28 +557,27 @@ def start(args, directory):
             update_identity(directory, record, backend_session=claude_launch_id(output))
             if args.agent and re.search(r"no agent named|--agent .*not found", output, re.IGNORECASE):
                 raise ValueError("requested Claude agent unavailable; inspect launch log")
+            verify_visible(record)
         elif args.backend == "opencode":
             body = {"title": args.name, "location": {"directory": path}}
             if model:
                 body["model"] = model
             if args.agent:
                 body["agent"] = args.agent
-            session = api("post", "/api/session", body)["data"]
+            session = worker_api(record, "post", "/api/session", body)["data"]
             update_identity(directory, record, session=session["id"])
             if args.agent and session.get("agent") != args.agent:
                 raise ValueError("OpenCode did not confirm the requested agent; refusing command dispatch")
+            verify_visible(record)
             with (directory / (args.name + ".log")).open("a") as log:
                 spawn(
                     [sys.executable, str(Path(__file__).resolve()), "_opencode-run", args.name],
                     cwd=path, stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True,
                 )
         else:
-            with (directory / (args.name + ".log")).open("a") as log:
-                spawn(
-                    [sys.executable, str(Path(__file__).resolve()), "_codex-run", args.name],
-                    cwd=path, stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True,
-                )
-    except (OSError, subprocess.SubprocessError, ValueError, KeyError) as exc:
+            start_native(directory, record)
+
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as exc:
         write_status(directory, record, "blocked", detail="launch failed: " + str(exc))
         raise
     print(f"{args.name}: {args.backend} session {record['session'] or '(allocating)'} in {path}")
@@ -310,9 +591,11 @@ def run_backend(name, directory, codex):
     try:
         if not codex:
             kind, text = command_parts(record["command"])
-            api("post", "/api/session/" + record["session"] + "/command", {"name": kind, "text": text})
+            worker_api(record, "post", "/api/session/" + record["session"] + "/command", {"name": kind, "text": text})
         else:
-            command = ["codex", "exec", "--json", "--sandbox", "workspace-write", "-C", record["worktree"],
+            if record.get("transport") == "native":
+                raise ValueError("native worker cannot run through the legacy headless exec supervisor")
+            command = ["codex", "exec", "--json", "--sandbox", sandbox_mode(record), "-C", record["worktree"],
                        "--add-dir", str(directory)]
             if record.get("model"):
                 command += ["--model", record["model"]]
@@ -335,7 +618,7 @@ def run_backend(name, directory, codex):
                         update_identity(directory, record, session=session)
             if process.wait() != 0 or not record.get("session"):
                 raise ValueError("Codex launch/run failed or returned no thread.started identity")
-    except (OSError, subprocess.SubprocessError, ValueError, KeyError) as exc:
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as exc:
         with locked(directory):
             record = load(directory / (name + ".json"))
             write_status(directory, record, "blocked", detail="backend command failed: " + str(exc))
@@ -406,8 +689,22 @@ def remove_session(record):
             raise ValueError("Claude background job ID missing; supply known identity with record-session, not status polling")
         command = ["claude", "rm", native_id(record["backend_session"])]
     elif backend(record) == "opencode":
-        command = ["opencode", "api", "delete", "/api/session/" + session]
+        command = ["opencode", "api"]
+        if record.get("server"):
+            command += ["--server", record["server"]]
+        command += ["delete", "/api/session/" + session]
     elif backend(record) == "codex":
+        if record.get("transport") == "native":
+            client = CodexClient(record["native_socket"])
+            try:
+                try:
+                    client.request("thread/delete", {"threadId": session})
+                except CodexRpcError as exc:
+                    if exc.code != -32600 or exc.message != "no rollout found for thread id " + session:
+                        raise
+            finally:
+                client.close()
+            return
         command = ["codex", "delete", "--force", str(uuid.UUID(session))]
     else:
         raise ValueError("unknown backend for recorded session")
@@ -487,7 +784,7 @@ def prune(directory, all_worktrees):
             try:
                 finish_cleanup(record_path, record)
                 print(f"completed cleanup for {record['name']}")
-            except (OSError, subprocess.SubprocessError, ValueError, KeyError) as exc:
+            except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as exc:
                 failures = True
                 print(f"cleanup incomplete for {record['name']}: {exc}; retry identity retained", file=sys.stderr)
     for path in candidates:
@@ -528,6 +825,7 @@ def show(path, record=None):
             return
         print(f"{name}\t{backend(identity) or '-'}\t{identity.get('selected_agent') or identity.get('agent_policy', 'legacy-unspecified')}"
               f"\t{identity.get('model') or '-'}\t{phase}\t{path}\t{git}"
+              f"\tsandbox={sandbox_mode(identity) or '-'}\ttransport={identity.get('transport', 'legacy')}"
               f"\tplan={(status or {}).get('plan', '-')}\tpr={(status or {}).get('pr', {}).get('url', '-')}"
               f"\t{detail}\tresume: python3 scripts/worker.py resume {name}")
     except (OSError, ValueError, KeyError, TypeError) as exc:
@@ -554,10 +852,13 @@ def update(args, directory, record):
     write_status(directory, record, args.phase, **changes)
 
 
-def resume(directory, record):
+def resume(directory, record, sandbox=None):
+    selected_sandbox = sandbox_mode(record, sandbox)
     if not record.get("session") or record.get("session_deleted"):
         raise ValueError("worker has no resumable recorded session; inspect launch/cleanup diagnostics")
     status = read_status(record["worktree"], record)
+    if selected_sandbox is not None and record.get("transport") != "native":
+        update_identity(directory, record, sandbox=selected_sandbox)
     phase = status["phase"] if status else "discussing"
     if phase in ("done", "awaiting-merge"):
         phase = "discussing"
@@ -567,9 +868,24 @@ def resume(directory, record):
             raise ValueError("Claude background job ID missing; supply known identity with record-session")
         return ["claude", "attach", native_id(record["backend_session"])]
     if backend(record) == "opencode":
-        return ["opencode", "--session", record["session"]]
+        verify_visible(record)
+        command = ["opencode"]
+        if record.get("server"):
+            command += ["--server", record["server"]]
+        return command + ["--session", record["session"]]
     if backend(record) == "codex":
-        return ["codex", "resume", record["session"]]
+        if record.get("transport") == "native":
+            client = CodexClient(record["native_socket"])
+            try:
+                selected = record | {"sandbox": selected_sandbox}
+                result = client.request("thread/resume", native_params(selected, directory) | {"threadId": record["session"]})
+                native_thread_check(result, selected)
+                native_listing(client, selected)
+                update_identity(directory, record, sandbox=selected_sandbox)
+            finally:
+                client.close()
+            return ["codex", "--remote", "unix://" + record["native_socket"], "resume", record["session"]]
+        return ["codex", "resume", "--sandbox", selected_sandbox, record["session"]]
     raise ValueError("unknown backend")
 
 
@@ -582,6 +898,11 @@ def main():
     selection.add_argument("--agent", help="explicit named agent, separate from model")
     selection.add_argument("--default-agent", action="store_true", help="deliberately use backend default")
     launch.add_argument("--model", help="backend model name; OpenCode provider/model[#variant]")
+    launch.add_argument("--sandbox", choices=SANDBOX_MODES,
+                        help="Codex only; default: danger-full-access (no filesystem/network sandbox)")
+    launch.add_argument("--codex-socket", help="existing shared Codex control socket; never starts a private server")
+    launch.add_argument("--parent-session", help="Codex task to fork for inherited model/configuration; creates an independent task")
+    launch.add_argument("--server", help="OpenCode shared server URL; omit to use its default service")
     launch.add_argument("--worktree", required=True)
     launch.add_argument("--name", required=True)
     launch.add_argument("--command", required=True)
@@ -589,7 +910,11 @@ def main():
     listing.add_argument("--worktrees", action="store_true", help="include unregistered legacy worktrees")
     sub.add_parser("prune").add_argument("--all", action="store_true")
     sub.add_parser("remove-worktree").add_argument("path")
-    for action in ("status", "resume", "remove", "_codex-run", "_opencode-run"):
+    resuming = sub.add_parser("resume")
+    resuming.add_argument("name")
+    resuming.add_argument("--sandbox", choices=SANDBOX_MODES,
+                          help="Codex only; persist an override for this and future resumes")
+    for action in ("status", "remove", "_codex-run", "_opencode-run"):
         sub.add_parser(action).add_argument("name")
     updating = sub.add_parser("update")
     updating.add_argument("name")
@@ -644,7 +969,7 @@ def main():
             if args.action == "update":
                 update(args, directory, record)
             elif args.action == "resume":
-                resume_command = resume(directory, record)
+                resume_command = resume(directory, record, args.sandbox)
             elif args.action == "record-session":
                 if backend(record) != "claude" or record.get("backend_session"):
                     raise ValueError("record-session only fills a missing Claude job identity")

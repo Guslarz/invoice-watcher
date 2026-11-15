@@ -5,7 +5,7 @@ services:
     ports:
       - '9092:9092'
       - '9093:9093'
-    env_file: ../../deployments/k8s-apps/apps/kafka/overlays/dev/config/.env
+    env_file: ../../deployments/k8s-apps/workloads/kafka/overlays/dev/config/.env
     environment:
       # the app runs on the host, not in the cluster
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092

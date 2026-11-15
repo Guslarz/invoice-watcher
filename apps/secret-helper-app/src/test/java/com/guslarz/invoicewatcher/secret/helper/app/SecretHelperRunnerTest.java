@@ -174,6 +174,56 @@ class SecretHelperRunnerTest {
     assertThat(result.status()).isZero();
   }
 
+  @Test
+  @DisplayName("SECRET-014: an unknown command prints usage and exits with status 2")
+  void unknownCommandPrintsUsage() {
+    // given
+    String command = "unknown-command";
+
+    // when
+    Result result = run("", command);
+
+    // then
+    assertThat(result.status()).isEqualTo(2);
+    assertThat(result.err()).contains("Usage: secret-helper");
+    assertThat(result.out()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("SECRET-015: tampered ciphertext fails without exposing plaintext")
+  void tamperedCiphertextFailsBriefly() {
+    // given
+    String encrypted = AesUtil.encrypt(PLAINTEXT, AesUtil.decodeSecretKey(KEY));
+    byte[] ciphertext = Base64.getDecoder().decode(encrypted.substring(16));
+    ciphertext[0] ^= 1;
+    String tampered = encrypted.substring(0, 16) + Base64.getEncoder().encodeToString(ciphertext);
+
+    // when
+    Result result = run(KEY + "\n" + tampered + "\n", "decrypt");
+
+    // then
+    assertThat(result.status()).isEqualTo(1);
+    assertThat(result.err().lines()).hasSize(1);
+    assertThat(result.err()).doesNotContain(PLAINTEXT);
+    assertThat(result.out()).doesNotContain(PLAINTEXT);
+  }
+
+  @Test
+  @DisplayName("SECRET-015: input ending after the key fails with a one-line error")
+  void missingValueFailsBriefly() {
+    // given
+    String input = KEY + "\n";
+
+    // when
+    Result result = run(input, "encrypt");
+
+    // then
+    assertThat(result.status()).isEqualTo(1);
+    assertThat(result.err().lines()).hasSize(1);
+    assertThat(result.out()).doesNotContain(KEY);
+    assertThat(result.err()).doesNotContain(KEY);
+  }
+
   private Result run(String input, String... args) {
     out = new ByteArrayOutputStream();
     err = new ByteArrayOutputStream();

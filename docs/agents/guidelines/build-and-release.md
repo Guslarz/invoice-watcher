@@ -36,7 +36,7 @@
 - CI (`.github/workflows`): `build-and-analyze` on PRs (job `build` runs `./gradlew build analyze`
   and is skipped when only `docs/` changed; job `reference` checks `docs/reference/` on every PR),
   `snapshot` on push to `master` unless only `docs/` changed, or run by hand (image tag
-  `snapshot`), `release` manual (bumps version, publishes images), `docs` builds and
+  `snapshot`), `release` manual on master (creates release/restoration commits and a tag, publishes images), `docs` builds and
   deploys the documentation site.
 
 - Frontend conventions provision pinned Node/pnpm locally through Gradle and use a frozen pnpm
@@ -54,3 +54,10 @@
   target/output and browser configuration, and consume managed tool artifacts from :frontend.
   Never install the same workspace separately from each application. Use distinct application
   output directories and non-conflicting browser-test servers for parallel checks.
+
+Release uses `scripts/release.py` to ask axion-release for the next version, commit the explicit
+deployment selection, invoke its local `createRelease` task, and restore development in a
+later commit. It atomically pushes both commits and the tag using the dedicated release App,
+then checks out the tag to build and publish. Never force a tag or branch update. A retry uses
+the original workflow source SHA recorded in the release commit; a newly dispatched stale run fails.
+The App setup and ruleset exception are documented in the one-time setup instructions.

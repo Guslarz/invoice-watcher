@@ -1,10 +1,10 @@
 ---
-id: ADR-0017
+id: ADR-0018
 status: accepted
 date: 2026-11-12
 ---
 
-# ADR-0017: Deploy Angular registration separately and share UI tokens and components
+# ADR-0018: Deploy Angular registration separately and share UI tokens and components
 
 ## Context and decision
 

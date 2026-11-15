@@ -1,10 +1,10 @@
 ---
-id: ADR-0016
+id: ADR-0017
 status: accepted
 date: 2026-11-12
 ---
 
-# ADR-0016: Keep Google consent in registration and scan Gmail with IMAP XOAUTH2
+# ADR-0017: Keep Google consent in registration and scan Gmail with IMAP XOAUTH2
 
 ## Context and decision
 

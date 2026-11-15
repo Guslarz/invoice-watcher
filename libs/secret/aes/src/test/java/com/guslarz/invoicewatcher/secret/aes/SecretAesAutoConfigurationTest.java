@@ -2,10 +2,13 @@ package com.guslarz.invoicewatcher.secret.aes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.guslarz.invoicewatcher.secret.api.Secret;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
+import com.guslarz.invoicewatcher.util.aes.AesUtil;
 import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import javax.crypto.SecretKey;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -89,5 +92,43 @@ class SecretAesAutoConfigurationTest {
           assertThat(factory.fromEncrypted(first.getEncrypted()).getDecrypted())
               .isEqualTo("fixture-refresh-token");
         });
+  }
+
+  @Test
+  @DisplayName("SECRET-003: binds the Base64 key used to decrypt stored secrets")
+  void bindsKeyForSecretFactory() {
+    // given
+    SecretKey key = AesUtil.decodeSecretKey("4yWK+SIr9BkkB3ymrJ1A1mtQLH7opt27zItE7akvJ9w=");
+    String encrypted = AesUtil.encrypt("password", key);
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        "invoice-watcher.secret.aes.key=" + Base64.getEncoder().encodeToString(key.getEncoded()));
+
+    // when
+    runner.run(context -> {
+      Secret secret =
+          context.getBean(SecretFactory.class).fromEncrypted(encrypted);
+
+      // then
+      assertThat(context).hasNotFailed();
+      assertThat(secret.getEncrypted()).isEqualTo(encrypted);
+      assertThat(secret.getDecrypted()).isEqualTo("password");
+    });
+  }
+
+  @Test
+  @DisplayName("SECRET-004: wrapping a stored value does not decrypt it")
+  void defersDecryptionOfStoredValue() {
+    // given
+    ApplicationContextRunner runner = uut.withPropertyValues(
+        "invoice-watcher.secret.aes.key=" + Base64.getEncoder().encodeToString(new byte[32]));
+
+    // when
+    runner.run(context -> {
+      Secret secret =
+          context.getBean(SecretFactory.class).fromEncrypted("not-yet-decryptable");
+
+      // then
+      assertThat(secret.getEncrypted()).isEqualTo("not-yet-decryptable");
+    });
   }
 }

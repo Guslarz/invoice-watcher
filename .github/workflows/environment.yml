@@ -22,6 +22,11 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: environment-${{ inputs.environment }}
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   infrastructure:
     uses: ./.github/workflows/infrastructure.yml

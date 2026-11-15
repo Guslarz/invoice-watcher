@@ -5,10 +5,10 @@ labels:
   - pairs:
       environment: dev
 resources:
-  - ../../apps/kafka/overlays/dev
-  - ../../apps/mail-producer/overlays/dev
-  - ../../apps/user-registration-backend/overlays/dev
-  - ../../apps/user-registration-frontend/overlays/dev
+  - ../../workloads/kafka/overlays/dev
+  - ../../workloads/mail-producer/overlays/dev
+  - ../../workloads/user-registration-backend/overlays/dev
+  - ../../workloads/user-registration-frontend/overlays/dev
   - registration-route.yml
 components:
   - ../../components/app-identity
