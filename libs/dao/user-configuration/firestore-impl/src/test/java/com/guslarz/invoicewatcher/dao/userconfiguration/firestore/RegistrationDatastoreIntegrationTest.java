@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.datastore.Datastore;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.FolderConfig;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailScanConfig;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailServer;
@@ -52,13 +53,17 @@ class RegistrationDatastoreIntegrationTest {
             .withConfiguration(
                 AutoConfigurations.of(UserConfigurationDaoFirestoreAutoConfiguration.class))
             .withBean(SecretFactory.class, () -> factory)
+            // The DAO uses SDK project discovery, not Spring's GCP project property.
+            .withSystemProperties("GOOGLE_CLOUD_PROJECT=" + emulator.getProjectId())
             .withPropertyValues(
-                "spring.cloud.gcp.project-id=" + emulator.getProjectId(),
                 "invoice-watcher.user-configuration.dao.mode=firestore",
                 "invoice-watcher.user-configuration.dao.firestore.host=http://"
                     + emulator.getEmulatorEndpoint());
     uut.run(
         context -> {
+          assertThat(context).hasNotFailed();
+          assertThat(context.getBean(Datastore.class).getOptions().getProjectId())
+              .isEqualTo(emulator.getProjectId());
           var registration = context.getBean(RegistrationDao.class);
           var scanner = context.getBean(UserDaoService.class);
           var positions = context.getBean(FolderConfigDaoService.class);
