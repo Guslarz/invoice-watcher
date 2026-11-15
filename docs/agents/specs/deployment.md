@@ -16,7 +16,7 @@ modules:
 
 InvoiceWatcher runs on Google Kubernetes Engine. An environment can be created and destroyed
 from GitHub Actions with one workflow (after a one-time manual setup), so that it costs nothing
-while it is not needed. After it is up, application changes are deployed automatically from `master`.
+while it is not needed. ArgoCD reconciles applications from the revision committed in the selected deployment files.
 
 ## Behavior
 
@@ -41,7 +41,8 @@ while it is not needed. After it is up, application changes are deployed automat
 ### Environment lifecycle
 
 - **DEPLOY-001** The `Environment` workflow (run manually) takes an action, `up` or `down`, and an
-  environment (`dev`).
+  environment (`dev`). Both actions use the deployment files from the Git ref selected for the
+  workflow run; there is no separate deployment version input.
 - **DEPLOY-002** `up` creates the environment's cloud resources and then installs the cluster
   services. `down` destroys the cloud resources; the cluster and everything in it go with them.
 - **DEPLOY-003** Running `up` on an environment that is already up only applies differences.
@@ -75,14 +76,16 @@ while it is not needed. After it is up, application changes are deployed automat
 ### Applications
 
 - **DEPLOY-030** ArgoCD keeps the namespace `invoice-watcher-<env>` in sync with
-  `deployments/k8s-apps/environments/<env>` on `master`, pruning removed resources and reverting
-  manual changes.
+  `deployments/k8s-apps/environments/<env>` at the `targetRevision` committed in its Application
+  definition, pruning removed resources and reverting manual changes. Workflow dispatch does not
+  derive or override that revision. Development commits target `master`; release commits target
+  their corresponding `v<version>` tag.
 - **DEPLOY-031** The dev environment runs Kafka (single node; its data is kept on the persistent
   disk from DEPLOY-010, so it survives pod and node restarts, and is deleted by `down`) and the mail
-  producer using the image tagged `snapshot`, pulled on every start, so restarting the pod picks
-  up the latest `master` build.
+  producer. Development commits select the `snapshot` image, pulled on every start; release commits
+  select the corresponding released image tag.
 - **DEPLOY-032** Application configuration is passed as environment variables generated from
-  `overlays/<env>/config/.env` of each application.
+  `workloads/<name>/overlays/<env>/config/.env` under `deployments/k8s-apps`.
 - **DEPLOY-033** Images are pulled from `ghcr.io` with credentials synced from Secret Manager.
 - **DEPLOY-034** The mail producer gets the AES key (`invoice-watcher.secret.aes.key`) from the
   Secret Manager secret `aes_key`, synced into its namespace by external-secrets and passed as an
@@ -98,6 +101,15 @@ while it is not needed. After it is up, application changes are deployed automat
   is committed and must match it.
 
 ## Acceptance
+
+- **DEPLOY-001** Given Environment is dispatched on master or a release tag, when up or down
+  runs, then each deployment job checks out that workflow run's source SHA.
+- **DEPLOY-030** Given a committed Application targetRevision, when cluster-init renders, then
+  ArgoCD receives that exact value regardless of the ref used to run Environment.
+- **DEPLOY-031** Given a release commit, when its applications render, then mail-producer uses
+  the matching release image; given the subsequent development commit, then it uses snapshot.
+- **DEPLOY-032** Given the workload overlay's .env file, when dev renders, then the generated
+  ConfigMap contains its application configuration and is referenced by the mail-producer pod.
 
 - **DEPLOY-004** Given a new Google Cloud project, when `Environment` runs with `up` / `dev` before
   `persistent` is applied, then the workflow fails to authenticate to Google Cloud; after

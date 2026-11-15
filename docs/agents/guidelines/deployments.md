@@ -10,8 +10,8 @@ Three layers, applied in this order by the `Environment` workflow (`.github/work
    cert-manager, Cloudflare origin-ca-issuer, external-secrets and the local `cluster-init` chart
    (gateway, certificate, secret store, ArgoCD `Application`). Per-environment values in
    `environments/<env>.yml.gotmpl`.
-3. **Applications** — `deployments/k8s-apps`, synced by ArgoCD from `master`
-   (`environments/<env>/kustomization.yml`). Each app has `base/` and `overlays/<env>/`;
+3. **Applications** — `deployments/k8s-apps`, synced by ArgoCD from the committed `targetRevision`
+   (`environments/<env>/kustomization.yml`). Each workload has `workloads/<name>/base/` and `workloads/<name>/overlays/<env>/`;
    configuration as env vars in `overlays/<env>/config/.env`; shared pieces as kustomize
    `components/`.
 
@@ -36,3 +36,9 @@ Rules:
 - `scripts/check-deployments.sh` runs the same checks as the `deployments` CI job (YAML style,
   OpenTofu formatting and validation, helmfile and kustomize rendering, kubeconform schema validation);
   a missing tool skips its check locally and fails it in CI (`CI` set).
+
+Environment uses the workflow checkout for both up and down. Do not derive targetRevision from
+the workflow ref or override it at render time. Release commits point to their version tag and
+versioned image; the subsequent development commit restores master and snapshot. The release
+helper updates the installation template and generated overlay together. Local charts stay
+unpublished and installed by path. See ADR-0015 for the release automation exception.

@@ -31,9 +31,13 @@ the dev environment can run, and a release produces a versioned image and a GitH
 - **RELEASE-002** Every push to `master` that changes a file outside `docs/` builds and publishes
   the installation's mail-producer image tagged `snapshot`, replacing the
   previous snapshot.
-- **RELEASE-003** The `Release` workflow (run manually with `major`, `minor` or `patch`) increments
-  the version, tags the commit `v<version>`, publishes the image tagged `<version>` and creates
-  the GitHub release `v<version>`.
+- **RELEASE-003** The `Release` workflow (run manually on `master` with `major`, `minor` or `patch`)
+  uses the Gradle axion-release plugin to determine the next version, creates a release commit with
+  `targetRevision: v<version>` and the matching application image tag, tags that commit `v<version>`,
+  using the plugin's local `createRelease` task, and creates a subsequent commit restoring
+  `master` and `snapshot` for development. It pushes
+  both commits and the tag atomically, then publishes the versioned image and GitHub release from
+  the tagged commit. A retry of the same run reuses its existing release tag without moving it.
 - **RELEASE-004** The project version is derived from git tags; it is never written in build files.
   Builds between releases get a snapshot version of the next patch release.
   Helm charts installed from the repository by path are not released and carry the fixed
@@ -43,11 +47,23 @@ the dev environment can run, and a release produces a versioned image and a GitH
 - **RELEASE-006** Every push to `master` builds the documentation site and publishes it at
   https://guslarz.github.io/invoice-watcher/. Every pull request builds the site in strict mode
   without publishing it; a broken link or a structure check failure blocks the change.
-- **RELEASE-007** `master` changes only by merging a pull request whose checks (RELEASE-001,
-  RELEASE-006) passed or were skipped; direct pushes, force pushes and deleting `master` are
-  rejected, also for repository administrators.
+- **RELEASE-007** Ordinary changes to `master` require merging a pull request whose checks
+  (RELEASE-001, RELEASE-006) passed or were skipped. Direct pushes, force pushes and deleting
+  `master` are rejected for ordinary users, administrators and workflows. The dedicated release
+  GitHub App is the sole configured bypass and is used only for the release workflow's atomic
+  fast-forward push of the release commit, development restoration commit and release tag.
 
 ## Acceptance
+
+- **RELEASE-003** Given release version 1.3.0, when preparation finishes, then v1.3.0 points to
+  the release commit with targetRevision v1.3.0, image tag 1.3.0 and pod label 1.3.0; master
+  points to its subsequent restoration commit with the original development files restored.
+- **RELEASE-003** Given artifact publication fails after the refs are pushed, when the same
+  workflow run is retried, then it checks out its existing release tag without moving it.
+- **RELEASE-003** Given master changed since dispatch, when a new release is prepared, then it
+  fails before creating remote refs and tells the operator to dispatch from current master.
+- **RELEASE-007** Given the server rejects the atomic release push, when preparation fails,
+  then neither master nor the release tag changes remotely.
 
 - **RELEASE-001** Given a pull request changing only files under `docs/`, when it is opened, then
   the `build` job of `Build and analyze` is skipped and the `reference` job runs.
@@ -87,5 +103,4 @@ the dev environment can run, and a release produces a versioned image and a GitH
 
 ## Out of scope
 
-- Deploying releases to an environment — environments run `snapshot` (DEPLOY-031).
 - Publishing the `secret-helper` tool as a binary or image; it is run from the sources.

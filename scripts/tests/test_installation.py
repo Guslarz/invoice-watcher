@@ -59,16 +59,16 @@ class InstallationTest(unittest.TestCase):
         self.assertIn(".cluster_name", workflow)
         self.assertIn(".zone", workflow)
 
-    def test_DEPLOY_020_DEPLOY_021_DEPLOY_030_master_and_domain(self):
+    def test_DEPLOY_020_DEPLOY_021_DEPLOY_030_committed_revision_and_domain(self):
         env = installation.generate(self.current)["deployments/k8s/environments/dev.yml.gotmpl"]
         self.assertIn("domain: " + self.current["domain"], env)
         app = (ROOT / "deployments/k8s/cluster-init/templates/apps/invoice-watcher.yml").read_text()
-        self.assertIn("targetRevision: master", app)
+        self.assertRegex(app, r"targetRevision: [^\s{]+")
         self.assertIn(".Values.github.repoUrl", app)
 
     def test_RELEASE_002_published_image_matches(self):
         outputs = installation.generate(self.current)
-        self.assertIn("ghcr.io/" + self.current["repository"].lower() + "/mail-producer", outputs["deployments/k8s-apps/apps/mail-producer/overlays/dev/kustomization.yml"])
+        self.assertIn("ghcr.io/" + self.current["repository"].lower() + "/mail-producer", outputs["deployments/k8s-apps/workloads/mail-producer/overlays/dev/kustomization.yml"])
         self.assertIn('["repository"].lower()', (ROOT / ".github/actions/gradle-publish/action.yml").read_text())
 
     def test_DEPLOY_039_rejects_unknown_values(self):

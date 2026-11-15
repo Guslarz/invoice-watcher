@@ -1,6 +1,6 @@
 ---
 id: ADR-0005
-status: accepted
+status: amended by ADR-0015
 date: 2026-10-13
 ---
 
@@ -22,3 +22,9 @@ Environments run the `snapshot` image.
 - A local build needs the tags (`git fetch --tags`) to get the right version.
 - Local Helm charts are not versioned (fixed `0.0.0`); they are deployed from the commit, not
   from a release.
+
+## Amendment
+
+[ADR-0015](0015-commit-release-deployment-revisions-before-tagging.md) replaces the snapshot-only
+environment policy with committed release image selection. Tag-derived versions and local
+unpublished charts remain in force.

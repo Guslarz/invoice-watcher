@@ -38,7 +38,7 @@ flowchart LR
       subgraph app[namespace invoice-watcher-dev]
         producer[mail-producer] -->|events| kafka[Kafka]
       end
-      argocd -->|syncs from master| app
+      argocd -->|syncs committed revision| app
     end
     producer -->|users, scan positions| fs[(Firestore<br/>Datastore mode)]
     sm[(Secret Manager)]
@@ -83,7 +83,10 @@ flowchart LR
   merge -->|Snapshot workflow| img[image :snapshot on ghcr.io]
   merge -->|ArgoCD watches master| sync[Manifests synced]
   img -->|pod restart pulls :snapshot| run[Running mail producer]
-  rel[Release workflow] --> tag[tag vX.Y.Z, image :X.Y.Z, GitHub release]
+  rel[Release workflow] --> tag[Release commit and tag vX.Y.Z]
+  tag --> dev[Later commit restores master and snapshot]
+  tag --> pub[Image :X.Y.Z and GitHub release]
+  tag -->|Environment run on tag| pinned[ArgoCD follows vX.Y.Z]
 ```
 
 - **Pull requests** are built and tested (`./gradlew build analyze`: tests, Checkstyle,
@@ -98,6 +101,10 @@ flowchart LR
   one pull request, and opens a pull request with security fixes when a vulnerable dependency is
   reported. They pass the same checks as any other pull request.
 
-Versions come from git tags and are never written in build files; the dev environment always runs
-the `snapshot` image. Application manifests are deployed by ArgoCD from `master` — merging a
-change to `deployments/k8s-apps` is the deployment.
+Versions come from Git tags and are never written in build files. Release creates a commit
+pinning ArgoCD to its release tag and selecting the matching application image. It tags that
+commit, then makes a subsequent commit restoring master and snapshot for development. The
+commits and tag are pushed together before publishing artifacts from the tag.
+
+Environment can run from master or a release tag. Its infrastructure and bootstrap come from
+that checkout; ArgoCD uses the revision committed there. No extra deployment package is published.

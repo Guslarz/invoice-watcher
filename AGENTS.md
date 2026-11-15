@@ -21,7 +21,7 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `config/` | Checkstyle (Google style) and SpotBugs config |
 | `deployments/infrastructure/` | Terraform modules and environments |
 | `deployments/k8s/` | helmfile + `cluster-init` chart (ArgoCD, certificates, secrets) |
-| `deployments/k8s-apps/` | kustomize bases/overlays deployed by ArgoCD |
+| `deployments/k8s-apps/` | kustomize workloads, shared components and environment entry points deployed by ArgoCD |
 | `.github/workflows/` | CI: build, snapshot, release, environment, docs |
 | `docs/` | Published user documentation (built with Zensical) — see below |
 | `docs/agents/` | Specs, ADRs and agent material, not published |
@@ -94,6 +94,9 @@ an ADR only when relevant), and the guideline for the area you touch (`docs/agen
   In Codex and OpenCode use `scripts/worktree.sh` for worktree creation/removal; Claude's
   worktree hooks call the same script. Process approval gates do not enforce shell permissions.
 
+- Release automation alone may push its release/restoration commits with the dedicated GitHub App
+  under [ADR-0015](docs/agents/adr/0015-commit-release-deployment-revisions-before-tagging.md).
+  This exception never authorizes agents to commit, push or merge directly on `master`.
 - `master` is the main development branch. **Never commit or push directly to `master`.**
 - Every change starts on its own branch created from an up-to-date `master`, in its own worktree
   next to `master/`: `scripts/worktree.sh new <type>/<slug>`

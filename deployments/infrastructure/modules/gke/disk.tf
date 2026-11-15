@@ -5,7 +5,7 @@ resource "google_compute_disk" "kafka_data" {
   type = "pd-balanced"
   zone = var.gcp_zone
   # Keep in sync with the capacity in deployments/k8s/cluster-init/templates/storage/kafka-data-volume.yml
-  # and the claim in deployments/k8s-apps/apps/kafka/base/statefulset.yml
+  # and the claim in deployments/k8s-apps/workloads/kafka/base/statefulset.yml
   size = 10
 
   depends_on = [

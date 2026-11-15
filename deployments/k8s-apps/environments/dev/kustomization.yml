@@ -5,7 +5,7 @@ labels:
   - pairs:
       environment: dev
 resources:
-  - ../../apps/kafka/overlays/dev
-  - ../../apps/mail-producer/overlays/dev
+  - ../../workloads/kafka/overlays/dev
+  - ../../workloads/mail-producer/overlays/dev
 components:
   - ../../components/app-identity

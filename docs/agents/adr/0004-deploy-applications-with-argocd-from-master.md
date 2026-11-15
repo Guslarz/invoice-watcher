@@ -1,6 +1,6 @@
 ---
 id: ADR-0004
-status: accepted
+status: amended by ADR-0015
 date: 2026-10-13
 ---
 
@@ -24,3 +24,8 @@ gateway) change rarely; application manifests change with the code.
   in the cluster are reverted.
 - What runs is exactly what is on `master` — another reason `master` changes only through pull
   requests (ADR-0002).
+
+## Amendment
+
+[ADR-0015](0015-commit-release-deployment-revisions-before-tagging.md) amends the release automation
+and deployment revision policy. Other responsibilities remain in force.

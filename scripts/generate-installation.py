@@ -40,7 +40,7 @@ def generate(config):
         base + "ephemeral/installation.auto.tfvars.json": tfvars({"gcp_region": c["region"], "gcp_zone": c["zone"], "gcp_gke_cluster_name": c["cluster_name"], "domain_name": c["domain"]}),
         "deployments/k8s/environments/dev.yml.gotmpl": f'domain: {c["domain"]}\nenvironment: dev\ngcpZone: {c["zone"]}\ngithubRepository: {c["repository"]}\nregistryUsername: {c["registry_username"]}\n\nargocd:\n  domainPrefix: argocd\n',
         "deployments/k8s-apps/components/app-identity/image-pull-secret.yml": template("image-pull-secret.yml"),
-        "deployments/k8s-apps/apps/mail-producer/overlays/dev/kustomization.yml": template("mail-kustomization.yml"),
+        "deployments/k8s-apps/workloads/mail-producer/overlays/dev/kustomization.yml": template("mail-kustomization.yml"),
         "images/mail-producer-docker/src/Dockerfile": template("Dockerfile"),
     }
 
