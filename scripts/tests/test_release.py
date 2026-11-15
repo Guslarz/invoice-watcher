@@ -178,5 +178,22 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("namespace: invoice-watcher-dev", rendered)
 
 
+class GradleVersionOutputTest(unittest.TestCase):
+    def test_RELEASE_003_accepts_version_with_fresh_wrapper_download_output(self):
+        output = ("Fetching distribution.\n"
+                  "Downloading https://services.gradle.org/distributions/gradle-9.8.2-bin.zip\n"
+                  "..............10%..............100%\n"
+                  "2.0.0-SNAPSHOT\n")
+        with patch.object(release.subprocess, "check_output", return_value=output):
+            self.assertEqual(release.release_version(ROOT, "major"), "2.0.0")
+
+    def test_RELEASE_003_rejects_missing_invalid_or_ambiguous_versions(self):
+        for output in ("Downloading Gradle\n", "2.0.0\n", "invalid-SNAPSHOT\n",
+                       "2.0.0-SNAPSHOT\n3.0.0-SNAPSHOT\n"):
+            with self.subTest(output=output), patch.object(release.subprocess, "check_output", return_value=output):
+                with self.assertRaisesRegex(ValueError, "exactly one"):
+                    release.release_version(ROOT, "major")
+
+
 if __name__ == "__main__":
     unittest.main()

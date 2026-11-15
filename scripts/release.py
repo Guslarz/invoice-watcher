@@ -29,10 +29,12 @@ def release_version(root, increment):
     output = subprocess.check_output(
         [str(root / "gradlew"), "cV", "-q", "-Prelease.quiet", "-Prelease.versionCreator=simple",
          "-Prelease.forceSnapshot", *plugin_arguments(increment)], cwd=root, text=True).strip()
-    version = output.removesuffix("-SNAPSHOT")
-    if not output.endswith("-SNAPSHOT") or not TAG.fullmatch("v" + version):
-        raise ValueError("Gradle did not return a supported release version: " + output)
-    return version
+    # A fresh wrapper can print distribution download progress even with Gradle's -q flag.
+    versions = [line.removesuffix("-SNAPSHOT") for line in map(str.strip, output.splitlines())
+                if line.endswith("-SNAPSHOT") and TAG.fullmatch("v" + line.removesuffix("-SNAPSHOT"))]
+    if len(versions) != 1:
+        raise ValueError("Gradle did not return exactly one supported release version: " + output)
+    return versions[0]
 
 
 def create_release_tag(root, increment):
