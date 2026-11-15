@@ -1,0 +1,32 @@
+:root {
+  --iw-font: system-ui, sans-serif;
+  --iw-text: #182b2a;
+  --iw-muted: #455b58;
+  --iw-surface: #ffffff;
+  --iw-background: #f0f5f3;
+  --iw-primary: #155b4a;
+  --iw-on-primary: #ffffff;
+  --iw-border: #647b74;
+  --iw-error: #a51b29;
+  --iw-focus: #145fba;
+  --iw-space-1: 0.375rem;
+  --iw-space-2: 0.75rem;
+  --iw-space-3: 1.25rem;
+  --iw-space-4: 2rem;
+  --iw-radius: 0.5rem;
+  --iw-page-width: 48rem;
+  --iw-body-size: 1rem;
+  --iw-heading-size: 2rem;
+  --iw-border-width: 1px;
+  --iw-focus-width: 1px;
+  --iw-focus-offset: 2px;
+  --iw-notice-accent-width: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

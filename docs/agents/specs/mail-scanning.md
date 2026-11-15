@@ -37,9 +37,11 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
   the host and port from the mailbox configuration (port 993 is the usual one). The server's TLS
   certificate must be trusted and issued for the configured host; otherwise connecting fails
   (MAIL-040).
-- **MAIL-011** It authenticates with a username and password (basic authentication). The password
-  is stored encrypted and decrypted only for the moment of connecting
-  (see [secret encryption](../specs/secret-encryption.md)).
+- **MAIL-011** InvoiceWatcher authenticates with either username and password or a
+  Gmail OAuth grant. Passwords are decrypted only for connection. For Gmail OAuth, the producer
+  obtains a short-lived access token using the encrypted refresh token and authenticates to
+  imap.gmail.com:993 over implicit TLS using SASL XOAUTH2, without password-authentication fallback.
+
 - **MAIL-012** Folders are opened read-only. InvoiceWatcher never marks, moves or deletes
   messages.
 - **MAIL-013** Connecting gives up after `invoice-watcher.mail-connector.imap.connect-timeout`
@@ -90,6 +92,10 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 - **MAIL-043** Each failure is logged once, naming the user, the mailbox host and the folder where
   it applies. Logs never contain credentials.
 
+- **MAIL-014** When Gmail rejects a refresh grant as revoked or expired, that mailbox is
+  marked as requiring reconnection and its scan positions are preserved. Other mailboxes continue
+  scanning. Temporary token-service failures do not mark a grant as permanently invalid.
+
 ## Acceptance
 
 - **MAIL-001** Given the scan rate `10s`, when the application has been running for 30 seconds,
@@ -134,6 +140,13 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
   logged for it, naming the user, host and folder, and containing neither the username nor the
   password of the mailbox.
 
+- **MAIL-011** Given a Gmail OAuth mailbox, when scanning starts, then a token is obtained and
+  XOAUTH2 connects over verified TLS without basic-auth fallback. Given a manually provisioned or
+  mock username/password mailbox, when scanned with Firestore or JPA selected, then the
+  password-authentication path remains functional and does not require Gmail OAuth consent.
+- **MAIL-014** Given invalid_grant, when token refresh fails, then reconnection is reported without
+  resetting progress; given a timeout or provider 5xx, then the mailbox remains eligible for retry.
+
 ## Configuration
 
 Properties, their types, defaults and meaning are listed in the generated reference:
@@ -145,5 +158,5 @@ Properties, their types, defaults and meaning are listed in the generated refere
 
 - Recognizing which messages are invoices and extracting data from them — done by consumers of
   the published events.
-- Other protocols (POP3, Gmail / Microsoft Graph APIs) and OAuth authentication.
+- Other protocols (POP3, Gmail / Microsoft Graph APIs) and Microsoft OAuth authentication.
 - Attachments.

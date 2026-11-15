@@ -29,8 +29,10 @@ encrypted values.
   the Base64 ciphertext. It can be stored anywhere a string can.
 - **SECRET-003** The key is a Base64-encoded 256-bit AES key, given to the application in
   `invoice-watcher.secret.aes.key`. The application fails to start without it.
-- **SECRET-004** Stored passwords (and the mock user's password, see USER-030) are decrypted only
-  when a mailbox connection is made, and never logged.
+- **SECRET-004** Stored mailbox passwords are decrypted only when a mailbox connection
+  is made. Stored OAuth refresh tokens are decrypted only when exchanging or revoking a grant.
+  Passwords, refresh tokens, access tokens and OAuth authorization codes are never logged.
+
 - **SECRET-005** A value encrypted with one key cannot be decrypted with another; decryption with
   a wrong key fails instead of returning garbage.
 
@@ -50,6 +52,15 @@ encrypted values.
   key, input ending early — the tool prints a one-line message on standard error, without a stack
   trace and without any plaintext, and exits with status 1.
 
+- **SECRET-006** The registration backend encrypts supplied Gmail refresh tokens using
+  SECRET-001 and SECRET-002 and the same key as the mail producer. The browser never receives
+  that key or stored credentials. Registration does not accept mailbox passwords. Existing
+  password encryption/provisioning and producer decryption remain available outside registration.
+
+- **SECRET-007** OAuth refresh tokens are encrypted using SECRET-001 and SECRET-002 before
+  persistence. Access tokens are held only transiently for token exchange and mailbox connections
+  and are never returned to the browser or stored in user configuration.
+
 ## Acceptance
 
 - **SECRET-001** Given a key, when `encrypt` is run twice with the same password, then the two
@@ -68,6 +79,14 @@ encrypted values.
   error has one line, standard output has no plaintext and the exit status is 1.
 - **SECRET-015** Given empty standard input, when `encrypt` runs, then standard error has one line
   and the exit status is 1.
+
+- **SECRET-006** Given a Gmail refresh token from completed consent, when stored, then it is
+  encrypted and the producer can decrypt it with the existing key; browser assets and responses
+  contain neither the token nor the AES key.
+- **SECRET-004** Given a token exchange or revocation, when it fails, then no credential or code is
+  logged; stored passwords are still decrypted only for connection.
+- **SECRET-007** Given an OAuth grant, when persisted, then only the encrypted refresh token is
+  stored and access tokens do not appear in configuration, responses or logs.
 
 ## Configuration
 

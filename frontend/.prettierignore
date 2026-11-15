@@ -1,0 +1,9 @@
+**/node_modules/**
+**/dist/**
+**/.gradle/**
+**/build/**
+.angular/
+out-tsc/
+test-results/
+playwright-report/
+pnpm-lock.yaml

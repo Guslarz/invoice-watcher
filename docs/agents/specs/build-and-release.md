@@ -47,6 +47,14 @@ the dev environment can run, and a release produces a versioned image and a GitH
   RELEASE-006) passed or were skipped; direct pushes, force pushes and deleting `master` are
   rejected, also for repository administrators.
 
+- **RELEASE-040** The registration backend and Angular frontend are built and packaged as
+  separate applications with separate container images. The frontend consumes the repository's
+  shared UI component and design-token library. Pull-request verification builds and checks both
+  applications and the library, exercises registration flows and checks reviewed library visual
+  baselines; snapshot and release publishing include both images with the repository version.
+
+Confirm clause identifier availability when applying these changes.
+
 ## Acceptance
 
 - **RELEASE-001** Given a pull request changing only files under `docs/`, when it is opened, then
@@ -84,6 +92,13 @@ the dev environment can run, and a release produces a versioned image and a GitH
   rejected.
 - **RELEASE-007** Given a pull request whose `build` check failed, when it is viewed on GitHub,
   then it cannot be merged.
+
+- **RELEASE-040** Given a frontend compilation or registration-flow failure, when verification runs,
+  then it fails; both images use the repository version, the backend image contains no frontend
+  bundle, and the frontend image serves the Angular build consuming the shared library.
+- **RELEASE-040** Given a shared component or token change, when verification runs, then it rebuilds
+  the Angular consumer and runs catalogue interaction/accessibility and visual-baseline checks;
+  an unapproved visual difference fails verification.
 
 ## Out of scope
 

@@ -2,12 +2,9 @@
 
 ## Applications and libraries
 
-The repository is a Gradle multi-module Java 25 / Spring Boot 4 project with two applications:
-
-| Application | What it is |
-|-------------|------------|
-| `mail-producer-app` | The service that runs in the cluster: scans mailboxes and publishes events. |
-| `secret-helper-app` | A command-line tool for the operator: generates the AES key and encrypts mailbox passwords ([usage](../reference/cli.md)). |
+The backend services use Java 25 and Spring Boot 4; the registration frontend is a separate Angular
+application. Runnable modules and their dependencies are listed in the generated
+[module reference](../reference/modules.md), rather than maintained as a second inventory here.
 
 The applications contain almost no code — they put libraries together. Each library area has an
 `api` module with interfaces, records and configuration properties, and one or more
@@ -16,7 +13,7 @@ implementations that plug themselves in through Spring Boot auto-configuration. 
 
 | Area | Implementations | Selected by |
 |------|-----------------|-------------|
-| Storage of users | Firestore (Datastore mode), JPA (H2, Cloud SQL) | [`invoice-watcher.mail-producer.dao.mode`](../reference/configuration.md#invoice-watcher-mail-producer-dao) |
+| Storage of users | Firestore (Datastore mode), JPA (H2, Cloud SQL) | [`invoice-watcher.user-configuration.dao.mode`](../reference/configuration.md#invoice-watcher-user-configuration-dao) |
 | Events | Kafka | [`invoice-watcher.event-producer.mode`](../reference/configuration.md#invoice-watcher-event-producer) |
 | Mailbox access | IMAP (Jakarta Mail) | — |
 | Secrets | AES-GCM | — |
@@ -37,9 +34,12 @@ flowchart LR
       gw --> argocd[ArgoCD]
       subgraph app[namespace invoice-watcher-dev]
         producer[mail-producer] -->|events| kafka[Kafka]
+        gw -->|assets| frontend[Angular registration]
+        gw -->|API and callbacks| backend[registration backend]
       end
       argocd -->|syncs from master| app
     end
+    backend -->|registration configuration and grants| fs
     producer -->|users, scan positions| fs[(Firestore<br/>Datastore mode)]
     sm[(Secret Manager)]
   end
@@ -51,8 +51,8 @@ flowchart LR
 
 - **Cloudflare** holds the domain. A proxied wildcard record points at the gateway's global IP,
   and the gateway serves HTTPS with a Cloudflare origin certificate issued in the cluster.
-- **ArgoCD** is the only thing exposed (`https://argocd.<domain>`); the mail producer has no
-  HTTP interface for users.
+- **ArgoCD** is available at `https://argocd.<domain>`. Registration is available at
+  `https://register.<domain>`; the mail producer has no public HTTP interface.
 - **Kafka** runs as a single node inside the cluster. Its data is kept on a persistent disk, so
   events survive restarts of the Kafka pod and replacement of the preemptible node; the disk is
   deleted together with the environment.
@@ -62,7 +62,7 @@ flowchart LR
 ### How secrets reach the cluster
 
 No secret is stored in the repository.
-The GitHub token, the Cloudflare token and the AES key are given to the `Environment` workflow as GitHub
+The GitHub token, the Cloudflare token, the AES key and Google OAuth client settings are given to the `Environment` workflow as GitHub
 secrets; OpenTofu stores them in Secret Manager, and the cluster pulls them from there:
 
 ```mermaid
@@ -71,7 +71,7 @@ flowchart LR
   sm -->|GKE secret sync| ci[Secrets in namespace cluster-init]
   ci -->|external-secrets| repo[ArgoCD repository credentials]
   ci -->|external-secrets| pull[Image pull secret<br/>in invoice-watcher-dev]
-  ci -->|external-secrets| aes[AES key for the mail producer<br/>in invoice-watcher-dev]
+  ci -->|external-secrets| aes[AES key and OAuth client settings<br/>for Java workloads]
   ci --> cert[Cloudflare origin issuer]
 ```
 

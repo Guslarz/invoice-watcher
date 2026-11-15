@@ -1,0 +1,94 @@
+package com.guslarz.invoicewatcher.dao.userconfiguration.jpa;
+
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.auth.Credentials;
+import com.google.auth.ServiceAccountSigner;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.spring.autoconfigure.sql.CloudSqlJdbcInfoProvider;
+import com.google.cloud.spring.autoconfigure.sql.DatabaseType;
+import com.google.cloud.spring.autoconfigure.sql.DefaultCloudSqlJdbcInfoProvider;
+import com.google.cloud.spring.autoconfigure.sql.GcpCloudSqlProperties;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.UserConfigurationDaoProperties;
+import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.BasicDataSourceProperties;
+import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.DataSourceProperties;
+import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.GcpDataSourceProperties;
+import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.UserConfigurationDaoJpaProperties;
+import java.io.IOException;
+import javax.sql.DataSource;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration(proxyBeanMethods = false)
+class UserConfigurationDaoJpaDataSourceConfiguration {
+
+  private static final String DATA_SOURCE_PREFIX =
+      UserConfigurationDaoProperties.Constants.PREFIX + ".jpa.data-source";
+
+  private static final String SERVICE_ACCOUNT_SUFFIX = ".gserviceaccount.com";
+
+  @Bean(UserConfigurationDaoJpaAutoConfiguration.Beans.DATA_SOURCE)
+  DataSource dataSource(
+      UserConfigurationDaoJpaProperties properties,
+      ObjectProvider<CredentialsProvider> credentialsProvider)
+      throws IOException {
+    DataSourceProperties dataSource = properties.dataSource();
+    BasicDataSourceProperties basic = dataSource == null ? null : dataSource.basic();
+    GcpDataSourceProperties gcp = dataSource == null ? null : dataSource.gcp();
+    requireExactlyOne(basic, gcp);
+    if (basic != null) {
+      return basicDataSource(basic);
+    }
+    CredentialsProvider credentials =
+        credentialsProvider.getIfUnique(() -> GoogleCredentials::getApplicationDefault);
+    return cloudSqlDataSource(gcp, iamDatabaseUser(credentials.getCredentials()));
+  }
+
+  private void requireExactlyOne(BasicDataSourceProperties basic, GcpDataSourceProperties gcp) {
+    boolean basicSet = basic != null;
+    boolean gcpSet = gcp != null;
+    boolean neitherSet = !basicSet && !gcpSet;
+    boolean bothSet = basicSet && gcpSet;
+    if (neitherSet || bothSet) {
+      throw new IllegalStateException(
+          "Exactly one of %s.basic and %s.gcp must be set"
+              .formatted(DATA_SOURCE_PREFIX, DATA_SOURCE_PREFIX));
+    }
+  }
+
+  private String iamDatabaseUser(Credentials credentials) {
+    if (!(credentials instanceof ServiceAccountSigner serviceAccount)) {
+      throw new IllegalStateException(
+          "Cloud SQL IAM database authentication needs service account credentials, got %s"
+              .formatted(credentials.getClass().getName()));
+    }
+    String account = serviceAccount.getAccount();
+    return account.endsWith(SERVICE_ACCOUNT_SUFFIX)
+        ? account.substring(0, account.length() - SERVICE_ACCOUNT_SUFFIX.length())
+        : account;
+  }
+
+  private DataSource basicDataSource(BasicDataSourceProperties basic) {
+    return DataSourceBuilder.create()
+        .url(basic.url())
+        .username(basic.username())
+        .password(basic.password())
+        .driverClassName(basic.driver())
+        .build();
+  }
+
+  private DataSource cloudSqlDataSource(GcpDataSourceProperties gcp, String username) {
+    GcpCloudSqlProperties gcpProperties = new GcpCloudSqlProperties();
+    gcpProperties.setInstanceConnectionName(gcp.instanceConnectionName());
+    gcpProperties.setDatabaseName(gcp.databaseName());
+    gcpProperties.setEnableIamAuth(true);
+    CloudSqlJdbcInfoProvider infoProvider =
+        new DefaultCloudSqlJdbcInfoProvider(gcpProperties, DatabaseType.POSTGRESQL);
+    return DataSourceBuilder.create()
+        .url(infoProvider.getJdbcUrl())
+        .username(username)
+        .driverClassName(infoProvider.getJdbcDriverClass())
+        .build();
+  }
+}

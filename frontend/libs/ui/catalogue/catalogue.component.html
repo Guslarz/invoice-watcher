@@ -1,0 +1,32 @@
+<main>
+  <h1>InvoiceWatcher components</h1>
+  <section>
+    <h2>Actions</h2>
+    <div class="actions">
+      <iw-action>Save folders</iw-action
+      ><iw-action [disabled]="true">Loading…</iw-action>
+    </div>
+  </section>
+  <section>
+    <h2>Form fields</h2>
+    <iw-field
+      label="Folder name"
+      value="INBOX"
+      hint="Name used by the mail server"
+    /><iw-field label="Invalid folder" error="Enter a folder name." /><iw-field
+      label="Start date"
+      value="2026-01-01T00:00:00Z"
+      [readOnly]="true"
+      hint="Set when added"
+    />
+  </section>
+  <section>
+    <h2>Feedback</h2>
+    <iw-notice>Your folders are saved.</iw-notice
+    ><iw-notice>Loading your account…</iw-notice
+    ><iw-notice>No folders are configured.</iw-notice
+    ><iw-notice [error]="true"
+      >Your configuration changed. Reload before trying again.</iw-notice
+    >
+  </section>
+</main>

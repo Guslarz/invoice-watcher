@@ -5,8 +5,8 @@
 - Modules are discovered automatically by the `settings.module-discovery` settings plugin
   (`gradle/build-logic/settings`): every directory under `apps/`, `images/`, `libs/` containing a
   `build.gradle.kts` becomes a project. Path
-  `libs/mail-producer/dao/api` → project `:libs:mail-producer-dao-api` → type-safe accessor
-  `projects.libs.mailProducerDaoApi`. Never edit `settings.gradle.kts` to add a module.
+  `libs/dao/user-configuration/api` → project `:libs:dao-user-configuration-api` → type-safe accessor
+  `projects.libs.daoUserConfigurationApi`. Never edit `settings.gradle.kts` to add a module.
 - Every `build.gradle.kts` sets a one-line `description`; it is published in the generated module
   reference, and a module without one fails the docs build.
 - A library area has an `api` module and one or more implementations:
@@ -30,7 +30,7 @@
   `src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
 - Beans are added with `@Import({...})` of `@Component` classes, not component scanning.
 - Alternative implementations are switched by a `mode` property defined in the `api` module, e.g.
-  `invoice-watcher.mail-producer.dao.mode = jpa | firestore`,
+  `invoice-watcher.user-configuration.dao.mode = jpa | firestore`,
   `invoice-watcher.event-producer.mode = kafka`, guarded with `@ConditionalOnProperty` using the
   constants from the properties' nested `Constants` class.
 - When several implementations may live on one classpath, name beans explicitly (nested `Beans`

@@ -1,4 +1,5 @@
 [versions]
+gradle-node-plugin = "7.1.0"
 axion-release = "1.21.4"
 checkstyle = "11.0.0"
 gradle-docker-plugin = "10.0.0"
@@ -13,6 +14,11 @@ spring-dependency-management-plugin = "1.1.7"
 axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
 
 [libraries]
+gradle-node-plugin = { group = "com.github.node-gradle.node", name = "com.github.node-gradle.node.gradle.plugin", version.ref = "gradle-node-plugin" }
+spring-tx = { group = "org.springframework", name = "spring-tx" }
+spring-boot-starter-security-oauth2-client = { group = "org.springframework.boot", name = "spring-boot-starter-security-oauth2-client" }
+spring-security-test = { group = "org.springframework.security", name = "spring-security-test" }
+
 angus-mail = { group = "org.eclipse.angus", name = "angus-mail" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version = "3.27.7" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3" }
@@ -41,3 +47,5 @@ spring-cloud-gcp-starter-sql-postgresql = { group = "com.google.cloud", name = "
 spring-dependency-management-plugin = { group = "io.spring.gradle", name = "dependency-management-plugin", version.ref = "spring-dependency-management-plugin" }
 spring-kafka = { group = "org.springframework.kafka", name = "spring-kafka" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api" }
+testcontainers-gcloud = { group = "org.testcontainers", name = "testcontainers-gcloud" }
+testcontainers-junit-jupiter = { group = "org.testcontainers", name = "testcontainers-junit-jupiter" }

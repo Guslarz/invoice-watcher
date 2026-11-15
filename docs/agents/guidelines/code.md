@@ -21,6 +21,21 @@
 - Secrets (passwords, tokens) are held as `Secret` from `libs/secret/api`, never as plain `String`
   outside the moment of use. Their values never go into the repository (ADR-0006).
 
+## Readability
+
+- Keep one level of transformation in an expression. Do not nest stream pipelines inside builder
+  arguments inside other stream lambdas. Compute intermediate collections in named local variables
+  and extract focused methods named for their purpose (for example, assignNewFolderId versus
+  assignMissingFolderId).
+- Keep orchestration methods readable as a sequence of domain operations. Use method references
+  for extracted transformations and descriptive lambda parameters such as config and folder.
+  A reader should not have to trace several nested builders to understand one operation.
+- Prefer ordinary loops for nested side effects such as saving collections of child records.
+  Streams are useful for transformations; compact syntax alone is not a reason to use them.
+- Extract meaningful operations, not a method for every field or trivial expression. Preserve
+  transaction boundaries and behavior while improving readability; comments and formatter output
+  are not substitutes for simplifying convoluted code.
+
 ## Tests
 
 - JUnit 5 (+ `@ParameterizedTest` with `@MethodSource` for tables) and AssertJ.

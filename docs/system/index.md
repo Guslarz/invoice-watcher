@@ -20,7 +20,7 @@ sequenceDiagram
   S->>T: every invoice-watcher.mail-producer.scheduler.rate
   T->>D: read all users, mailboxes and folders
   loop every mailbox of every user
-    T->>M: connect (IMAPS, decrypted password)
+    T->>M: connect (IMAPS, password or OAuth access token)
     loop every folder
       T->>M: messages received after the folder's scan position
       M-->>T: sender, subject, date, body and media type
@@ -43,7 +43,7 @@ another.
 ### Reaching a mailbox
 
 InvoiceWatcher connects to each mailbox over IMAP with TLS (`imaps`, usually port 993), using the
-host and port of the mailbox. It logs in with a username and password. The password is kept
+host and port of the mailbox. It logs in using Gmail OAuth or manually configured username/password credentials. A password is kept
 encrypted and is decrypted only for the moment of connecting — see
 [keys and users](../setup/keys-and-users.md) for how to encrypt it.
 
@@ -89,15 +89,16 @@ was published, so the next scan continues with the first one that was not.
 Users, their mailboxes and folders are stored in a database and read at the start of every scan,
 so a change takes effect at the next scan without a restart.
 
-A **user** is identified by their e-mail address and has one or more **mailboxes**. A mailbox
-is an IMAP server (host and port) with a username and an encrypted password, and it lists one or
+A **user** is identified by their e-mail address and has watched **mailboxes**, or none after disconnecting Gmail. A mailbox
+is an IMAP server (host and port) with password or Gmail OAuth credentials, and it lists one or
 more **folders** to watch — by the name the mail server uses, such as `INBOX`, `Invoices` or
 `INBOX/Bills`. A folder can have a start date that limits its first scan, and it keeps its scan
-position; the position is the only thing InvoiceWatcher itself writes.
+position. The producer writes scan progress and grant-refresh metadata; registration owns
+configuration changes.
 
 ```mermaid
 erDiagram
-  USER ||--|{ MAILBOX : has
+  USER ||--o{ MAILBOX : has
   MAILBOX ||--|{ FOLDER : watches
   USER {
     string name "e-mail address, unique"
@@ -106,7 +107,7 @@ erDiagram
     string host
     int port
     string username
-    string password "encrypted"
+    string credential "encrypted password or OAuth grant"
   }
   FOLDER {
     string name "e.g. INBOX, Invoices"
@@ -118,7 +119,7 @@ erDiagram
 
 The storage is either Firestore in Datastore mode (used in the deployed environment) or a
 relational database (used locally with H2), chosen with
-[`invoice-watcher.mail-producer.dao.mode`](../reference/configuration.md#invoice-watcher-mail-producer-dao).
+[`invoice-watcher.user-configuration.dao.mode`](../reference/configuration.md#invoice-watcher-user-configuration-dao).
 How to add a user is described in [keys and users](../setup/keys-and-users.md).
 
 The application checks its configuration when it starts. A required property that is missing —
@@ -154,3 +155,16 @@ Kafka confirmed an event but before the position was saved. Delivery is therefor
 consumers must be ready to receive the same message twice.
 
 An example of a published event is shown in [In action](../results/index.md).
+
+## Self-service Gmail configuration
+
+The registration frontend and backend are separate applications behind the registration HTTPS
+origin. Users sign in with Google, explicitly authorize Gmail and choose watched folders. The
+backend and producer share one authoritative configuration database and its storage mappings.
+Registration owns configuration edits; scanning updates only progress and OAuth grant metadata.
+Versioned transactional writes preserve retained folders' progress and reject stale edits.
+
+Gmail uses IMAP with OAuth tokens; manually provisioned username/password mailboxes still work.
+Refresh tokens are encrypted at rest. Expired or revoked Gmail access is renewed through consent
+during the next sign-in; reconnecting does not rewind scans. See
+[registration setup and use](../setup/registration.md).

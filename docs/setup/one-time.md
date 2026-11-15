@@ -97,6 +97,13 @@ packages accept only classic tokens:
 3. Choose an expiration and copy the token. When it expires, create a new one, update the `PAT`
    secret and run `Environment` with `up` again.
 
+## Configure Google sign-in and Gmail
+
+Before the first environment `up`, create the Google web OAuth client and set its encrypted secret
+as described in [Google sign-in and Gmail registration](registration.md#configure-google-once).
+The manual Google configuration survives environment teardown; environment copies of its settings
+are recreated by `up`.
+
 ## 4. Configure the GitHub repository
 
 In the repository open **Settings → Secrets and variables → Actions** and add:
@@ -109,6 +116,8 @@ In the repository open **Settings → Secrets and variables → Actions** and ad
 | `PAGES_ENABLED` | variable | `true` — the `Docs` workflow publishes the documentation site only when it is set |
 | `PAT` | secret | the token from step 3 |
 | `CLOUDFLARE_API_TOKEN` | secret | the token from step 2 |
+| `GOOGLE_OAUTH_CLIENT_ID` | secret | Google web OAuth client ID from the registration setup |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | secret | Client secret encrypted with the application AES key |
 | `AES_KEY` | secret | a new key from `secret-helper generate-key` ([keys and users](keys-and-users.md#1-generate-the-key)) |
 
 The `Snapshot` and `Release` workflows need nothing else — they publish images with the

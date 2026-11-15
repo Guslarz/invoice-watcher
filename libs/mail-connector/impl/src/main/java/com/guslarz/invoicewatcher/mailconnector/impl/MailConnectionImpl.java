@@ -17,14 +17,13 @@ import jakarta.mail.Store;
 import jakarta.mail.UIDFolder;
 import jakarta.mail.search.ComparisonTerm;
 import jakarta.mail.search.ReceivedDateTerm;
-import lombok.RequiredArgsConstructor;
-
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class MailConnectionImpl implements MailConnection {
@@ -49,64 +48,71 @@ public class MailConnectionImpl implements MailConnection {
     }
   }
 
-  private MailFolderMessages getEmailMessagesFromFolder(MailQuery query, Folder folder) throws MessagingException {
+  private MailFolderMessages getEmailMessagesFromFolder(MailQuery query, Folder folder)
+      throws MessagingException {
     if (!(folder instanceof UIDFolder uidFolder)) {
       throw new MessagingException("Folder does not support UIDs: " + query.folder());
     }
     folder.open(Folder.READ_ONLY);
     long uidValidity = uidFolder.getUIDValidity();
     ScanPosition position = query.position();
-    List<FolderMessage> messages = position != null && position.uidValidity() == uidValidity
-        ? messagesAfter(uidFolder, folder, position.lastUid())
-        : messagesReceivedSince(uidFolder, folder, query);
-    return MailFolderMessages.builder()
-        .uidValidity(uidValidity)
-        .messages(messages)
-        .build();
+    List<FolderMessage> messages =
+        position != null && position.uidValidity() == uidValidity
+            ? messagesAfter(uidFolder, folder, position.lastUid())
+            : messagesReceivedSince(uidFolder, folder, query);
+    return MailFolderMessages.builder().uidValidity(uidValidity).messages(messages).build();
   }
 
   /**
-   * Returns the messages with a UID greater than {@code lastUid}. IMAP answers the range
-   * {@code lastUid+1:*} with the last message even when it is not newer, so the range is filtered.
+   * Returns the messages with a UID greater than {@code lastUid}. IMAP answers the range {@code
+   * lastUid+1:*} with the last message even when it is not newer, so the range is filtered.
    */
   private List<FolderMessage> messagesAfter(UIDFolder uidFolder, Folder folder, long lastUid)
       throws MessagingException {
     Message[] messages = uidFolder.getMessagesByUID(lastUid + 1, UIDFolder.LASTUID);
-    Message[] newMessages = Stream.of(messages)
-        .filter(message -> uid(uidFolder, message) > lastUid)
-        .toArray(Message[]::new);
+    Message[] newMessages =
+        Stream.of(messages)
+            .filter(message -> uid(uidFolder, message) > lastUid)
+            .toArray(Message[]::new);
     return toFolderMessages(uidFolder, folder, newMessages).toList();
   }
 
   /**
    * Returns the messages the server received at or after the query's start date, or all messages
-   * without a start date. IMAP searches by day only, so the search result is filtered to the second;
-   * a message without a received date is kept, as the server's search already selected it.
+   * without a start date. IMAP searches by day only, so the search result is filtered to the
+   * second; a message without a received date is kept, as the server's search already selected it.
    */
-  private List<FolderMessage> messagesReceivedSince(UIDFolder uidFolder, Folder folder, MailQuery query)
-      throws MessagingException {
+  private List<FolderMessage> messagesReceivedSince(
+      UIDFolder uidFolder, Folder folder, MailQuery query) throws MessagingException {
     if (query.startDate() == null) {
       return toFolderMessages(uidFolder, folder, folder.getMessages()).toList();
     }
     Date startDate = DateUtil.toDate(query.startDate());
     Message[] messages = folder.search(new ReceivedDateTerm(ComparisonTerm.GE, startDate));
-    return toFolderMessages(uidFolder, folder, Stream.of(messages)
-        .filter(message -> receivedDate(message) == null || !receivedDate(message).before(startDate))
-        .toArray(Message[]::new))
+    return toFolderMessages(
+            uidFolder,
+            folder,
+            Stream.of(messages)
+                .filter(
+                    message ->
+                        receivedDate(message) == null || !receivedDate(message).before(startDate))
+                .toArray(Message[]::new))
         .toList();
   }
 
-  private Stream<FolderMessage> toFolderMessages(UIDFolder uidFolder, Folder folder, Message[] messages)
-      throws MessagingException {
+  private Stream<FolderMessage> toFolderMessages(
+      UIDFolder uidFolder, Folder folder, Message[] messages) throws MessagingException {
     FetchProfile fetchProfile = new FetchProfile();
     fetchProfile.add(UIDFolder.FetchProfileItem.UID);
     fetchProfile.add(FetchProfile.Item.ENVELOPE);
     folder.fetch(messages, fetchProfile);
     return Stream.of(messages)
-        .map(message -> FolderMessage.builder()
-            .uid(uid(uidFolder, message))
-            .message(toMessage(message))
-            .build())
+        .map(
+            message ->
+                FolderMessage.builder()
+                    .uid(uid(uidFolder, message))
+                    .message(toMessage(message))
+                    .build())
         .sorted(Comparator.comparingLong(FolderMessage::uid));
   }
 
@@ -141,17 +147,15 @@ public class MailConnectionImpl implements MailConnection {
     }
   }
 
-  /**
-   * Returns the first {@code From} address, or {@code null} when the message has none.
-   */
+  /** Returns the first {@code From} address, or {@code null} when the message has none. */
   private String sender(Message message) throws MessagingException {
     Address[] from = message.getFrom();
     return from == null || from.length == 0 ? null : from[0].toString();
   }
 
   /**
-   * Returns the sent date, or the date the server received the message when it has no valid
-   * {@code Date} header, or {@code null} when neither is known.
+   * Returns the sent date, or the date the server received the message when it has no valid {@code
+   * Date} header, or {@code null} when neither is known.
    */
   private ZonedDateTime date(Message message) throws MessagingException {
     Date date = message.getSentDate() != null ? message.getSentDate() : message.getReceivedDate();

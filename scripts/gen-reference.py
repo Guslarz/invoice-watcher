@@ -30,6 +30,8 @@ def load_modules():
     # modules are skipped.
     module_dirs = [build_file.parent for top in MODULE_DIRS
                    for build_file in (ROOT / top).rglob("build.gradle.kts")]
+    if (ROOT / "frontend/build.gradle.kts").is_file():
+        module_dirs.append(ROOT / "frontend")
     modules = []
     for module_dir in module_dirs:
         path = module_dir / FACTS

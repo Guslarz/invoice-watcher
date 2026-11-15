@@ -9,7 +9,7 @@ date: 2026-11-11
 ## Context
 
 The project has no frontend today. Future user-facing applications, starting with registration
-(see `docs/agents/inbox/user-registration-app.md`), will need a consistent visual language without
+(see `docs/agents/specs/user-registration.md`), will need a consistent visual language without
 prematurely committing the repository to a frontend framework, component library or build tool.
 
 Several sources of consistency are possible: shared design tokens, a shared component library,
@@ -36,8 +36,9 @@ automation becomes worthwhile.
   applications or future consumers. Breaking visual changes require an explicit migration note in the
   same change.
 - **Require staged adoption.** The first frontend consumes tokens and documented patterns directly;
-  shared packages or generated artifacts are introduced only when at least two consumers need the
-  same implementation and the ownership boundary is clear.
+  the first Angular frontend introduces the shared component/token package as an explicit
+  foundation. Its consumer and ownership boundaries are documented, and catalogue, Shadow DOM and
+  visual checks ship with it. Further shared implementation is added only for demonstrated needs.
 
 ## Alternatives considered
 
@@ -61,3 +62,11 @@ automation becomes worthwhile.
 - **Must keep doing:** update the frontend guideline and token definitions together; record deferred
   implementation choices in the first frontend plan; do not introduce frontend code or shared
   packages without a plan that names their consumers and verification.
+
+## Amendment: first Angular frontend (2026-11-12)
+
+Registration now defines a real frontend and its build/release boundaries. Introduce the shared
+Angular UI library with this first consumer, as explicitly selected for this capability. This
+updates the original two-consumer staging threshold; it does not relax token ownership,
+accessibility, catalogue, encapsulation or visual-review requirements. Token files and components
+live together under frontend/libs/ui; registration remains responsible for its business workflows.

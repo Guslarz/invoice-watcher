@@ -1,18 +1,50 @@
 # Frontend design system
 
-This guideline defines how future frontend applications in this repository stay visually
-consistent. No frontend application, shared frontend package or automated visual check exists yet;
-this document records the current direction and the decisions intentionally deferred.
+This guideline governs the Angular registration frontend and shared UI package. The frontend
+workspace owns build/release tooling; the Java applications remain separate runtime deployments.
 
 ## Scope and current state
 
-- **Applies to:** future user-facing frontend applications and any later shared frontend assets.
-- **Current state:** research and direction only. Do not add frontend code, component packages,
-  generated token packages or consistency automation as part of routine changes until a plan for the
-  first frontend requires them.
-- **Related work:** user registration is tracked separately in
-  `docs/agents/inbox/user-registration-app.md` and must not be treated as implemented by this
-  guideline.
+- Registration consumes the shared Angular components and versioned design tokens under
+  frontend/libs/ui. See the frontend README for build, catalogue and browser-check commands.
+- This first consumer introduces the shared package under the amended ADR-0013. Keep mailbox
+  workflows in the application and reusable controls in the UI package.
+
+## Source organization and formatting
+
+Follow the [Angular style guide](https://angular.dev/style-guide) and
+[Google TypeScript style guide](https://google.github.io/styleguide/tsguide.html), subject to the
+explicit repository conventions below. Formatting uses the settings published by
+[Google gts](https://github.com/google/gts/blob/main/.prettierrc.json); formatting alone does not
+establish full style-guide compliance. Broader linting/alignment is tracked in
+[the inbox](../inbox/enforce-angular-google-typescript-style.md).
+
+- Put each Angular target's entry HTML and global stylesheet alongside that target's sources.
+  Keep genuinely shared design styles in the UI library; the workspace root owns tooling only.
+
+- Use signals for reactive component state, signal inputs and model bindings, and computed signals
+  for derived state. Use output() for component events. Update signal-held objects/arrays
+  immutably. Set ChangeDetectionStrategy.OnPush explicitly on every component, including
+  catalogue/demo components. Keep stateless components stateless.
+
+- Keep bootstrap entry points focused on application startup. Put each component in its own
+  TypeScript file with adjacent HTML and SCSS files referenced by templateUrl and styleUrl.
+- Keep components as projections of state: render read-only signals and forward UI events to
+  commands. Put workflow state, async operations, validation and payload transformations in
+  focused injectable services or signal stores. Scope mutable feature stores to the owning
+  component's providers so state is not shared across unrelated instances. Expose read-only
+  signals and explicit commands; templates must not mutate store signals directly. Native
+  control event adaptation stays in reusable controls. Do not add a store dependency just to
+  wrap stateless markup or framework lifecycle wiring.
+- Keep HTTP/CSRF handling in typed services, transport models in model files, and folder editing
+  and validation separate from account workflow orchestration. Shared public-api files only export
+  supported library interfaces and components.
+- Declare explicit return types on TypeScript methods and named functions, including void and
+  Promise<void>. Constructors have no return annotation; callbacks may use contextual typing.
+- Separate the import block from declarations or executable code with a blank line in TypeScript.
+- Format frontend source and configuration with the pinned Prettier version. Gradle's
+  :frontend:frontendFormat applies formatting; frontend verification runs frontendFormatCheck.
+- Focus outlines use shared width and offset tokens: 1px thick with a 2px gap from the control.
 
 ## Design sources
 
@@ -28,29 +60,26 @@ this document records the current direction and the decisions intentionally defe
 
 ## Where design sources live
 
-- **Now:** design direction lives in `docs/agents/adr/` decisions and `docs/agents/guidelines/`
-  guidance. This avoids inventing frontend module structure before a frontend exists.
-- **When the first frontend is planned:** that plan must choose concrete repository locations for
-  token definitions and any consumable artifacts (for example a dedicated frontend area or shared
-  package). The plan must justify the location against existing repository conventions and name the
-  consumers.
-- **Do not assume:** do not place frontend assets under `libs/` or `apps/` by analogy to Java
-  modules without a plan that defines build, ownership and release boundaries for frontend code.
+Canonical CSS tokens and public Angular components live under frontend/libs/ui. The package's
+catalogue and README document supported states and usage. Application workflows live under
+frontend/apps/user-registration. The frontend workspace is registered as the Gradle project :frontend;
+apps/user-registration-frontend-app bridges its build and verification into Gradle, while image
+modules package the backend and frontend independently.
 
 ## Consumption by future applications
 
-- **First application:** consume the canonical tokens and patterns directly, keeping implementation
-  choices local to that application unless reuse is clearly needed.
-- **Multiple applications:** introduce a shared token artifact or package only after at least two
-  consumers need the same implementation. The shared boundary must expose stable token names and
+- **First application:** use the shared UI package and canonical tokens; keep business-specific
+  screens and consent workflows local to registration.
+- **Shared package:** registration introduces the initial token/component boundary; additional
+  applications consume its public exports. Expand shared implementation when consumers need it.
+  The shared boundary must expose stable token names and
   documented usage, not application-specific components by default.
-- **Framework choice:** deferred until the first frontend plan. Token names and accessibility
+- **Framework choice:** Angular with pnpm. Token names and accessibility
   requirements must remain usable regardless of the selected framework or styling approach.
 
 ## Shared component library requirements
 
-Apply these requirements when a shared component library is introduced; no library or tooling is
-implemented by this guideline.
+Apply these requirements to the shared component library and any future additions.
 
 - **Component catalogue:** provide a browsable catalogue of supported component states and usage,
   including variants, loading, empty, error, disabled and focus states where applicable. Evaluate
@@ -102,27 +131,20 @@ them without an accepted decision:
 - **Forms and errors:** labels, instructions and error messages must be programmatically associated
   and understandable without relying on placeholder text alone.
 
-## Consistency checks and staged adoption
+## Consistency checks
 
-Consistency tooling is intentionally not implemented now. The shared-library requirements above
-become mandatory when that library is introduced; tool selection remains deferred.
+The shared library ships with its first consumer. Token usage lint, catalogue fixtures,
+interaction/accessibility checks and visual baseline comparison run in verification and CI.
+Keep these checks focused on supported states and representative viewports; expand fixtures when
+new component contracts are introduced. Review visual differences explicitly before updating
+baselines. Token renames and semantic changes require a documented consumer migration.
 
-1. **Stage 1 — documented contract (now):** maintain tokens, patterns and accessibility
-   requirements in repository docs; use pull-request review for consistency.
-2. **Stage 2 — first frontend:** add lightweight checks appropriate to the chosen stack, such as
-   token/value linting, accessibility linting and focused interaction tests for critical flows.
-3. **Stage 3 — shared library:** provide a component catalogue, Shadow DOM encapsulation and visual
-   regression checks as described above. Evaluate shared packaging and additional design review
-   automation when repeated implementation or drift justifies the maintenance cost.
+## Current tooling
 
-When proposing checks later, prefer targeted, maintainable signals over broad screenshot suites that
-are expensive to review.
-
-## Decisions deferred until the first frontend exists
-
-- Frontend framework, rendering model and styling technology.
-- Directory layout and packaging for frontend code and shared assets.
-- Token file format and generation pipeline, if any.
-- Component library scope, versioning and release process.
-- Automated lint, accessibility, interaction and visual regression tooling.
-- Integration with external design tools as an authoring or export source.
+Use a supported stable Angular release compatible with the selected Node LTS release. Angular
+may be in active support or LTS. Pin exact compatible tooling versions in frontend metadata; keep
+the Node version in package.json engines aligned with .node-version. Use pnpm workspaces and
+frozen-lockfile CI installs. The native Angular component
+catalogue and Playwright browser fixtures provide component states, interaction/accessibility
+checks and desktop/mobile visual baselines. Review baseline changes explicitly in pull requests.
+External design tools remain optional authoring inputs; repository tokens are canonical.

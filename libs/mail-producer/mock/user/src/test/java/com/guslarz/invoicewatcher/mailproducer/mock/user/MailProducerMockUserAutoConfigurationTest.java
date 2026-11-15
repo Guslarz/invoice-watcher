@@ -1,6 +1,6 @@
 package com.guslarz.invoicewatcher.mailproducer.mock.user;
 
-import com.guslarz.invoicewatcher.mailproducer.dao.api.service.UserDaoService;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.UserDaoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;

@@ -3,9 +3,10 @@ title: Replace illustrative examples in the docs with captures from the running 
 kind: idea
 area: docs
 added: 2026-10-13
-status: later
+status: waiting
 size: S
-blocked-by: [user-registration-app]
+blocked-by: []
+waiting-for: A dev environment with real registered users and published mail events
 ---
 
 `docs/results/index.md` shows a published event, scan logs and the ArgoCD view as illustrative

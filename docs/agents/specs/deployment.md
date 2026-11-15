@@ -46,7 +46,7 @@ while it is not needed. After it is up, application changes are deployed automat
   services. `down` destroys the cloud resources; the cluster and everything in it go with them.
 - **DEPLOY-003** Running `up` on an environment that is already up only applies differences.
 - **DEPLOY-007** `up` fails before creating any resources when the `AES_KEY`, `PAT` or
-  `CLOUDFLARE_API_TOKEN` secret is not set.
+  `CLOUDFLARE_API_TOKEN`, `GOOGLE_OAUTH_CLIENT_ID` or `GOOGLE_OAUTH_CLIENT_SECRET` secret is not set.
 - **DEPLOY-008** The workflow logs the OpenTofu plan of the action it runs — a destroy plan for
   `down` — and executes exactly that saved plan.
 - **DEPLOY-038** `down` leaves no disks of the environment behind.
@@ -77,10 +77,11 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-030** ArgoCD keeps the namespace `invoice-watcher-<env>` in sync with
   `deployments/k8s-apps/environments/<env>` on `master`, pruning removed resources and reverting
   manual changes.
-- **DEPLOY-031** The dev environment runs Kafka (single node; its data is kept on the persistent
-  disk from DEPLOY-010, so it survives pod and node restarts, and is deleted by `down`) and the mail
-  producer using the image tagged `snapshot`, pulled on every start, so restarting the pod picks
-  up the latest `master` build.
+- **DEPLOY-031** The dev environment runs Kafka (single node, with data on the persistent
+  disk from DEPLOY-010) and the mail producer and registration backend using snapshot images pulled
+  on every start. Kafka data survives pod and node restarts and is deleted by down. Restarting an
+  application pod picks up the latest master build.
+
 - **DEPLOY-032** Application configuration is passed as environment variables generated from
   `overlays/<env>/config/.env` of each application.
 - **DEPLOY-033** Images are pulled from `ghcr.io` with credentials synced from Secret Manager.
@@ -97,6 +98,16 @@ while it is not needed. After it is up, application changes are deployed automat
   repository, registry, domain and location values used by deployment. Its generated configuration
   is committed and must match it.
 
+- **DEPLOY-040** The registration frontend and backend are available at
+  https://register.<configured-domain>; the gateway routes frontend assets to the frontend service
+  and authentication and API requests to the backend service on that same origin. The mail producer
+  remains unexposed.
+
+- **DEPLOY-041** The registration backend obtains the AES key and OIDC client secret from
+  Secret Manager through external-secrets. Its workload identity has access to the configured
+  user database. No credential values are committed. It exposes liveness and readiness probes
+  to Kubernetes, without exposing actuator endpoints through the public gateway.
+
 ## Acceptance
 
 - **DEPLOY-004** Given a new Google Cloud project, when `Environment` runs with `up` / `dev` before
@@ -106,7 +117,7 @@ while it is not needed. After it is up, application changes are deployed automat
   then the workflow succeeds, ArgoCD is reachable at `https://argocd.<configured-domain>` and the
   `mail-producer` pod in `invoice-watcher-dev` is running.
 - **DEPLOY-010** Given the dev environment is down, when `Environment` runs with `up` / `dev`, then
-  Secret Manager holds `github_pat`, `cloudflare_api_token` and `aes_key` and no
+  Secret Manager holds `github_pat`, `cloudflare_api_token`, `aes_key` and `google_oauth` and no
   `ghcr_docker_config_json`, and the application still pulls its image.
 - **DEPLOY-012** Given a configured non-default zone and cluster name, when `Environment` runs
   with `up` / `dev`, then the cluster is created with those values and `k8s-install` finds it.
@@ -120,7 +131,7 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-002** Given the dev environment is up, when `Environment` runs with `down` / `dev`,
   then the cluster, the Firestore database and the DNS record no longer exist.
 - **DEPLOY-007** Given the `PAT` secret is not set, when `Environment` runs with `up` / `dev`, then
-  the workflow fails before `tofu init`. Same for `AES_KEY` and `CLOUDFLARE_API_TOKEN`.
+  the workflow fails before `tofu init`. Same for `AES_KEY`, `CLOUDFLARE_API_TOKEN`, `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`.
 - **DEPLOY-008** Given the dev environment is up, when `Environment` runs with `down` / `dev`, then
   the logged plan lists only destroys and the next step applies that saved plan file.
 - **DEPLOY-034** Given the `AES_KEY` secret is set and the dev environment is up, when the
@@ -138,6 +149,13 @@ while it is not needed. After it is up, application changes are deployed automat
 - **DEPLOY-037** Given Kafka is starting, when port 9092 does not accept connections yet, then the
   pod is not Ready.
 
+- **DEPLOY-031** Given published snapshot images, when application pods restart, then the producer
+  and both registration applications pull the snapshot images and become ready.
+- **DEPLOY-040** Given an installed environment, when a user visits the registration hostname,
+  then sign-in and API requests use HTTPS on that origin and no producer endpoint is reachable.
+- **DEPLOY-041** Given configured secret references and workload identity, when the registration
+  pod starts, then secrets are injected and probes report readiness; public actuator access fails.
+
 ## Configuration
 
 GitHub repository settings used by the workflows:
@@ -149,6 +167,8 @@ GitHub repository settings used by the workflows:
 | `CLOUDFLARE_ZONE_ID` | variable | Cloudflare zone of the domain |
 | `PAT` | secret | GitHub token used to pull images and read the repository |
 | `CLOUDFLARE_API_TOKEN` | secret | Cloudflare token for DNS and origin certificates |
+| `GOOGLE_OAUTH_CLIENT_ID` | secret | Google web OAuth client identifier |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | secret | OAuth client secret encrypted with the application AES key |
 | `AES_KEY` | secret | AES key that decrypts mailbox passwords, as printed by `secret-helper generate-key` |
 
 ## Out of scope

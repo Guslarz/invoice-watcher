@@ -5,4 +5,6 @@ public interface MailCredentialsVisitor<T> {
   T visit(MailCredentials mailCredentials);
 
   T visitBasicMailCredentials(BasicAuthMailCredentials mailCredentials);
+
+  T visitGmailOauthCredentials(GmailOauthCredentials credentials);
 }

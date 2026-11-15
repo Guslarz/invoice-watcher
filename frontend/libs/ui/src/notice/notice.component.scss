@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  font: inherit;
+  color: var(--iw-text);
+}
+p {
+  padding: var(--iw-space-2);
+  border-inline-start: var(--iw-notice-accent-width) solid var(--iw-primary);
+  background: var(--iw-surface);
+}
+[role='alert'] {
+  color: var(--iw-error);
+  border-color: var(--iw-error);
+}

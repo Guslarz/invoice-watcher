@@ -19,5 +19,18 @@ dependencyResolutionManagement {
   repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
   repositories {
     mavenCentral()
+    exclusiveContent {
+      forRepository {
+        ivy {
+          name = "Node.js distributions"
+          url = uri("https://nodejs.org/dist/")
+          patternLayout {
+            artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]")
+          }
+          metadataSources { artifact() }
+        }
+      }
+      filter { includeModule("org.nodejs", "node") }
+    }
   }
 }

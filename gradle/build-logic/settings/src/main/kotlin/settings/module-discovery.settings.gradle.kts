@@ -7,8 +7,12 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 // Every directory under apps/, images/ and libs/ containing a build.gradle.kts becomes a project:
-// libs/mail-producer/dao/api -> :libs:mail-producer-dao-api.
+// libs/dao/user-configuration/api -> :libs:dao-user-configuration-api.
 registerModules("apps", "images", "libs")
+// The pnpm workspace is one project; never recurse into its node_modules directory.
+if (settings.rootDir.resolve("frontend/build.gradle.kts").isFile) {
+  settings.include(":frontend")
+}
 
 fun registerModules(vararg modules: String) {
   modules.forEach{ internalRegisterModules(arrayOf(it)) }

@@ -74,3 +74,15 @@ While the environment is up you pay for: one preemptible `e2-standard-2` node, t
 management fee (one zonal cluster per billing account is covered by the GKE free tier), the
 global IP address and the HTTPS load balancer of the gateway, Kafka's 10 GiB disk (about $1 a
 month), and Firestore and Secret Manager usage (within the free tier at this scale). After `down` only the state bucket remains.
+
+## Registration applications
+
+After `up`, `https://register.<configured-domain>` serves the Angular frontend. The gateway routes
+API and Google callback paths to the registration backend; the producer remains private. Frontend
+and backend have independent images and health probes. Google OAuth settings and the shared AES
+key are injected only into the Java workloads. Configure them before `up` using the
+[registration setup](registration.md#configure-google-once).
+
+`down` deletes registrations, encrypted grants and scan progress along with the database. It does
+not remove the manually configured Google OAuth client or revoke Google permissions. The next
+`up` starts without registered users; the producer mock user is disabled in this deployment.

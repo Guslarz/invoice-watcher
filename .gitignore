@@ -55,3 +55,12 @@ site/
 ### Proposed commit message (AGENTS.md, Git workflow) ###
 .gitmessage
 .worker-status.json
+
+### Frontend build outputs ###
+node_modules/
+frontend/dist/
+frontend/libs/ui/dist/
+frontend/.angular/
+frontend/out-tsc/
+frontend/test-results/
+frontend/playwright-report/
