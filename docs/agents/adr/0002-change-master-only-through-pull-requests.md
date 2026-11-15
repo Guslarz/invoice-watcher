@@ -1,6 +1,6 @@
 ---
 id: ADR-0002
-status: accepted
+status: amended by ADR-0015
 date: 2026-10-13
 ---
 
@@ -20,3 +20,8 @@ goes on its own branch created from an up-to-date `master` and ends with a pull 
 ## Consequences
 
 CI (`build-and-analyze`, `docs`) runs on every change before it reaches `master`.
+
+## Amendment
+
+[ADR-0015](0015-commit-release-deployment-revisions-before-tagging.md) amends the release automation
+and deployment revision policy. Other responsibilities remain in force.

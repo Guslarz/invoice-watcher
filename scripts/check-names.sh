@@ -85,7 +85,7 @@ same "gateway address" "$cluster" \
 echo "--- kafka-data disk"
 disk=$infra/modules/gke/disk.tf
 volume=$k8s/cluster-init/templates/storage/kafka-data-volume.yml
-kafka=$apps/apps/kafka/base/statefulset.yml
+kafka=$apps/workloads/kafka/base/statefulset.yml
 same "Kafka data disk" "$disk" "$(value "$disk" '^ *name *= *"([^"]+)".*' '/"google_compute_disk"/,/name *=/')" \
   "$volume (volumeHandle)" "$(value "$volume" '^ *volumeHandle:.*\/disks\/([a-z0-9-]+).*')"
 same "Kafka data volume" "$volume" "$(value "$volume" '^  name: *([^[:space:]]+).*')" \

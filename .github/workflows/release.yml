@@ -8,49 +8,62 @@ on:
         type: choice
         required: true
         default: minor
-        options:
-          - major
-          - minor
-          - patch
+        options: [major, minor, patch]
 
 permissions:
   contents: write
   packages: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   release:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-26.04
     steps:
+      - name: Create release automation token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
       - name: Checkout sources
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup Java and Gradle
         uses: ./.github/actions/setup-gradle
 
-      - name: Set environment variables
+      - name: Configure release commit identity
         run: |
-          declare -A INCREMENT_MAP=( ["major"]="incrementMajor" ["minor"]="incrementMinor" ["patch"]="incrementPatch" )
-          echo "VERSION_INCREMENT=${INCREMENT_MAP[${{ inputs.version_increment }}]}" >> "$GITHUB_ENV"
+          git config user.name 'Release automation'
+          git config user.email 'release@users.noreply.github.com'
 
-      - name: Increment version
-        run: |
-          ./gradlew release \
-            -Prelease.versionIncrementer=${{ env.VERSION_INCREMENT }} \
-            -Prelease.customUsername=${{ github.actor }} \
-            -Prelease.customPassword=${{ secrets.GITHUB_TOKEN }}
+      - name: Commit release, tag it and restore development
+        id: prepare
+        env:
+          SOURCE: ${{ github.sha }}
+          INCREMENT: ${{ inputs.version_increment }}
+        run: python3 scripts/release.py --source "$SOURCE" --increment "$INCREMENT"
 
-      - name: Build and publish artifacts
+      - name: Build and publish tagged artifacts
         uses: ./.github/actions/gradle-publish
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get current version
-        run: echo "CURRENT_VERSION=$(./gradlew cV -q -Prelease.quiet)" >> "$GITHUB_ENV"
-
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "v$CURRENT_VERSION" --title "Release v$CURRENT_VERSION" --verify-tag
+          VERSION: ${{ steps.prepare.outputs.version }}
+        run: |
+          if ! gh release view "v$VERSION" >/dev/null 2>&1; then
+            gh release create "v$VERSION" --title "Release v$VERSION" --verify-tag
+          fi

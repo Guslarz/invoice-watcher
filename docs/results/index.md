@@ -104,4 +104,5 @@ kubectl -n invoice-watcher-dev logs deploy/mail-producer -f
 At `https://argocd.<domain>` the application `invoice-watcher-dev` shows the resources of the
 namespace `invoice-watcher-dev`: the `kafka` stateful set with its volume claim, the `mail-producer`
 deployment, the Kafka service, the generated config maps, the `app-sa` service account and the image pull secret. It is
-*Synced* when the cluster matches `deployments/k8s-apps/environments/dev` on `master`.
+*Synced* when the cluster matches `deployments/k8s-apps/environments/dev` at the committed
+ArgoCD target revision: master for development, or the selected release tag for a release.

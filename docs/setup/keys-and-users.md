@@ -88,7 +88,8 @@ resets the user's folders: their start date is set to ten days before the start 
 position is cleared.
 
 For the dev environment that means adding to
-`deployments/k8s-apps/apps/mail-producer/overlays/dev/config/.env` (and merging it to `master`):
+`deployments/k8s-apps/workloads/mail-producer/overlays/dev/config/.env`, merging it to `master`,
+waiting for Snapshot to publish, and running `Environment up` with `snapshot`:
 
 ```properties
 INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_ENABLED=true

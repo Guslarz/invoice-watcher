@@ -11,7 +11,19 @@ resources, and the cluster with everything in it goes with them.
 ## Create
 
 1. In the repository open **Actions → Environment → Run workflow**.
-2. Choose `up` and `dev`, run it.
+2. Choose the workflow ref: `master` for development, or a completed release's tag such as
+   `v1.3.0` for a released deployment. Choose `up` and `dev`, then run it.
+
+You can select a release tag explicitly with the GitHub CLI:
+
+```shell
+gh workflow run environment.yml --ref v1.3.0 -f action=up -f environment=dev
+```
+
+Both infrastructure and cluster bootstrap use that workflow run's checkout. There is no separate
+version input. The local cluster-init chart is installed from that checkout. ArgoCD follows the
+`targetRevision` committed in its Application definition: `master` in development commits and
+`v1.3.0` in that release commit. Selecting another ref does not override the committed value.
 
 The workflow has two jobs:
 
@@ -20,7 +32,7 @@ The workflow has two jobs:
 | `infrastructure` | Checks that the `AES_KEY`, `PAT` and `CLOUDFLARE_API_TOKEN` secrets are set and stops before touching anything when one is missing. Then OpenTofu plans `deployments/infrastructure/environments/dev/ephemeral`, prints the plan in the log and applies exactly that plan: Secret Manager secrets, Firestore database, GKE cluster and node pool (in the configured zone and under the configured name), Kafka's 10 GiB data disk `kafka-data` in the same zone, global IP, Cloudflare DNS record. State is kept in the `<project-id>-tfstate` bucket. |
 | `k8s-install` | Waits for the cluster, then `helmfile sync` installs ArgoCD, cert-manager, origin-ca-issuer, external-secrets and the `cluster-init` chart (gateway, certificate, secret sync, the volume for Kafka's disk, the ArgoCD application). |
 
-From then on ArgoCD deploys the applications from `master` by itself.
+From then on ArgoCD continuously reconciles the applications from that committed target revision.
 
 ## Check
 
@@ -47,7 +59,7 @@ load.
 
 ## Deploy a new version
 
-Nothing to do: every merge to `master` publishes the `snapshot` image, and ArgoCD applies changed
+For development, every merge to `master` publishes the `snapshot` image, and ArgoCD applies changed
 manifests. The pod pulls the image only when it starts, so to run the latest `snapshot` restart
 it:
 
@@ -55,9 +67,22 @@ it:
 kubectl -n invoice-watcher-dev rollout restart deploy/mail-producer
 ```
 
+To deploy a release instead, run Environment with `up` from its completed release tag. That
+commit contains both the pinned ArgoCD revision and the matching versioned application image.
+A later merge or snapshot image publication does not upgrade that deployment. To switch back to
+development, run `up` from `master`. Applying older definitions does not restore data or guarantee
+that an infrastructure or application downgrade is compatible with existing state.
+
 ## Destroy
 
-Run **Environment** with `down` and `dev`. OpenTofu prints a destroy plan in the log and
+Run **Environment** with `down` and `dev` from the same release tag used for `up` (or `master`
+for development). Both actions use the selected checkout's OpenTofu files:
+
+```shell
+gh workflow run environment.yml --ref v1.3.0 -f action=down -f environment=dev
+```
+
+OpenTofu prints a destroy plan in the log and
 applies exactly that plan: everything `up` created is destroyed, and the cluster goes with all it
 contains.
 
