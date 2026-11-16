@@ -14,6 +14,10 @@ Act as the dispatcher from `docs/agents/protocols/parallel.md` exactly, for thes
 the inputs supplied alongside this skill invocation
 
 
+Before recommending or launching topics, follow Protocol parallel's freshness check: fetch
+origin successfully and triage the fetched `origin/master` revision. A fetch alone does not
+refresh checkout files; do not use a stale local inbox or redispatch notes removed upstream.
+
 A successful launch must also pass the native session visibility checks in Protocol parallel.
 Codex workers are independent interactive tasks on the shared app-server daemon and appear in
 `codex agents`; do not launch them with `codex exec` or describe them as parent-owned subagents.

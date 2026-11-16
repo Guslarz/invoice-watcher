@@ -80,14 +80,14 @@
       "backends": {
         "claude": {
           "status": "native",
-          "detail": "Invoke /dispatch with workflow inputs.",
+          "detail": "Invoke /dispatch with workflow inputs. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches.",
           "references": [
             ".claude/commands/dispatch.md"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Invoke $iw-dispatch with workflow inputs; generated explicit-only skill.",
+          "detail": "Invoke $iw-dispatch with workflow inputs; generated explicit-only skill. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches.",
           "references": [
             ".agents/skills/iw-dispatch/SKILL.md",
             ".agents/skills/iw-dispatch/agents/openai.yaml"
@@ -95,13 +95,13 @@
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Invoke /dispatch; generated V2 command.",
+          "detail": "Invoke /dispatch; generated V2 command. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches.",
           "references": [
             "opencode.json"
           ]
         }
       },
-      "reviewed": "2026-11-11",
+      "reviewed": "2026-11-16",
       "evidence": [
         "claude-commands",
         "codex-skills",

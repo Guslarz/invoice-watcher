@@ -53,8 +53,29 @@ Backend integration support and operational alternatives are recorded in the
 handling remains separate. Use `--sandbox workspace-write` where host namespace support is
 available and sandboxed execution is desired.
 
-1. For inbox batches use `python3 scripts/inbox.py ready`. Run `scripts/worktree.sh prune` and
-   report kept worktrees. Group overlapping topics; never run them in parallel.
+1. Before recommending topics or dispatching a new batch, run `git fetch origin` successfully
+   and record `git rev-parse origin/master` as the triage revision. If fetching fails, stop new
+   topic selection and launches and report the failure; cached refs are not a freshness check.
+   Fetching does not update checkout files. Read the inbox, initiative roadmaps and workflow
+   instructions from that revision, not a stale local branch. A clean `master` may be advanced
+   with `git merge --ff-only origin/master`; never reset, switch or rebase a dirty checkout or
+   an active worker for triage. Otherwise use a temporary snapshot, for example:
+
+   ```sh
+   triage_revision=$(git rev-parse origin/master)
+   triage_dir=$(mktemp -d /tmp/iw-dispatch-triage.XXXXXX)
+   git archive "$triage_revision" docs/agents/inbox scripts/inbox.py | tar -x -C "$triage_dir"
+   python3 "$triage_dir/scripts/inbox.py" ready
+   ```
+
+   Read candidate notes from the same snapshot (or `git show <triage-revision>:<path>`).
+   Recheck explicitly requested notes there too: a note deleted on `origin/master` is not
+   pending just because it remains in the local checkout. Report it as already removed and
+   inspect its resolution rather than launching it. Local-only proposals must be identified
+   explicitly as such. Consult `python3 scripts/worker.py list` to exclude already assigned
+   topics. Repeat the freshness check for later recommendations and additional dispatches in
+   the same conversation. Run `scripts/worktree.sh prune` and report kept worktrees. Group
+   overlapping topics; never run them in parallel.
 2. Determine planning versus lightweight and select backend/agent as above. Use the developer's
    backend, otherwise the dispatcher's; ask if unknown. Do not infer an agent from a model.
 3. Create each assigned worktree with `scripts/worktree.sh new <type>/<slug>` and launch:
