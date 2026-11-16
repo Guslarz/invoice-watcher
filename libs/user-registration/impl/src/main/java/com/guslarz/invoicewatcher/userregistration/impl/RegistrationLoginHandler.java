@@ -1,8 +1,8 @@
 package com.guslarz.invoicewatcher.userregistration.impl;
 
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.ConfigurationConflictException;
-import com.guslarz.invoicewatcher.googleoauth.api.GmailReconnectionRequiredException;
-import com.guslarz.invoicewatcher.googleoauth.api.GoogleOauthService;
+import com.guslarz.invoicewatcher.oauth.google.api.GmailReconnectionRequiredException;
+import com.guslarz.invoicewatcher.oauth.google.api.GoogleOauthService;
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.GmailOauthCredentials;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
 import jakarta.servlet.http.HttpServletRequest;

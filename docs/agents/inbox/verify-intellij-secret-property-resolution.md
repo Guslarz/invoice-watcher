@@ -8,7 +8,7 @@ size: S
 blocked-by: []
 ---
 
-Confirm that IntelliJ resolves `invoice-watcher.google-oauth.client-secret` in the registration
+Confirm that IntelliJ resolves `invoice-watcher.oauth.google.client-secret` in the registration
 backend's linked `application-local.yml` after Reload All Gradle Projects. The shared Spring
 build convention now describes `Secret` properties as strings in generated and packaged metadata;
 runtime types remain `Secret`. Build verification passed, but the IDE warning disappearing has

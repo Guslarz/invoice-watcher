@@ -291,8 +291,14 @@ Configure both Java applications in their ignored `application-local.yml` with t
 `jdbc:h2:tcp://localhost:9093/./invoice-watcher`, user `sa`, empty password, driver `org.h2.Driver`,
 dialect `org.hibernate.dialect.H2Dialect` and **ddl-auto `validate`**. Two independent in-memory
 H2 databases cannot share registrations. Disable the producer mock user. Both apps also need the
-same AES key and `invoice-watcher.google-oauth.client-id` / `client-secret`; the latter is encrypted
+same AES key and `invoice-watcher.oauth.google.client-id` / `client-secret`; the latter is encrypted
 with that key. Keep every secret value in ignored files or environment variables.
+
+When updating an existing local setup, move the former `invoice-watcher.google-oauth` settings
+to `invoice-watcher.oauth.google`. The environment variables are now
+`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_ID` and `INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_SECRET`.
+The old application prefix is no longer read. Keep the same client ID, encrypted secret and AES
+key; this configuration rename does not require creating another Google client.
 
 In the backend's local file set `invoice-watcher.user-registration.public-base-url` to
 `http://localhost:4200` and `invoice-watcher.user-registration.secure-cookies` to `false` for local

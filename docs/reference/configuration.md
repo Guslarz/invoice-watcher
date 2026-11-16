@@ -21,15 +21,6 @@ Module `:libs:event-producer-kafka-impl`.
 |---|---|---|---|
 | `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  | Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`. |
 
-## `invoice-watcher.google-oauth` { #invoice-watcher-google-oauth }
-
-Module `:libs:google-oauth-api`.
-
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.google-oauth.client-id`<br>`INVOICE_WATCHER_GOOGLE_OAUTH_CLIENT_ID` | `String` |  | Required. Google web OAuth client identifier. |
-| `invoice-watcher.google-oauth.client-secret`<br>`INVOICE_WATCHER_GOOGLE_OAUTH_CLIENT_SECRET` | `String` |  | Required. Google web OAuth client secret, provided outside version control. |
-
 ## `invoice-watcher.mail-connector.imap` { #invoice-watcher-mail-connector-imap }
 
 Module `:libs:mail-connector-impl`.
@@ -67,6 +58,15 @@ Module `:libs:mail-producer-task`.
 | Property | Type | Default | Description |
 |---|---|---|---|
 | `invoice-watcher.mail-producer.task.topic`<br>`INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC` | `String` |  | Required. Topic every scanned message is published to, e.g. `all-mails`. |
+
+## `invoice-watcher.oauth.google` { #invoice-watcher-oauth-google }
+
+Module `:libs:oauth-google-api`.
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `invoice-watcher.oauth.google.client-id`<br>`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_ID` | `String` |  | Required. Google web OAuth client identifier. |
+| `invoice-watcher.oauth.google.client-secret`<br>`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_SECRET` | `String` |  | Required. Google web OAuth client secret, provided outside version control. |
 
 ## `invoice-watcher.secret.aes` { #invoice-watcher-secret-aes }
 

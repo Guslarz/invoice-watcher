@@ -23,6 +23,13 @@
   it out when another declared `api` module already brings it.
 - Applications (`apps/*`) contain almost no code — they compose `impl` modules in
   `build.gradle.kts`.
+- OAuth provider libraries live under `libs/oauth/<provider>/{api,impl}`, with packages
+  `com.guslarz.invoicewatcher.oauth.<provider>.{api,impl}`. For Google, the discovered projects
+  are `:libs:oauth-google-api` and `:libs:oauth-google-impl`, accessed as
+  `projects.libs.oauthGoogleApi` and `projects.libs.oauthGoogleImpl`.
+  Each provider binds independent `invoice-watcher.oauth.<provider>` settings and activates
+  independently. Providers may coexist; do not introduce an exclusive provider `mode` or let
+  one provider's bean suppress another provider. Name provider beans distinctly where needed.
 
 ## Auto-configuration
 

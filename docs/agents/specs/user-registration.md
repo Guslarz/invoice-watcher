@@ -166,12 +166,23 @@ and remove their registration without editing storage or handling mailbox creden
   the committed result with equivalent ownership/conflict and progress guarantees in both modes;
   missing or unknown DAO mode fails startup naming invoice-watcher.user-configuration.dao.mode.
 
+- **REG-016** Given Google settings under `invoice-watcher.oauth.google`, when the applications
+  start, then client ID and encrypted secret bind and validate without selecting an exclusive
+  provider. Given only the former `invoice-watcher.google-oauth` prefix, when configuration is
+  bound, then it does not configure the Google client.
+
 ## Configuration
+
+- **REG-016** Google client settings use `invoice-watcher.oauth.google.client-id` and
+  `invoice-watcher.oauth.google.client-secret`. The client secret is supplied encrypted with the
+  application's AES key. Provider settings are independent: configuring Google does not select
+  an exclusive OAuth provider or disable another configured provider. The former
+  `invoice-watcher.google-oauth` prefix is not supported.
 
 Properties and startup requirements are listed in the generated reference:
 
 - [Registration](../../reference/configuration.md#invoice-watcher-user-registration)
-- [Google OAuth](../../reference/configuration.md#invoice-watcher-google-oauth)
+- [Google OAuth](../../reference/configuration.md#invoice-watcher-oauth-google)
 - [Shared DAO](../../reference/configuration.md#invoice-watcher-user-configuration-dao)
 
 ## Out of scope

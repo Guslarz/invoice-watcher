@@ -12,8 +12,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.RegistrationDao;
-import com.guslarz.invoicewatcher.googleoauth.api.GoogleOauthProperties;
-import com.guslarz.invoicewatcher.googleoauth.api.GoogleOauthService;
+import com.guslarz.invoicewatcher.oauth.google.api.GoogleOauthProperties;
+import com.guslarz.invoicewatcher.oauth.google.api.GoogleOauthService;
 import com.guslarz.invoicewatcher.secret.api.Secret;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
 import com.guslarz.invoicewatcher.userregistration.api.RegistrationProperties;

@@ -12,7 +12,7 @@ dependencies {
   implementation(projects.libs.daoUserConfigurationFirestoreImpl)
   implementation(projects.libs.mailProducerMockUser)
   implementation(projects.libs.secretAes)
-  implementation(projects.libs.googleOauthImpl)
+  implementation(projects.libs.oauthGoogleImpl)
   implementation(projects.libs.eventProducerKafkaImpl)
 
   implementation(libs.spring.boot.starter.actuator)

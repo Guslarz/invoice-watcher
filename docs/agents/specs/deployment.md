@@ -37,6 +37,14 @@ while it is not needed. ArgoCD reconciles applications from the revision committ
       that account — without stored keys.
 - **DEPLOY-006** The OpenTofu state of `persistent` itself is kept locally on the operator's
   machine (not in git and not in the bucket).
+- **DEPLOY-042** Before the first environment `up`, the operator configures the Google Auth
+  Platform application and its Web application OAuth client once in the Google Cloud console,
+  including branding, audience, test users, requested scopes and authorized redirect URIs for
+  Google sign-in and Gmail connection. An existing configured app and client are reused.
+  The app and client survive environment `down`; `up` neither creates nor replaces them.
+  The client ID and AES-encrypted client secret are supplied through the configured GitHub
+  secrets, and OpenTofu manages their ephemeral Secret Manager copies. No Google client
+  credential is committed to the repository.
 
 ### Environment lifecycle
 
@@ -111,6 +119,12 @@ while it is not needed. ArgoCD reconciles applications from the revision committ
   to Kubernetes, without exposing actuator endpoints through the public gateway.
 
 ## Acceptance
+
+- **DEPLOY-042** Given an existing Google Auth Platform app and Web application OAuth client,
+  when environment `down` and `up` complete, then the app, client ID, client secret and configured
+  redirects remain unchanged; only the environment's Secret Manager copies are recreated from
+  the supplied GitHub secrets. Given a new installation, when following one-time setup, then
+  the operator configures the app and client in the console before running `up`.
 
 - **DEPLOY-001** Given Environment is dispatched on master or a release tag, when up or down
   runs, then each deployment job checks out that workflow run's source SHA.

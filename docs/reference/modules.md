@@ -20,14 +20,14 @@ and `libs/` that contains a `build.gradle.kts`.
 | `:libs:dao-user-configuration-jpa-impl` | `libs/dao/user-configuration/jpa-impl` | Storage of users in a relational database via JPA (H2 or Cloud SQL). |
 | `:libs:event-producer-api` | `libs/event-producer/api` | Event producer interface and backend selection. |
 | `:libs:event-producer-kafka-impl` | `libs/event-producer/kafka-impl` | Event producer that sends events to Kafka. |
-| `:libs:google-oauth-api` | `libs/google-oauth/api` | Google OAuth contracts and validated client settings. |
-| `:libs:google-oauth-impl` | `libs/google-oauth/impl` | Google OAuth grant refresh and revocation with bounded network requests. |
 | `:libs:mail-connector-api` | `libs/mail-connector/api` | Mailbox connection interfaces: connections, queries, messages, credentials. |
 | `:libs:mail-connector-impl` | `libs/mail-connector/impl` | IMAP mailbox connection based on Angus Mail, scanning folders by UID. |
 | `:libs:mail-producer-mock-user` | `libs/mail-producer/mock/user` | Creates a mock user from properties at startup. |
 | `:libs:mail-producer-scheduler-api` | `libs/mail-producer/scheduler/api` | Interface of the scheduled mail producer task. |
 | `:libs:mail-producer-scheduler-impl` | `libs/mail-producer/scheduler/impl` | Runs the mail producer task at a fixed rate. |
 | `:libs:mail-producer-task` | `libs/mail-producer/task` | Scan task: reads users, scans their folders and publishes new messages. |
+| `:libs:oauth-google-api` | `libs/oauth/google/api` | Google OAuth contracts and validated client settings. |
+| `:libs:oauth-google-impl` | `libs/oauth/google/impl` | Google OAuth grant refresh and revocation with bounded network requests. |
 | `:libs:secret-aes` | `libs/secret/aes` | AES-GCM implementation of secrets, decrypted only when used. |
 | `:libs:secret-api` | `libs/secret/api` | Secret value interface and factory. |
 | `:libs:user-registration-api` | `libs/user-registration/api` | Registration contracts and public origin settings. |
@@ -59,11 +59,11 @@ flowchart TB
     libs_dao_user_configuration_firestore_impl["dao-user-configuration-firestore-impl"]
     libs_dao_user_configuration_jpa_impl["dao-user-configuration-jpa-impl"]
     libs_event_producer_kafka_impl["event-producer-kafka-impl"]
-    libs_google_oauth_impl["google-oauth-impl"]
     libs_mail_connector_impl["mail-connector-impl"]
     libs_mail_producer_mock_user["mail-producer-mock-user"]
     libs_mail_producer_scheduler_impl["mail-producer-scheduler-impl"]
     libs_mail_producer_task["mail-producer-task"]
+    libs_oauth_google_impl["oauth-google-impl"]
     libs_secret_aes["secret-aes"]
     libs_user_registration_impl["user-registration-impl"]
     libs_util_aes["util-aes"]
@@ -71,25 +71,25 @@ flowchart TB
   subgraph api
     libs_dao_user_configuration_api["dao-user-configuration-api"]
     libs_event_producer_api["event-producer-api"]
-    libs_google_oauth_api["google-oauth-api"]
     libs_mail_connector_api["mail-connector-api"]
     libs_mail_producer_scheduler_api["mail-producer-scheduler-api"]
+    libs_oauth_google_api["oauth-google-api"]
     libs_secret_api["secret-api"]
     libs_user_registration_api["user-registration-api"]
   end
   apps_mail_producer_app --> libs_dao_user_configuration_firestore_impl
   apps_mail_producer_app --> libs_dao_user_configuration_jpa_impl
   apps_mail_producer_app --> libs_event_producer_kafka_impl
-  apps_mail_producer_app --> libs_google_oauth_impl
   apps_mail_producer_app --> libs_mail_connector_impl
   apps_mail_producer_app --> libs_mail_producer_mock_user
   apps_mail_producer_app --> libs_mail_producer_scheduler_impl
   apps_mail_producer_app --> libs_mail_producer_task
+  apps_mail_producer_app --> libs_oauth_google_impl
   apps_mail_producer_app --> libs_secret_aes
   apps_secret_helper_app --> libs_util_aes
   apps_user_registration_backend_app --> libs_dao_user_configuration_firestore_impl
   apps_user_registration_backend_app --> libs_dao_user_configuration_jpa_impl
-  apps_user_registration_backend_app --> libs_google_oauth_impl
+  apps_user_registration_backend_app --> libs_oauth_google_impl
   apps_user_registration_backend_app --> libs_secret_aes
   apps_user_registration_backend_app --> libs_user_registration_impl
   images_mail_producer_docker --> apps_mail_producer_app
@@ -99,8 +99,6 @@ flowchart TB
   libs_dao_user_configuration_firestore_impl --> libs_dao_user_configuration_api
   libs_dao_user_configuration_jpa_impl --> libs_dao_user_configuration_api
   libs_event_producer_kafka_impl --> libs_event_producer_api
-  libs_google_oauth_api --> libs_dao_user_configuration_api
-  libs_google_oauth_impl --> libs_google_oauth_api
   libs_mail_connector_api --> libs_secret_api
   libs_mail_connector_impl --> libs_mail_connector_api
   libs_mail_producer_mock_user --> libs_dao_user_configuration_api
@@ -110,8 +108,10 @@ flowchart TB
   libs_mail_producer_task --> libs_event_producer_api
   libs_mail_producer_task --> libs_mail_connector_api
   libs_mail_producer_task --> libs_mail_producer_scheduler_api
+  libs_oauth_google_api --> libs_dao_user_configuration_api
+  libs_oauth_google_impl --> libs_oauth_google_api
   libs_secret_aes --> libs_secret_api
   libs_secret_aes --> libs_util_aes
-  libs_user_registration_api --> libs_google_oauth_api
+  libs_user_registration_api --> libs_oauth_google_api
   libs_user_registration_impl --> libs_user_registration_api
 ```

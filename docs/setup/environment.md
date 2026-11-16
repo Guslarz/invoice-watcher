@@ -109,5 +109,8 @@ key are injected only into the Java workloads. Configure them before `up` using 
 [registration setup](registration.md#configure-google-once).
 
 `down` deletes registrations, encrypted grants and scan progress along with the database. It does
-not remove the manually configured Google OAuth client or revoke Google permissions. The next
+not remove the manually configured Google Auth Platform app or Web application OAuth client,
+replace their credentials or revoke Google permissions. Both have persistent lifetime outside
+ephemeral OpenTofu resources; only Secret Manager copies of the settings are destroyed and
+recreated from GitHub secrets. The next
 `up` starts without registered users; the producer mock user is disabled in this deployment.

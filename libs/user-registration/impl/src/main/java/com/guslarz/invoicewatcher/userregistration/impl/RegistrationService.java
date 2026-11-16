@@ -6,7 +6,7 @@ import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailServ
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.User;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.ConfigurationConflictException;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.RegistrationDao;
-import com.guslarz.invoicewatcher.googleoauth.api.GoogleOauthService;
+import com.guslarz.invoicewatcher.oauth.google.api.GoogleOauthService;
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.GmailOauthCredentials;
 import java.time.ZonedDateTime;
 import java.util.HashSet;

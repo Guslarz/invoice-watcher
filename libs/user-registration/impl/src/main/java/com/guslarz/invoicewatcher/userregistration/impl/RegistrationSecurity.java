@@ -1,6 +1,6 @@
 package com.guslarz.invoicewatcher.userregistration.impl;
 
-import com.guslarz.invoicewatcher.googleoauth.api.GoogleOauthProperties;
+import com.guslarz.invoicewatcher.oauth.google.api.GoogleOauthProperties;
 import com.guslarz.invoicewatcher.userregistration.api.RegistrationProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
