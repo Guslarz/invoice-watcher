@@ -1,0 +1,11 @@
+{
+  "name": "@invoice-watcher/ui",
+  "private": true,
+  "peerDependencies": {
+    "@angular/core": "22.2.6",
+    "@angular/common": "22.2.6"
+  },
+  "exports": {
+    "./tokens.css": "./tokens/tokens.css"
+  }
+}

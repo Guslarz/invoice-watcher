@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="registration" type="CompoundRunConfigurationType">
+    <toRun name="UserRegistrationBackendApp" type="SpringBootApplicationConfigurationType" />
+    <toRun name="registration-frontend" type="GradleRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>

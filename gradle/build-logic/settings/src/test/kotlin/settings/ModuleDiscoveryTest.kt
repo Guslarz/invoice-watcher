@@ -100,6 +100,23 @@ class ModuleDiscoveryTest {
       .contains("already used by")
   }
 
+  @Test
+  fun registersFrontendWorkspaceWithoutTraversingPackages() {
+    // given
+    module("frontend")
+    module("frontend/node_modules/example")
+    module("frontend/apps/registration")
+
+    // when
+    val result = uut.build()
+
+    // then
+    assertThat(result.output)
+      .contains("module :frontend -> frontend")
+      .doesNotContain("module :frontend:")
+      .doesNotContain("node_modules")
+  }
+
   private fun module(path: String) {
     projectDir.resolve(path).mkdirs()
     projectDir.resolve("$path/build.gradle.kts").writeText("")

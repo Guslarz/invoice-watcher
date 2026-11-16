@@ -19,7 +19,7 @@ tag creation. Python orchestrates the Git commits and atomic push, without dupli
 selection rules.
 
 Commit the release tag as the Application's targetRevision and the release version as the
-mail-producer image tag and pod version label. Tag that commit. Create a later commit restoring
+application image tags and pod version labels. Tag that commit. Create a later commit restoring
 master, snapshot and the original development files. Push both commits and the tag atomically,
 then publish artifacts from the tagged commit. Preserve tags on retries; identify a retry by its
 original workflow source commit and increment stored in the release commit.

@@ -5,4 +5,9 @@ public abstract class BaseMailCredentialsVisitor<T> implements MailCredentialsVi
   public T visit(MailCredentials mailCredentials) {
     return mailCredentials.accept(this);
   }
+
+  @Override
+  public T visitGmailOauthCredentials(GmailOauthCredentials credentials) {
+    throw new IllegalArgumentException("OAuth credentials unsupported by this operation");
+  }
 }

@@ -1,0 +1,94 @@
+<main>
+  <p class="muted">InvoiceWatcher · Account</p>
+  <h1>Your mail, ready for scanning</h1>
+  <p>
+    Connect Gmail and choose the folders InvoiceWatcher watches for new
+    messages.
+  </p>
+  @if (store.loading()) {
+    <iw-notice>Loading your account…</iw-notice>
+  }
+  @if (store.message()) {
+    <iw-notice [error]="store.hasError()">{{ store.message() }}</iw-notice>
+  }
+  @if (!store.loading() && !store.email()) {
+    <section>
+      <h2>Welcome</h2>
+      <p>Sign in with Google to manage your Gmail connection.</p>
+      <iw-action (activated)="store.signin()">Sign in with Google</iw-action>
+    </section>
+  }
+  @if (store.email()) {
+    <p>Signed in as {{ store.email() }}</p>
+    <p class="muted">
+      Development environment: taking the environment down permanently deletes
+      registrations and scan progress.
+    </p>
+    @if (!store.config()?.connected) {
+      <section>
+        <h2>Connect Gmail</h2>
+        <p>
+          Allow background access so scheduled scans continue while you are
+          signed out. InvoiceWatcher reads messages without modifying them.
+        </p>
+        <iw-action [disabled]="store.busy()" (activated)="store.connect()"
+          >Connect Gmail</iw-action
+        >
+      </section>
+    }
+    @if (store.config()?.reconnectionRequired) {
+      <iw-notice [error]="true"
+        >Gmail needs authorization. Sign out and sign in again to continue
+        through Google consent.</iw-notice
+      >
+    }
+    @if (store.config()?.connected || store.pending()) {
+      <iw-folder-editor
+        [busy]="store.busy()"
+        [registered]="!!store.config()"
+        (saved)="store.save()"
+      />
+    }
+    @if (store.config()) {
+      <section>
+        <h2>Account settings</h2>
+        <p>
+          Disconnecting removes the mailbox and its scan progress. Deleting
+          registration also removes your InvoiceWatcher account. Neither deletes
+          your Google account or already published events. Google revocation can
+          also end your sign-in authorization.
+        </p>
+        @if (store.confirming()) {
+          <iw-notice [error]="true">{{
+            store.confirmationMessage()
+          }}</iw-notice>
+          <div class="actions">
+            <iw-action [disabled]="store.busy()" (activated)="store.confirm()"
+              >Confirm {{ store.confirming() }}</iw-action
+            ><iw-action (activated)="store.cancelConfirmation()"
+              >Cancel</iw-action
+            >
+          </div>
+        } @else {
+          <div class="actions">
+            @if (store.config()?.connected) {
+              <iw-action
+                [disabled]="store.busy()"
+                (activated)="store.requestConfirmation('disconnect')"
+                >Disconnect Gmail</iw-action
+              >
+            }
+            <iw-action
+              [disabled]="store.busy()"
+              (activated)="store.requestConfirmation('delete')"
+              >Delete registration</iw-action
+            >
+          </div>
+        }
+      </section>
+    }
+    <iw-action [disabled]="store.busy()" (activated)="store.signout()"
+      >Sign out</iw-action
+    >
+  }
+</main>

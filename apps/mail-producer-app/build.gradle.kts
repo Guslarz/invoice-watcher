@@ -8,10 +8,11 @@ dependencies {
   implementation(projects.libs.mailConnectorImpl)
   implementation(projects.libs.mailProducerSchedulerImpl)
   implementation(projects.libs.mailProducerTask)
-  implementation(projects.libs.mailProducerDaoJpaImpl)
-  implementation(projects.libs.mailProducerDaoFirestoreImpl)
+  implementation(projects.libs.daoUserConfigurationJpaImpl)
+  implementation(projects.libs.daoUserConfigurationFirestoreImpl)
   implementation(projects.libs.mailProducerMockUser)
   implementation(projects.libs.secretAes)
+  implementation(projects.libs.googleOauthImpl)
   implementation(projects.libs.eventProducerKafkaImpl)
 
   implementation(libs.spring.boot.starter.actuator)

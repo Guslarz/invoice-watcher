@@ -9,6 +9,7 @@ java {
 }
 
 dependencies {
+  implementation(libs.gradle.node.plugin)
   implementation(libs.gradle.docker.plugin)
   implementation(libs.lombok.plugin)
   implementation(libs.spotbugs.gradle.plugin)

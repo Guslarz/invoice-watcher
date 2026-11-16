@@ -9,20 +9,29 @@ and `libs/` that contains a `build.gradle.kts`.
 |---|---|---|
 | `:apps:mail-producer-app` | `apps/mail-producer-app` | Spring Boot application that scans mailboxes on a schedule and publishes their messages as events. |
 | `:apps:secret-helper-app` | `apps/secret-helper-app` | Command-line tool that generates AES keys and encrypts and decrypts secrets. |
+| `:apps:user-registration-backend-app` | `apps/user-registration-backend-app` | Registration backend with Google sign-in and Gmail OAuth. |
+| `:apps:user-registration-frontend-app` | `apps/user-registration-frontend-app` | Angular registration frontend consuming the shared component and design-token library. |
+| `:frontend` | `frontend` | Shared frontend toolchain, pnpm installation, UI library and catalogue. |
 | `:images:mail-producer-docker` | `images/mail-producer-docker` | Docker image of the mail producer application. |
+| `:images:user-registration-backend-docker` | `images/user-registration-backend-docker` | Docker image of the registration backend application. |
+| `:images:user-registration-frontend-docker` | `images/user-registration-frontend-docker` | Docker image of the registration frontend application. |
+| `:libs:dao-user-configuration-api` | `libs/dao/user-configuration/api` | Storage interfaces for users, mailbox configurations and folders. |
+| `:libs:dao-user-configuration-firestore-impl` | `libs/dao/user-configuration/firestore-impl` | Storage of users in Firestore in Datastore mode. |
+| `:libs:dao-user-configuration-jpa-impl` | `libs/dao/user-configuration/jpa-impl` | Storage of users in a relational database via JPA (H2 or Cloud SQL). |
 | `:libs:event-producer-api` | `libs/event-producer/api` | Event producer interface and backend selection. |
 | `:libs:event-producer-kafka-impl` | `libs/event-producer/kafka-impl` | Event producer that sends events to Kafka. |
+| `:libs:google-oauth-api` | `libs/google-oauth/api` | Google OAuth contracts and validated client settings. |
+| `:libs:google-oauth-impl` | `libs/google-oauth/impl` | Google OAuth grant refresh and revocation with bounded network requests. |
 | `:libs:mail-connector-api` | `libs/mail-connector/api` | Mailbox connection interfaces: connections, queries, messages, credentials. |
 | `:libs:mail-connector-impl` | `libs/mail-connector/impl` | IMAP mailbox connection based on Angus Mail, scanning folders by UID. |
-| `:libs:mail-producer-dao-api` | `libs/mail-producer/dao/api` | Storage interfaces for users, mailbox configurations and folders. |
-| `:libs:mail-producer-dao-firestore-impl` | `libs/mail-producer/dao/firestore-impl` | Storage of users in Firestore in Datastore mode. |
-| `:libs:mail-producer-dao-jpa-impl` | `libs/mail-producer/dao/jpa-impl` | Storage of users in a relational database via JPA (H2 or Cloud SQL). |
 | `:libs:mail-producer-mock-user` | `libs/mail-producer/mock/user` | Creates a mock user from properties at startup. |
 | `:libs:mail-producer-scheduler-api` | `libs/mail-producer/scheduler/api` | Interface of the scheduled mail producer task. |
 | `:libs:mail-producer-scheduler-impl` | `libs/mail-producer/scheduler/impl` | Runs the mail producer task at a fixed rate. |
 | `:libs:mail-producer-task` | `libs/mail-producer/task` | Scan task: reads users, scans their folders and publishes new messages. |
 | `:libs:secret-aes` | `libs/secret/aes` | AES-GCM implementation of secrets, decrypted only when used. |
 | `:libs:secret-api` | `libs/secret/api` | Secret value interface and factory. |
+| `:libs:user-registration-api` | `libs/user-registration/api` | Registration contracts and public origin settings. |
+| `:libs:user-registration-impl` | `libs/user-registration/impl` | Google sign-in, Gmail consent and owner-scoped registration HTTP API. |
 | `:libs:util-aes` | `libs/util/aes` | AES-GCM encryption, decryption and key encoding helpers. |
 
 ## Dependencies
@@ -37,52 +46,72 @@ config:
 flowchart TB
   subgraph images
     images_mail_producer_docker["mail-producer-docker"]
+    images_user_registration_backend_docker["user-registration-backend-docker"]
+    images_user_registration_frontend_docker["user-registration-frontend-docker"]
   end
   subgraph apps
     apps_mail_producer_app["mail-producer-app"]
     apps_secret_helper_app["secret-helper-app"]
+    apps_user_registration_backend_app["user-registration-backend-app"]
+    apps_user_registration_frontend_app["user-registration-frontend-app"]
   end
   subgraph impl
+    libs_dao_user_configuration_firestore_impl["dao-user-configuration-firestore-impl"]
+    libs_dao_user_configuration_jpa_impl["dao-user-configuration-jpa-impl"]
     libs_event_producer_kafka_impl["event-producer-kafka-impl"]
+    libs_google_oauth_impl["google-oauth-impl"]
     libs_mail_connector_impl["mail-connector-impl"]
-    libs_mail_producer_dao_firestore_impl["mail-producer-dao-firestore-impl"]
-    libs_mail_producer_dao_jpa_impl["mail-producer-dao-jpa-impl"]
     libs_mail_producer_mock_user["mail-producer-mock-user"]
     libs_mail_producer_scheduler_impl["mail-producer-scheduler-impl"]
     libs_mail_producer_task["mail-producer-task"]
     libs_secret_aes["secret-aes"]
+    libs_user_registration_impl["user-registration-impl"]
     libs_util_aes["util-aes"]
   end
   subgraph api
+    libs_dao_user_configuration_api["dao-user-configuration-api"]
     libs_event_producer_api["event-producer-api"]
+    libs_google_oauth_api["google-oauth-api"]
     libs_mail_connector_api["mail-connector-api"]
-    libs_mail_producer_dao_api["mail-producer-dao-api"]
     libs_mail_producer_scheduler_api["mail-producer-scheduler-api"]
     libs_secret_api["secret-api"]
+    libs_user_registration_api["user-registration-api"]
   end
+  apps_mail_producer_app --> libs_dao_user_configuration_firestore_impl
+  apps_mail_producer_app --> libs_dao_user_configuration_jpa_impl
   apps_mail_producer_app --> libs_event_producer_kafka_impl
+  apps_mail_producer_app --> libs_google_oauth_impl
   apps_mail_producer_app --> libs_mail_connector_impl
-  apps_mail_producer_app --> libs_mail_producer_dao_firestore_impl
-  apps_mail_producer_app --> libs_mail_producer_dao_jpa_impl
   apps_mail_producer_app --> libs_mail_producer_mock_user
   apps_mail_producer_app --> libs_mail_producer_scheduler_impl
   apps_mail_producer_app --> libs_mail_producer_task
   apps_mail_producer_app --> libs_secret_aes
   apps_secret_helper_app --> libs_util_aes
+  apps_user_registration_backend_app --> libs_dao_user_configuration_firestore_impl
+  apps_user_registration_backend_app --> libs_dao_user_configuration_jpa_impl
+  apps_user_registration_backend_app --> libs_google_oauth_impl
+  apps_user_registration_backend_app --> libs_secret_aes
+  apps_user_registration_backend_app --> libs_user_registration_impl
   images_mail_producer_docker --> apps_mail_producer_app
+  images_user_registration_backend_docker --> apps_user_registration_backend_app
+  images_user_registration_frontend_docker --> apps_user_registration_frontend_app
+  libs_dao_user_configuration_api --> libs_mail_connector_api
+  libs_dao_user_configuration_firestore_impl --> libs_dao_user_configuration_api
+  libs_dao_user_configuration_jpa_impl --> libs_dao_user_configuration_api
   libs_event_producer_kafka_impl --> libs_event_producer_api
+  libs_google_oauth_api --> libs_dao_user_configuration_api
+  libs_google_oauth_impl --> libs_google_oauth_api
   libs_mail_connector_api --> libs_secret_api
   libs_mail_connector_impl --> libs_mail_connector_api
-  libs_mail_producer_dao_api --> libs_mail_connector_api
-  libs_mail_producer_dao_firestore_impl --> libs_mail_producer_dao_api
-  libs_mail_producer_dao_jpa_impl --> libs_mail_producer_dao_api
-  libs_mail_producer_mock_user --> libs_mail_producer_dao_api
+  libs_mail_producer_mock_user --> libs_dao_user_configuration_api
   libs_mail_producer_mock_user --> libs_secret_api
   libs_mail_producer_scheduler_impl --> libs_mail_producer_scheduler_api
+  libs_mail_producer_task --> libs_dao_user_configuration_api
   libs_mail_producer_task --> libs_event_producer_api
   libs_mail_producer_task --> libs_mail_connector_api
-  libs_mail_producer_task --> libs_mail_producer_dao_api
   libs_mail_producer_task --> libs_mail_producer_scheduler_api
   libs_secret_aes --> libs_secret_api
   libs_secret_aes --> libs_util_aes
+  libs_user_registration_api --> libs_google_oauth_api
+  libs_user_registration_impl --> libs_user_registration_api
 ```

@@ -5,7 +5,7 @@ plugins {
 description = "Creates a mock user from properties at startup."
 
 dependencies {
-  api(projects.libs.mailProducerDaoApi)
+  api(projects.libs.daoUserConfigurationApi)
   api(projects.libs.secretApi)
 
   implementation(libs.spring.boot.autoconfigure)

@@ -7,5 +7,8 @@ labels:
 resources:
   - ../../workloads/kafka/overlays/dev
   - ../../workloads/mail-producer/overlays/dev
+  - ../../workloads/user-registration-backend/overlays/dev
+  - ../../workloads/user-registration-frontend/overlays/dev
+  - registration-route.yml
 components:
   - ../../components/app-identity

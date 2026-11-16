@@ -35,7 +35,7 @@ def generate(config):
     def tfvars(values):
         return json.dumps(values, indent=2) + "\n"
     base = "deployments/infrastructure/environments/dev/"
-    return {
+    outputs = {
         base + "persistent/installation.auto.tfvars.json": tfvars({"gcp_region": c["region"], "github_repository": c["repository"]}),
         base + "ephemeral/installation.auto.tfvars.json": tfvars({"gcp_region": c["region"], "gcp_zone": c["zone"], "gcp_gke_cluster_name": c["cluster_name"], "domain_name": c["domain"]}),
         "deployments/k8s/environments/dev.yml.gotmpl": f'domain: {c["domain"]}\nenvironment: dev\ngcpZone: {c["zone"]}\ngithubRepository: {c["repository"]}\nregistryUsername: {c["registry_username"]}\n\nargocd:\n  domainPrefix: argocd\n',
@@ -43,6 +43,21 @@ def generate(config):
         "deployments/k8s-apps/workloads/mail-producer/overlays/dev/kustomization.yml": template("mail-kustomization.yml"),
         "images/mail-producer-docker/src/Dockerfile": template("Dockerfile"),
     }
+
+    for role in ("backend", "frontend"):
+        app = f"user-registration-{role}"
+        content = template("mail-kustomization.yml").replace("mail-producer", app)
+        if role == "frontend":
+            content = content[:content.index("configMapGenerator:")]
+        outputs[f"deployments/k8s-apps/workloads/{app}/overlays/dev/kustomization.yml"] = content
+    outputs["images/user-registration-backend-docker/src/Dockerfile"] = template("Dockerfile").replace(
+        "Mail Producer", "User Registration Backend")
+    outputs["deployments/k8s-apps/workloads/user-registration-backend/overlays/dev/config/.env"] = (
+        "INVOICE_WATCHER_USER_CONFIGURATION_DAO_MODE=firestore\n"
+        f"INVOICE_WATCHER_USER_REGISTRATION_PUBLIC_BASE_URL=https://register.{c['domain']}\n")
+    outputs["deployments/k8s-apps/environments/dev/registration-route.yml"] = template("registration-route.yml")
+    return outputs
+
 
 
 def main():
@@ -58,6 +73,7 @@ def main():
                 if not target.is_file() or target.read_text() != content:
                     stale.append(path)
             else:
+                target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(content)
         if stale:
             print("Stale installation configuration: " + ", ".join(stale), file=sys.stderr)

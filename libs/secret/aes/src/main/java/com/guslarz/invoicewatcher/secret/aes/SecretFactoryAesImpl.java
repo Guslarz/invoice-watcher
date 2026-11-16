@@ -2,10 +2,10 @@ package com.guslarz.invoicewatcher.secret.aes;
 
 import com.guslarz.invoicewatcher.secret.api.Secret;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
+import com.guslarz.invoicewatcher.util.aes.AesUtil;
+import javax.crypto.SecretKey;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
 
 @Component
 @ConfigurationPropertiesBinding
@@ -20,5 +20,10 @@ public class SecretFactoryAesImpl implements SecretFactory {
   @Override
   public Secret fromEncrypted(String encrypted) {
     return new SecretAesImpl(encrypted, key);
+  }
+
+  @Override
+  public Secret fromPlaintext(String plaintext) {
+    return fromEncrypted(AesUtil.encrypt(plaintext, key));
   }
 }

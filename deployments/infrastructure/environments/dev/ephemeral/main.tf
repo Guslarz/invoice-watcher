@@ -32,10 +32,12 @@ provider "cloudflare" {
 }
 
 module "secret" {
-  source               = "../../../modules/secret"
-  github_pat           = var.github_pat
-  cloudflare_api_token = var.cloudflare_api_token
-  aes_key              = var.aes_key
+  source                     = "../../../modules/secret"
+  github_pat                 = var.github_pat
+  cloudflare_api_token       = var.cloudflare_api_token
+  aes_key                    = var.aes_key
+  google_oauth_client_id     = var.google_oauth_client_id
+  google_oauth_client_secret = var.google_oauth_client_secret
 }
 
 module "firestore" {

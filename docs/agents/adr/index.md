@@ -20,3 +20,6 @@ this list is usually enough; open a record to see why.
 | [0013](0013-define-frontend-consistency-through-versioned-design-tokens-and-documentation.md) | Define frontend consistency through versioned design tokens and documentation before shared components | accepted |
 | [0014](0014-cover-harness-integrations-across-supported-backends.md) | Cover harness integrations across supported backends | accepted |
 | [0015](0015-commit-release-deployment-revisions-before-tagging.md) | Commit release deployment revisions before tagging and restore development afterward | accepted |
+| [0016](0016-share-user-configuration-storage-and-daos-between-applications.md) | Share user configuration storage and DAOs between applications | accepted |
+| [0017](0017-keep-google-consent-in-registration-and-scan-gmail-with-imap-xoauth2.md) | Keep Google consent in registration and scan Gmail with IMAP XOAUTH2 | accepted |
+| [0018](0018-deploy-angular-registration-separately-and-share-ui-tokens-and-components.md) | Deploy Angular registration separately and share UI tokens and components | accepted |

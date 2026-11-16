@@ -1,0 +1,14 @@
+<label for="control">{{ label() }}</label
+><input
+  id="control"
+  [type]="type()"
+  [value]="value()"
+  [readOnly]="readOnly()"
+  [required]="required()"
+  [attr.aria-invalid]="error() ? 'true' : null"
+  [attr.aria-describedby]="error() ? 'error' : 'hint'"
+  (input)="changed($event)"
+/><small id="hint">{{ hint() }}</small>
+@if (error()) {
+  <small id="error" role="alert">{{ error() }}</small>
+}

@@ -2,11 +2,11 @@ package com.guslarz.invoicewatcher.mailproducer.mock.user;
 
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.BasicAuthMailCredentials;
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.MailCredentials;
-import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.FolderConfig;
-import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.MailScanConfig;
-import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.MailServer;
-import com.guslarz.invoicewatcher.mailproducer.dao.api.entity.user.User;
-import com.guslarz.invoicewatcher.mailproducer.dao.api.service.UserDaoService;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.FolderConfig;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailScanConfig;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailServer;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.User;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.UserDaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;

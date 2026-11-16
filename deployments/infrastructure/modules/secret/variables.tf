@@ -9,3 +9,11 @@ variable "cloudflare_api_token" {
 variable "aes_key" {
   sensitive = true
 }
+
+variable "google_oauth_client_id" {
+  sensitive = true
+}
+
+variable "google_oauth_client_secret" {
+  sensitive = true
+}

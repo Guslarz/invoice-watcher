@@ -4,9 +4,9 @@ title: User configuration
 status: implemented
 audience: [user, operator, developer]
 modules:
-  - libs/mail-producer/dao/api
-  - libs/mail-producer/dao/firestore-impl
-  - libs/mail-producer/dao/jpa-impl
+  - libs/dao/user-configuration/api
+  - libs/dao/user-configuration/firestore-impl
+  - libs/dao/user-configuration/jpa-impl
   - libs/mail-producer/mock/user
 ---
 
@@ -22,21 +22,28 @@ restart.
 
 ### Model
 
-- **USER-001** A **user** has a unique name — their e-mail address — and one or more **mailbox
-  configurations**.
-- **USER-002** A mailbox configuration has a server (IMAP host and port), credentials (username and
-  encrypted password, see [secret encryption](../specs/secret-encryption.md)) and one or more **folders**.
+- **USER-001** A **user** has a unique name — their e-mail address — and zero or more **mailbox
+  configurations**. Initial registration requires a mailbox; disconnecting it can leave none.
+- **USER-002** A mailbox configuration has an IMAP server, credentials (either a username
+  and encrypted password or a Google mailbox identity and encrypted OAuth refresh grant), and one
+  or more folders. Credential types are explicitly distinguished in storage; legacy credentials
+  without a type remain basic authentication.
+
 - **USER-003** A folder has a name as seen by the mail server (e.g. `INBOX`, `Invoices`,
   `INBOX/Bills`), an optional start date (see MAIL-023) and a scan position (see MAIL-020).
-- **USER-004** Configuration is read anew at the beginning of every scan; the only value
-  InvoiceWatcher itself writes during normal operation is the folder's scan position.
+- **USER-004** Configuration is read anew at the beginning of every scan. During normal
+  operation the mail producer writes folder scan positions and OAuth grant refresh/status
+  metadata; the registration backend writes user-owned configuration through the registration
+  capability.
 
 ### Storage
 
-- **USER-010** The storage is selected with `invoice-watcher.mail-producer.dao.mode`:
-  `firestore` (used in the deployed environments) or `jpa` (a relational database, used for local
-  development with H2). A missing or unknown value fails the startup with an error naming the
-  property.
+- **USER-010** User configuration storage is selected for both registration and the
+  mail producer with invoice-watcher.user-configuration.dao.mode: firestore or jpa. Both
+  applications in an environment use the same database. A missing or unknown value fails startup
+  naming the property. Registration changes are visible to scans begun after the commit without
+  copying or synchronizing user records between databases.
+
 - **USER-011** In `firestore` mode, users are stored in Firestore in Datastore mode, kind
   `mail-producer-users` (one entity per user, keyed by name, with the mailbox configurations
   embedded), and folders in kind `mail-producer-folders` (one entity per folder, referenced from
@@ -71,17 +78,21 @@ restart.
   before the start and their scan position is cleared. Each restart therefore picks up the last
   ten days of mail again.
 
+- **USER-014** Existing manually provisioned users are not automatically claimed by matching
+  email address. A registration collision leaves their configuration unchanged; an operator must
+  explicitly resolve it before that email address can register.
+
 ## Acceptance
 
 - **USER-004** Given a running application, when a folder is added to a user in the database,
   then the next scan scans that folder without a restart.
-- **USER-010** Given `invoice-watcher.mail-producer.dao.mode=jdbc`, when the application starts,
-  then it fails with an error naming `invoice-watcher.mail-producer.dao.mode`. Given no `dao.mode`,
+- **USER-010** Given `invoice-watcher.user-configuration.dao.mode=jdbc`, when the application starts,
+  then it fails with an error naming `invoice-watcher.user-configuration.dao.mode`. Given no `dao.mode`,
   the same.
-- **USER-013** Given `invoice-watcher.mail-producer.dao.mode=jpa` and no `ddl-auto`, when the
+- **USER-013** Given `invoice-watcher.user-configuration.dao.mode=jpa` and no `ddl-auto`, when the
   application starts, then it fails with an error naming
-  `invoice-watcher.mail-producer.dao.jpa.ddl-auto`. Given `basic.*` set without `url`, the same for
-  `invoice-watcher.mail-producer.dao.jpa.data-source.basic.url`.
+  `invoice-watcher.user-configuration.dao.jpa.ddl-auto`. Given `basic.*` set without `url`, the same for
+  `invoice-watcher.user-configuration.dao.jpa.data-source.basic.url`.
 - **USER-030** Given the mock user properties for `jan@example.com` with folders `INBOX` and
   `Invoices`, when the application starts, then the database contains exactly one user
   `jan@example.com` with these two folders.
@@ -91,17 +102,26 @@ restart.
 - **USER-031** Given the mock user exists with a scan position, when the application restarts,
   then its folders have no position and a start date ten days before the restart.
 
+- **USER-004** Given a saved mailbox change, when the next scan starts, then it uses the new
+  configuration without restarting the producer.
+- **USER-014** Given a manually provisioned email, when a new identity registers that email, then
+  registration conflicts and the existing data remains unchanged.
+- **USER-002** Given old basic-auth entities and new OAuth entities, when read, then the credential
+  types round-trip without exposing secrets or changing existing mailbox behavior.
+- **USER-010** Given either shared persistence implementation and both applications configured
+  for one database, when registration commits a change, then the producer's next query sees it
+  without an event consumer or sync job; both applications reject missing/invalid storage mode.
+
 ## Configuration
 
 Properties, their types, defaults and meaning are listed in the generated reference:
 
-- [`invoice-watcher.mail-producer.dao`](../../reference/configuration.md#invoice-watcher-mail-producer-dao)
-- [`invoice-watcher.mail-producer.dao.firestore`](../../reference/configuration.md#invoice-watcher-mail-producer-dao-firestore)
-- [`invoice-watcher.mail-producer.dao.jpa`](../../reference/configuration.md#invoice-watcher-mail-producer-dao-jpa)
+- [`invoice-watcher.user-configuration.dao`](../../reference/configuration.md#invoice-watcher-user-configuration-dao)
+- [`invoice-watcher.user-configuration.dao.firestore`](../../reference/configuration.md#invoice-watcher-user-configuration-dao-firestore)
+- [`invoice-watcher.user-configuration.dao.jpa`](../../reference/configuration.md#invoice-watcher-user-configuration-dao-jpa)
 - [`invoice-watcher.mail-producer.mock.user`](../../reference/configuration.md#invoice-watcher-mail-producer-mock-user)
 
 ## Out of scope
 
-- A user interface or API for managing users — today users are created via the mock user or
-  directly in the database.
+- Self-service management is specified by [user registration](user-registration.md).
 - Several users sharing a mailbox.

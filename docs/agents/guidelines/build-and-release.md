@@ -39,6 +39,22 @@
   `snapshot`), `release` manual on master (creates release/restoration commits and a tag, publishes images), `docs` builds and
   deploys the documentation site.
 
+- Frontend conventions provision pinned Node/pnpm locally through Gradle and use a frozen pnpm
+  lockfile. Browser checks and snapshot updates run their servers and Playwright inside a Docker
+  image version-matched to @playwright/test, with the exact workspace Node/pnpm pins. Do not install
+  browser binaries or OS libraries on the host, or duplicate frontend setup in CI actions. Run
+  containers as the host user, retain failure artifacts, mount baselines read-only for checks and
+  writable only for explicit snapshot updates. An accessible Docker daemon is required. Backend
+  tests manage Datastore through Testcontainers. Node archives are declared only in settings,
+  respecting FAIL_ON_PROJECT_REPOS.
+
+- `frontend.workspace-conventions` is applied once by `frontend/build.gradle.kts` (:frontend).
+  It owns Node/pnpm setup, the frozen workspace installation, shared UI/catalogue builds and
+  the shared browser test image. App wrappers apply `frontend.app-conventions`, declare their Angular
+  target/output and browser configuration, and consume managed tool artifacts from :frontend.
+  Never install the same workspace separately from each application. Use distinct application
+  output directories and non-conflicting browser-test servers for parallel checks.
+
 Release uses `scripts/release.py` to ask axion-release for the next version, commit the explicit
 deployment selection, invoke its local `createRelease` task, and restore development in a
 later commit. It atomically pushes both commits and the tag using the dedicated release App,

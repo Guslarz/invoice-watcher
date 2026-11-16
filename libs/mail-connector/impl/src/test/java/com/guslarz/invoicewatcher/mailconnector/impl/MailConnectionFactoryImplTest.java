@@ -1,17 +1,15 @@
 package com.guslarz.invoicewatcher.mailconnector.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException;
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionProperties;
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.BasicAuthMailCredentials;
 import com.guslarz.invoicewatcher.secret.api.Secret;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLServerSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -23,12 +21,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLServerSocket;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 /**
  * Connects to local servers that complete the TLS handshake and then never answer. Their
@@ -48,11 +47,12 @@ class MailConnectionFactoryImplTest {
   // A non-empty array is mutable, so this is not a Google-style constant.
   @SuppressWarnings("checkstyle:ConstantName")
   private static final char[] keystorePassword = "changeit".toCharArray();
+
   private static final Duration TIMEOUT = Duration.ofSeconds(1);
   private static final Duration TEST_LIMIT = Duration.ofSeconds(10);
 
   private final MailConnectionFactoryImpl uut =
-      new MailConnectionFactoryImpl(new MailConnectorImapProperties(TIMEOUT, TIMEOUT));
+      new MailConnectionFactoryImpl(new MailConnectorImapProperties(TIMEOUT, TIMEOUT), null);
   private final List<Socket> acceptedSockets = new ArrayList<>();
   private ServerSocket server;
 
@@ -76,9 +76,11 @@ class MailConnectionFactoryImplTest {
     // then
     assertThat(thrown).isInstanceOf(MailConnectionException.class);
     assertThat(causes(thrown))
-        .anySatisfy(cause -> assertThat(cause)
-            .isInstanceOf(CertificateException.class)
-            .hasMessageContaining("localhost"));
+        .anySatisfy(
+            cause ->
+                assertThat(cause)
+                    .isInstanceOf(CertificateException.class)
+                    .hasMessageContaining("localhost"));
   }
 
   @Test
@@ -112,14 +114,13 @@ class MailConnectionFactoryImplTest {
   private void connect() {
     Secret password = mock(Secret.class);
     when(password.getDecrypted()).thenReturn("password");
-    uut.createConnection(MailConnectionProperties.builder()
-        .host("localhost")
-        .port(server.getLocalPort())
-        .mailCredentials(BasicAuthMailCredentials.builder()
-            .username("user")
-            .password(password)
-            .build())
-        .build());
+    uut.createConnection(
+        MailConnectionProperties.builder()
+            .host("localhost")
+            .port(server.getLocalPort())
+            .mailCredentials(
+                BasicAuthMailCredentials.builder().username("user").password(password).build())
+            .build());
   }
 
   private static List<Throwable> causes(Throwable thrown) {
@@ -127,33 +128,38 @@ class MailConnectionFactoryImplTest {
   }
 
   private ServerSocket silentServer(ServerSocket serverSocket) {
-    Thread.ofVirtual().start(() -> {
-      try {
-        while (!serverSocket.isClosed()) {
-          Socket socket = serverSocket.accept();
-          synchronized (acceptedSockets) {
-            acceptedSockets.add(socket);
-          }
-          // A TLS server answers the handshake on the first read; the read itself never returns.
-          Thread.ofVirtual().start(() -> {
-            try {
-              socket.getInputStream().read();
-            } catch (IOException ignored) {
-              // closed by the test or the client
-            }
-          });
-        }
-      } catch (IOException ignored) {
-        // server closed after the test
-      }
-    });
+    Thread.ofVirtual()
+        .start(
+            () -> {
+              try {
+                while (!serverSocket.isClosed()) {
+                  Socket socket = serverSocket.accept();
+                  synchronized (acceptedSockets) {
+                    acceptedSockets.add(socket);
+                  }
+                  // A TLS server answers the handshake on the first read; the read itself never
+                  // returns.
+                  Thread.ofVirtual()
+                      .start(
+                          () -> {
+                            try {
+                              socket.getInputStream().read();
+                            } catch (IOException ignored) {
+                              // closed by the test or the client
+                            }
+                          });
+                }
+              } catch (IOException ignored) {
+                // server closed after the test
+              }
+            });
     return serverSocket;
   }
 
   private static SSLServerSocket tlsServerSocket(String host) throws Exception {
     KeyStore keyStore = KeyStore.getInstance("PKCS12");
     try (InputStream keyStoreFile =
-             MailConnectionFactoryImplTest.class.getResourceAsStream("/tls/" + host + ".p12")) {
+        MailConnectionFactoryImplTest.class.getResourceAsStream("/tls/" + host + ".p12")) {
       keyStore.load(keyStoreFile, keystorePassword);
     }
     KeyManagerFactory keyManagers =
@@ -161,7 +167,9 @@ class MailConnectionFactoryImplTest {
     keyManagers.init(keyStore, keystorePassword);
     SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(keyManagers.getKeyManagers(), null, null);
-    return (SSLServerSocket) sslContext.getServerSocketFactory()
-        .createServerSocket(0, 1, InetAddress.getLoopbackAddress());
+    return (SSLServerSocket)
+        sslContext
+            .getServerSocketFactory()
+            .createServerSocket(0, 1, InetAddress.getLoopbackAddress());
   }
 }

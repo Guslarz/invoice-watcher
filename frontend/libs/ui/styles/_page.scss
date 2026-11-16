@@ -1,0 +1,29 @@
+main {
+  max-width: var(--iw-page-width);
+  margin: auto;
+  padding: var(--iw-space-4) var(--iw-space-3);
+}
+h1 {
+  font-size: var(--iw-heading-size);
+  line-height: 1.2;
+}
+section,
+fieldset {
+  margin-block: var(--iw-space-3);
+  padding: var(--iw-space-3);
+  border: var(--iw-border-width) solid var(--iw-border);
+  border-radius: var(--iw-radius);
+  background: var(--iw-surface);
+}
+fieldset {
+  min-width: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--iw-space-2);
+  margin-block: var(--iw-space-2);
+}
+.muted {
+  color: var(--iw-muted);
+}

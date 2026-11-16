@@ -1,0 +1,44 @@
+<section>
+  <h2>Watched folders</h2>
+  <p>
+    Use Gmail IMAP folder names, such as INBOX. Leaving a new folder's start
+    date empty scans all its history. Start dates cannot be changed afterward.
+    Changing a folder name restarts it from its original start date.
+  </p>
+  @for (row of store.rows(); track $index; let i = $index) {
+    <fieldset>
+      <legend>Folder {{ i + 1 }}</legend>
+      <iw-field
+        label="Folder name"
+        [required]="true"
+        [value]="row.folder.name"
+        [error]="row.nameError"
+        (valueChange)="store.change(i, 'name', $event)"
+      />
+      <iw-field
+        label="Start date"
+        [type]="row.dateType"
+        [value]="row.folder.startDate"
+        [readOnly]="row.dateReadOnly"
+        [error]="row.dateError"
+        (validityChange)="store.setDateValidity(i, $event)"
+        [hint]="row.dateHint"
+        (valueChange)="store.change(i, 'startDate', $event)"
+      />
+      <iw-action [disabled]="busy()" (activated)="store.remove(i)"
+        >Remove folder</iw-action
+      >
+    </fieldset>
+  }
+  <div class="actions">
+    <iw-action
+      [disabled]="busy() || store.folders().length >= 16"
+      (activated)="store.add()"
+      >Add folder</iw-action
+    ><iw-action
+      [disabled]="busy() || store.invalid()"
+      (activated)="saved.emit()"
+      >{{ registered() ? 'Save folders' : 'Register' }}</iw-action
+    >
+  </div>
+</section>

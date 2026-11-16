@@ -27,7 +27,7 @@ class ReleaseTest(unittest.TestCase):
         self.git("config", "user.name", "Test release")
         self.git("config", "user.email", "test@example.org")
         for name in (*release.FILES, "scripts/generate-installation.py", "scripts/installation-templates/image-pull-secret.yml",
-                     "scripts/installation-templates/Dockerfile", "deployments/installations/dev.json"):
+                     "scripts/installation-templates/Dockerfile", "scripts/installation-templates/registration-route.yml", "deployments/installations/dev.json"):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, target)
@@ -36,8 +36,9 @@ class ReleaseTest(unittest.TestCase):
         app.write_text(re.sub(r"targetRevision: [^\n]+", "targetRevision: master", app.read_text()))
         template = self.root / release.TEMPLATE
         template.write_text(re.sub(r"newTag: [^\n]+", "newTag: snapshot", template.read_text()))
-        label = self.root / release.LABEL
-        label.write_text(re.sub(r"value: [^\n]+", "value: snapshot", label.read_text()))
+        for name in release.LABELS:
+            label = self.root / name
+            label.write_text(re.sub(r"value: [^\n]+", "value: snapshot", label.read_text()))
         # Generator writes all installation outputs; create their directories as the full tree does.
         for directory in ("deployments/infrastructure/environments/dev/persistent",
                           "deployments/infrastructure/environments/dev/ephemeral",
@@ -79,6 +80,12 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("newTag: 1.3.0", self.git("show", "v1.3.0:" + release.OVERLAY))
         self.assertIn("newTag: 1.3.0", self.git("show", "v1.3.0:" + release.TEMPLATE))
         self.assertIn("value: 1.3.0", self.git("show", "v1.3.0:" + release.LABEL))
+        for name in release.OVERLAYS:
+            self.assertIn("newTag: 1.3.0", self.git("show", "v1.3.0:" + name))
+            self.assertIn("newTag: snapshot", self.git("show", "origin/master:" + name))
+        for name in release.LABELS:
+            self.assertIn("value: 1.3.0", self.git("show", "v1.3.0:" + name))
+            self.assertIn("value: snapshot", self.git("show", "origin/master:" + name))
         self.assertIn("targetRevision: master", self.git("show", "origin/master:" + release.APP))
         self.assertIn("newTag: snapshot", self.git("show", "origin/master:" + release.OVERLAY))
         self.assertEqual(self.git("diff", "--name-only", self.source, "origin/master"), "")
@@ -174,7 +181,7 @@ class ReleaseTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which("kubectl"), "kubectl required for workload render")
     def test_DEPLOY_032_workload_configuration_renders(self):
         rendered = subprocess.check_output(["kubectl", "kustomize", str(ROOT / "deployments/k8s-apps/environments/dev")], text=True)
-        self.assertIn("INVOICE_WATCHER_MAIL_PRODUCER_DAO_MODE: firestore", rendered)
+        self.assertIn("INVOICE_WATCHER_USER_CONFIGURATION_DAO_MODE: firestore", rendered)
         self.assertIn("namespace: invoice-watcher-dev", rendered)
 
 

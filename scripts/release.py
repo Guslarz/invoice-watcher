@@ -12,7 +12,12 @@ APP = "deployments/k8s/cluster-init/templates/apps/invoice-watcher.yml"
 TEMPLATE = "scripts/installation-templates/mail-kustomization.yml"
 OVERLAY = "deployments/k8s-apps/workloads/mail-producer/overlays/dev/kustomization.yml"
 LABEL = "deployments/k8s-apps/workloads/mail-producer/overlays/dev/deployment-version-patch.yml"
-FILES = (APP, TEMPLATE, OVERLAY, LABEL)
+WORKLOADS = ("mail-producer", "user-registration-backend", "user-registration-frontend")
+OVERLAYS = tuple(f"deployments/k8s-apps/workloads/{name}/overlays/dev/kustomization.yml"
+                 for name in WORKLOADS)
+LABELS = tuple(f"deployments/k8s-apps/workloads/{name}/overlays/dev/deployment-version-patch.yml"
+               for name in WORKLOADS)
+FILES = (APP, TEMPLATE, *OVERLAYS, *LABELS)
 TAG = re.compile(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)")
 
 
@@ -55,8 +60,9 @@ def set_release(root, version):
     app.write_text(replace_once(app.read_text(), "targetRevision: master", "targetRevision: v" + version))
     template = root / TEMPLATE
     template.write_text(replace_once(template.read_text(), "newTag: snapshot", "newTag: " + version))
-    label = root / LABEL
-    label.write_text(replace_once(label.read_text(), "value: snapshot", "value: " + version))
+    for path in LABELS:
+        label = root / path
+        label.write_text(replace_once(label.read_text(), "value: snapshot", "value: " + version))
     subprocess.check_call([sys.executable, "scripts/generate-installation.py"], cwd=root)
 
 

@@ -1,9 +1,14 @@
 package com.guslarz.invoicewatcher.secret.aes;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.guslarz.invoicewatcher.secret.api.Secret;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
 import com.guslarz.invoicewatcher.util.aes.AesUtil;
-
+import java.util.Base64;
+import java.util.List;
+import java.util.Objects;
+import javax.crypto.SecretKey;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -13,25 +18,21 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.validation.FieldError;
 
-import javax.crypto.SecretKey;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 class SecretAesAutoConfigurationTest {
 
-  private final ApplicationContextRunner uut = new ApplicationContextRunner()
-      .withConfiguration(AutoConfigurations.of(SecretAesAutoConfiguration.class));
+  private final ApplicationContextRunner uut =
+      new ApplicationContextRunner()
+          .withConfiguration(AutoConfigurations.of(SecretAesAutoConfiguration.class));
 
   private static List<ConfigurationPropertyName> invalidProperties(Throwable startupFailure) {
     BindValidationException exception =
         (BindValidationException) NestedExceptionUtils.getRootCause(startupFailure);
     String prefix = Objects.requireNonNull(exception).getValidationErrors().getName().toString();
     return exception.getValidationErrors().getAllErrors().stream()
-        .map(error -> ConfigurationPropertyName.adapt(
-            prefix + "." + ((FieldError) error).getField(), '.'))
+        .map(
+            error ->
+                ConfigurationPropertyName.adapt(
+                    prefix + "." + ((FieldError) error).getField(), '.'))
         .toList();
   }
 
@@ -42,13 +43,14 @@ class SecretAesAutoConfigurationTest {
     ApplicationContextRunner runner = uut;
 
     // when
-    runner.run(context -> {
+    runner.run(
+        context -> {
 
-      // then
-      assertThat(context).hasFailed();
-      assertThat(invalidProperties(context.getStartupFailure())).containsExactly(
-          ConfigurationPropertyName.of("invoice-watcher.secret.aes.key"));
-    });
+          // then
+          assertThat(context).hasFailed();
+          assertThat(invalidProperties(context.getStartupFailure()))
+              .containsExactly(ConfigurationPropertyName.of("invoice-watcher.secret.aes.key"));
+        });
   }
 
   @Test
@@ -56,16 +58,40 @@ class SecretAesAutoConfigurationTest {
   void startsWithKey() {
     // given
     String key = Base64.getEncoder().encodeToString(new byte[32]);
-    ApplicationContextRunner runner = uut
-        .withPropertyValues("invoice-watcher.secret.aes.key=" + key);
+    ApplicationContextRunner runner =
+        uut.withPropertyValues("invoice-watcher.secret.aes.key=" + key);
 
     // when
-    runner.run(context -> {
+    runner.run(
+        context -> {
 
-      // then
-      assertThat(context).hasNotFailed();
-      assertThat(context).hasSingleBean(SecretFactory.class);
-    });
+          // then
+          assertThat(context).hasNotFailed();
+          assertThat(context).hasSingleBean(SecretFactory.class);
+        });
+  }
+
+  @Test
+  @DisplayName(
+      "SECRET-006 SECRET-007: incoming OAuth grants are encrypted before storage with fresh IVs")
+  void encryptsNewGrantValues() {
+    // given
+    var runner =
+        uut.withPropertyValues(
+            "invoice-watcher.secret.aes.key=" + Base64.getEncoder().encodeToString(new byte[32]));
+    runner.run(
+        context -> {
+          var factory = context.getBean(SecretFactory.class);
+          // when
+          var first = factory.fromPlaintext("fixture-refresh-token");
+          var second = factory.fromPlaintext("fixture-refresh-token");
+          // then
+          assertThat(first.getEncrypted())
+              .doesNotContain("fixture-refresh-token")
+              .isNotEqualTo(second.getEncrypted());
+          assertThat(factory.fromEncrypted(first.getEncrypted()).getDecrypted())
+              .isEqualTo("fixture-refresh-token");
+        });
   }
 
   @Test

@@ -70,13 +70,20 @@ password for IMAP once two-factor authentication is on and require an *app passw
 
 To check a value, `decrypt` prints the original password back.
 
-## 3. Add a user
+## 3. Register Gmail
+
+Use [Google sign-in and Gmail registration](registration.md) for self-service Gmail access. The
+backend encrypts the refresh grant with the same AES key used by the producer. Mailbox passwords
+are not accepted through registration. Both applications use the same user-configuration database;
+no synchronization step is needed.
+
+## Provision a password-based user manually
 
 A user is an e-mail address with one or more mailboxes, each with folders to watch — see
 [how it works](../system/index.md#what-invoicewatcher-needs-to-know).
 
-There is no user interface or API for managing users yet. Today a user can be defined in the
-application configuration as the **mock user**:
+For password authentication, a user can be defined in the producer configuration as the **mock
+user**. This provisioning path is separate from self-service Gmail registration:
 
 when [`invoice-watcher.mail-producer.mock.user.enabled`](../reference/configuration.md#invoice-watcher-mail-producer-mock-user)
 is `true`, the application creates the user at startup, or replaces it if it exists, from the
