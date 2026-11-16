@@ -1,10 +1,23 @@
 {
-  "version": 1,
-  "backends": [
-    "claude",
-    "codex",
-    "opencode"
-  ],
+  "version": 2,
+  "targets": {
+    "claude": {
+      "kind": "backend",
+      "name": "Claude Code"
+    },
+    "codex": {
+      "kind": "backend",
+      "name": "Codex CLI"
+    },
+    "opencode": {
+      "kind": "backend",
+      "name": "OpenCode V2"
+    },
+    "orca": {
+      "kind": "host",
+      "name": "Orca"
+    }
+  },
   "sources": {
     "claude-instructions": "https://code.claude.com/docs/en/memory",
     "claude-commands": "https://code.claude.com/docs/en/slash-commands",
@@ -23,13 +36,18 @@
     "claude-agent-view": "https://code.claude.com/docs/en/agent-view",
     "opencode-sdk": "https://opencode.ai/docs/build/sdk",
     "worker-live-visibility": "Local smoke evidence on 2026-11-11: Codex native task was listed by the current TUI and executed pwd/branch checks in its assigned worktree; OpenCode created, read, listed, and deleted a sibling-worktree session without a model turn. Claude native listing shape checked against the installed CLI; new launch validation uses mocked regression tests.",
-    "worktree-local-configuration": "Repository fixture tests cover explicit and Claude-hook creation, sibling-master source selection, current/future backend resource paths, preserved destinations, shared edits, ignore checks, private output, failure retention and source preservation on removal. No backend API or CLI contract changes."
+    "worktree-local-configuration": "Repository fixture tests cover explicit and Claude-hook creation, sibling-master source selection, current/future backend resource paths, preserved destinations, shared edits, ignore checks, private output, failure retention and source preservation on removal. No backend API or CLI contract changes.",
+    "orca-api": "Orca 1.4.261: bundled CLI and orchestration guides, recovery reference and installed command schemas. Worker launch, mutation replay IDs, same-chat follow-up assignment transfer, guarded release and non-forced workspace removal validated locally. orca.yaml parsed with the installed setup resolver.",
+    "development-setup-tests": "scripts/tests/test_dev_setup.py and test_worktree_prune.py: setup preflight/failure propagation and WORKTREE-007 existing-checkout linking. Runtime setup starts no services; Gradle frontend development-server arguments checked separately.",
+    "orca-worker-tests": "scripts/tests/test_orca_worker.py: ORCAWORKER-001 through ORCAWORKER-008 contract fixtures. Disposable live Codex structured-chat smoke verified workspace identity, same-conversation continuation, approval-phase cleanup refusal and release/workspace/branch removal. Terminal and other backend combinations use contract tests, not a claim of live parity."
   },
   "reviewed_inputs": {
     ".claude/settings.json": "8dbfba4d85ecdb6ded94679ec80fbd5a7bdcd6bd9ae357e7aa43e4365cc6a047",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
-    "scripts/worktree.sh": "7790c1a0a6393b496ab42d41be27d18d5124bdc034f69e559c9208b914124269",
-    "scripts/worker.py": "7542e80fcbd9a8d8631396cd608248497c6430c6c259d23e27b64b049f1445f5"
+    "scripts/worktree.sh": "f5cd6bf89aae6554ad79ae4f6889560bd813d3116102891ed2ecf8da1bde567e",
+    "scripts/worker.py": "5cf85eddeb6d8efc572e82af2851643bd55bf5f0d4b5a2fd4b1256dc69523527",
+    "scripts/dev-setup.sh": "a4b41e448a12697e03049b104384a58f47ce849631d6edf463a98ff2b6ea93f9",
+    "orca.yaml": "4496d1355d2a10853a3160a320dc6c925b72e248e96d5bee406a322698189d45"
   },
   "integrations": [
     {
@@ -40,7 +58,14 @@
         "file:AGENTS.md",
         "file:CLAUDE.md"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-instructions",
+        "codex-instructions",
+        "opencode-instructions",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "CLAUDE.md imports AGENTS.md with Claude file-import syntax.",
@@ -62,14 +87,16 @@
           "references": [
             "AGENTS.md"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Project instructions are read by the hosted backend; Orca does not replace its instruction precedence.",
+          "references": [
+            "docs/setup/local.md",
+            "AGENTS.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-instructions",
-        "codex-instructions",
-        "opencode-instructions"
-      ]
+      }
     },
     {
       "id": "command-dispatch",
@@ -78,7 +105,14 @@
         "command:dispatch",
         "file:.claude/commands/dispatch.md"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Invoke /dispatch with workflow inputs. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches.",
@@ -100,14 +134,17 @@
           "references": [
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Reuse the hosted backend workflow: /dispatch in Claude Code/OpenCode, or $iw-dispatch in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "references": [
+            "docs/setup/local.md",
+            ".claude/commands/dispatch.md",
+            ".agents/skills/iw-dispatch/SKILL.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-16",
-      "evidence": [
-        "claude-commands",
-        "codex-skills",
-        "opencode-commands"
-      ]
+      }
     },
     {
       "id": "command-implement",
@@ -116,7 +153,14 @@
         "command:implement",
         "file:.claude/commands/implement.md"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Invoke /implement with workflow inputs.",
@@ -138,14 +182,17 @@
           "references": [
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Reuse the hosted backend workflow: /implement in Claude Code/OpenCode, or $iw-implement in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "references": [
+            "docs/setup/local.md",
+            ".claude/commands/implement.md",
+            ".agents/skills/iw-implement/SKILL.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-commands",
-        "codex-skills",
-        "opencode-commands"
-      ]
+      }
     },
     {
       "id": "command-inbox",
@@ -154,7 +201,14 @@
         "command:inbox",
         "file:.claude/commands/inbox.md"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Invoke /inbox with workflow inputs.",
@@ -176,14 +230,17 @@
           "references": [
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Reuse the hosted backend workflow: /inbox in Claude Code/OpenCode, or $iw-inbox in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "references": [
+            "docs/setup/local.md",
+            ".claude/commands/inbox.md",
+            ".agents/skills/iw-inbox/SKILL.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-commands",
-        "codex-skills",
-        "opencode-commands"
-      ]
+      }
     },
     {
       "id": "command-lightweight",
@@ -192,7 +249,14 @@
         "command:lightweight",
         "file:.claude/commands/lightweight.md"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Invoke /lightweight with workflow inputs.",
@@ -214,14 +278,17 @@
           "references": [
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Reuse the hosted backend workflow: /lightweight in Claude Code/OpenCode, or $iw-lightweight in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "references": [
+            "docs/setup/local.md",
+            ".claude/commands/lightweight.md",
+            ".agents/skills/iw-lightweight/SKILL.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-commands",
-        "codex-skills",
-        "opencode-commands"
-      ]
+      }
     },
     {
       "id": "command-plan",
@@ -230,7 +297,14 @@
         "command:plan",
         "file:.claude/commands/plan.md"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Invoke /plan with workflow inputs.",
@@ -252,14 +326,17 @@
           "references": [
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Reuse the hosted backend workflow: /plan in Claude Code/OpenCode, or $iw-plan in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "references": [
+            "docs/setup/local.md",
+            ".claude/commands/plan.md",
+            ".agents/skills/iw-plan/SKILL.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-commands",
-        "codex-skills",
-        "opencode-commands"
-      ]
+      }
     },
     {
       "id": "command-metadata",
@@ -268,7 +345,14 @@
         "command-description",
         "command-arguments"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Description metadata and $ARGUMENTS expansion.",
@@ -289,14 +373,15 @@
           "references": [
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Use descriptions and workflow inputs from the hosted backend command/skill adapter. Orca displays backend-reported command and skill catalogues; it does not need a separately generated workflow definition.",
+          "references": [
+            "docs/setup/local.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-commands",
-        "codex-skills",
-        "opencode-commands"
-      ]
+      }
     },
     {
       "id": "argument-hints",
@@ -304,7 +389,14 @@
       "covers": [
         "command-argument-hint"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-commands",
+        "codex-skills",
+        "opencode-commands",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "argument-hint metadata.",
@@ -325,14 +417,15 @@
           "references": [
             ".claude/commands/plan.md"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Hints depend on the hosted backend: Orca can display session-reported hints; generated Codex skills describe inputs in their body. No separate Orca hint definition.",
+          "references": [
+            "docs/setup/local.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-commands",
-        "codex-skills",
-        "opencode-commands"
-      ]
+      }
     },
     {
       "id": "permissions",
@@ -343,7 +436,14 @@
         "permission:allow",
         "permission:deny"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-permissions",
+        "codex-rules",
+        "opencode-permissions",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Bash allow/deny settings. Commit approval remains a separate process requirement.",
@@ -367,14 +467,15 @@
             "opencode.json",
             "AGENTS.md"
           ]
+        },
+        "orca": {
+          "status": "unsupported",
+          "detail": "No translation of Claude shell rules into Orca. Hosted backend permissions and sandboxing remain authoritative; process approval is separate.",
+          "references": [
+            "docs/setup/local.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-permissions",
-        "codex-rules",
-        "opencode-permissions"
-      ]
+      }
     },
     {
       "id": "worktree-create-hook",
@@ -382,7 +483,14 @@
       "covers": [
         "hook:WorktreeCreate"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-hooks",
+        "repository-tests",
+        "worktree-local-configuration",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "WorktreeCreate calls hook-create; Claude JSON name and CLAUDE_PROJECT_DIR feed the shared script. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
@@ -404,14 +512,17 @@
           "references": [
             "scripts/worktree.sh"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Create through scripts/worktree.sh; repository setup may run dev-setup.sh after creation, but does not enforce branch layout or lifecycle checks.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worktree.sh",
+            "scripts/dev-setup.sh"
+          ]
         }
-      },
-      "reviewed": "2026-11-16",
-      "evidence": [
-        "claude-hooks",
-        "repository-tests",
-        "worktree-local-configuration"
-      ]
+      }
     },
     {
       "id": "worktree-remove-hook",
@@ -419,7 +530,13 @@
       "covers": [
         "hook:WorktreeRemove"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "claude-hooks",
+        "repository-tests",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "WorktreeRemove calls hook-remove with Claude worktree_path JSON.",
@@ -441,13 +558,17 @@
           "references": [
             "scripts/worktree.sh"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Remove through scripts/worktree.sh rm; keep archive hooks empty and automatic cleanup disabled. Native removal bypasses repository lifecycle checks.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worktree.sh",
+            "scripts/dev-setup.sh"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "claude-hooks",
-        "repository-tests"
-      ]
+      }
     },
     {
       "id": "configuration",
@@ -456,9 +577,17 @@
         "setting:$schema",
         "setting:hooks",
         "file:.claude/settings.json",
-        "file:opencode.json"
+        "file:opencode.json",
+        "file:orca.yaml"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "codex-skills",
+        "opencode-schema",
+        "repository-tests",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "native",
           "detail": "Canonical commands and settings live under .claude/. Hook definitions remain Claude-specific.",
@@ -480,14 +609,16 @@
             "scripts/sync-agent-config.py",
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "native",
+          "detail": "Committed orca.yaml declares the setup command and wait-for-setup startup policy. Base ref and external worktree visibility remain repository settings. Reuse existing backend workflow adapters.",
+          "references": [
+            "docs/setup/local.md",
+            "orca.yaml"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "codex-skills",
-        "opencode-schema",
-        "repository-tests"
-      ]
+      }
     },
     {
       "id": "worktree-script",
@@ -495,7 +626,13 @@
       "covers": [
         "worktree-script"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "repository-tests",
+        "worktree-local-configuration",
+        "orca-api"
+      ],
+      "support": {
         "claude": {
           "status": "alternative",
           "detail": "Shared script supports explicit operations and Claude hook entry points. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
@@ -516,13 +653,17 @@
           "references": [
             "scripts/worktree.sh"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Use scripts/worktree.sh for creation/removal and scripts/dev-setup.sh for existing checkouts. Orca displays the external worktrees.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worktree.sh",
+            "scripts/dev-setup.sh"
+          ]
         }
-      },
-      "reviewed": "2026-11-16",
-      "evidence": [
-        "repository-tests",
-        "worktree-local-configuration"
-      ]
+      }
     },
     {
       "id": "worker-launch",
@@ -533,9 +674,28 @@
         "worker:claude_launch_id",
         "worker:validate_session",
         "worker:verify_visible",
-        "worker:worker_api"
+        "worker:worker_api",
+        "worker:orca_executable",
+        "worker:orca_call",
+        "worker:orca_result",
+        "worker:orca_workspace",
+        "worker:orca_mutation",
+        "worker:orca_confirm",
+        "worker:verify_orca",
+        "worker:finish_orca_start",
+        "worker:start_orca"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "repository-tests",
+        "codex-app-server",
+        "claude-agent-view",
+        "opencode-sdk",
+        "worker-live-visibility",
+        "orca-api",
+        "orca-worker-tests"
+      ],
+      "support": {
         "claude": {
           "status": "alternative",
           "detail": "Uses --bg/--name/--session-id, then validates the returned job ID, conversation UUID, name and worktree in claude agents --json --all.",
@@ -556,16 +716,17 @@
           "references": [
             "scripts/worker.py"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "worker.py --host auto|orca launches one supervised Orca worker in an existing shared-script workspace and verifies assignment, backend and conversation identity. Follows Chat/CLI preference; protects status before launch and retains replay receipts.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worker.py",
+            "docs/agents/specs/orca-workers.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "repository-tests",
-        "codex-app-server",
-        "claude-agent-view",
-        "opencode-sdk",
-        "worker-live-visibility"
-      ]
+      }
     },
     {
       "id": "worker-prompts",
@@ -573,7 +734,13 @@
       "covers": [
         "worker:command_prompt"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "repository-tests",
+        "orca-api",
+        "orca-worker-tests"
+      ],
+      "support": {
         "claude": {
           "status": "alternative",
           "detail": "Launch prompt expands canonical /plan, /implement, or /lightweight template with worker-local gates.",
@@ -595,12 +762,17 @@
             "scripts/worker.py",
             "opencode.json"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Expand canonical workflow prompts in worker.py and deliver through Orca spec-file stdin. Workers report assignment outcomes at pauses without marking repository work complete or granting approval.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worker.py",
+            "docs/agents/specs/orca-workers.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "repository-tests"
-      ]
+      }
     },
     {
       "id": "worker-selection",
@@ -609,7 +781,13 @@
         "worker:opencode_model",
         "worker:sandbox_mode"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "repository-tests",
+        "orca-api",
+        "orca-worker-tests"
+      ],
+      "support": {
         "claude": {
           "status": "alternative",
           "detail": "Separate --agent and --model; named background agents require Claude >= 2.1.191 and reject unavailable selections.",
@@ -631,20 +809,36 @@
           "references": [
             "scripts/worker.py"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Orca transport maps Codex, Claude and OpenCode V2 to codex, claude and opencode2. It preserves supported model selection and uses Orca backend permissions; named-agent, sandbox, socket/fork and explicit server overrides are rejected before launch.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worker.py",
+            "docs/agents/specs/orca-workers.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "repository-tests"
-      ]
+      }
     },
     {
       "id": "worker-resume",
       "name": "Worker resume and attachment",
       "covers": [
-        "worker:resume"
+        "worker:resume",
+        "worker:resume_orca",
+        "worker:finish_orca_resume",
+        "worker:recover_orca"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "repository-tests",
+        "codex-app-server",
+        "opencode-sdk",
+        "orca-api",
+        "orca-worker-tests"
+      ],
+      "support": {
         "claude": {
           "status": "alternative",
           "detail": "Protects lifecycle before claude attach with recorded background job ID.",
@@ -665,22 +859,33 @@
           "references": [
             "scripts/worker.py"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "worker.py resume preserves repository approval gates and continues the recorded Orca conversation. Follow-up Task/Dispatch identities replace prior assignment IDs while conversation identity is verified; unresolved operations use recorded mutation IDs through recover.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worker.py",
+            "docs/agents/specs/orca-workers.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "repository-tests",
-        "codex-app-server",
-        "opencode-sdk"
-      ]
+      }
     },
     {
       "id": "worker-delete",
       "name": "Worker session deletion",
       "covers": [
-        "worker:remove_session"
+        "worker:remove_session",
+        "worker:release_orca",
+        "worker:orca_empty_workspace"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "repository-tests",
+        "orca-api",
+        "orca-worker-tests"
+      ],
+      "support": {
         "claude": {
           "status": "alternative",
           "detail": "claude rm deletes the recorded background job; saved conversation transcript is retained.",
@@ -701,12 +906,17 @@
           "references": [
             "scripts/worker.py"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "After repository lifecycle/PR/Git checks, cleanup releases only the recorded Orca assignment and removes its exact empty workspace without force or archive hooks. Retained, unknown and unrelated resources block cleanup; checkpoints preserve retry identity.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worker.py",
+            "docs/agents/specs/orca-workers.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "repository-tests"
-      ]
+      }
     },
     {
       "id": "worker-lifecycle",
@@ -714,7 +924,13 @@
       "covers": [
         "worker-lifecycle"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "repository-tests",
+        "orca-api",
+        "orca-worker-tests"
+      ],
+      "support": {
         "claude": {
           "status": "alternative",
           "detail": "Shared status file and script checks; approval gates are workflow instructions, not permission enforcement.",
@@ -738,12 +954,17 @@
             "docs/agents/protocols/parallel.md",
             "scripts/worker.py"
           ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Repository .worker-status.json remains the lifecycle authority, independent of Orca Task completion. Guarded Orca resource operations run only after cleanup eligibility. Status exposes the host and persisted identities.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worker.py",
+            "docs/agents/specs/orca-workers.md"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
-      "evidence": [
-        "repository-tests"
-      ]
+      }
     },
     {
       "id": "worker-codex-native-control",
@@ -757,7 +978,14 @@
         "worker:codex_socket",
         "worker:CodexRpcError"
       ],
-      "backends": {
+      "reviewed": "2026-11-16",
+      "evidence": [
+        "codex-app-server",
+        "repository-tests",
+        "worker-live-visibility",
+        "orca-api"
+      ],
+      "support": {
         "codex": {
           "status": "alternative",
           "detail": "Local shared-daemon WebSocket JSON-RPC over a Unix control socket; checks native interactive listing after initial user-message persistence. Requires a running UI daemon. Remote WebSocket servers are unsupported: run on the UI server host and select its local socket. UI tasks are independent; no subagent parentage is claimed.",
@@ -779,14 +1007,63 @@
           "references": [
             "scripts/worker.py"
           ]
+        },
+        "orca": {
+          "status": "unsupported",
+          "detail": "Codex-specific native control is not an Orca worker transport. Repository Codex workers continue to use their documented native transport.",
+          "references": [
+            "docs/setup/local.md",
+            "scripts/worker.py"
+          ]
         }
-      },
-      "reviewed": "2026-11-11",
+      }
+    },
+    {
+      "id": "development-setup",
+      "name": "Development setup",
+      "covers": [
+        "development-setup"
+      ],
+      "reviewed": "2026-11-16",
       "evidence": [
-        "codex-app-server",
-        "repository-tests",
-        "worker-live-visibility"
-      ]
+        "worktree-local-configuration",
+        "development-setup-tests"
+      ],
+      "support": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Run bash scripts/dev-setup.sh in the checkout: check JDK 25, Python venv/virtualenv and Docker, link local configuration, install Gradle-managed frontend dependencies. Verification remains explicit.",
+          "references": [
+            "scripts/dev-setup.sh",
+            "docs/setup/local.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Run bash scripts/dev-setup.sh in the checkout: check JDK 25, Python venv/virtualenv and Docker, link local configuration, install Gradle-managed frontend dependencies. Verification remains explicit.",
+          "references": [
+            "scripts/dev-setup.sh",
+            "docs/setup/local.md"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Run bash scripts/dev-setup.sh in the checkout: check JDK 25, Python venv/virtualenv and Docker, link local configuration, install Gradle-managed frontend dependencies. Verification remains explicit.",
+          "references": [
+            "scripts/dev-setup.sh",
+            "docs/setup/local.md"
+          ]
+        },
+        "orca": {
+          "status": "native",
+          "detail": "orca.yaml runs bash scripts/dev-setup.sh and waits for setup before starting an agent. Existing external worktrees run setup explicitly; setup prepares dependencies and local configuration without starting application services.",
+          "references": [
+            "scripts/dev-setup.sh",
+            "docs/setup/local.md",
+            "orca.yaml"
+          ]
+        }
+      }
     }
   ]
 }

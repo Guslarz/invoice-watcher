@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate backend adapters and check the reviewed harness compatibility inventory."""
+"""Generate agent adapters and check compatibility across execution backends and session hosts."""
 
 import ast
 from datetime import date
@@ -10,16 +10,18 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-MANIFEST = "config/agent-backends.json"
-MATRIX = "docs/agents/guidelines/agent-backends.md"
+MANIFEST = "config/agent-integrations.json"
+MATRIX = "docs/agents/guidelines/agent-integrations.md"
 OWNERSHIP = ".agents/generated-skills.json"
-BACKENDS = ("claude", "codex", "opencode")
 SKILL_FILE = re.compile(r"\.agents/skills/iw-[a-z0-9]+(?:-[a-z0-9]+)*/(?:SKILL\.md|agents/openai\.yaml)")
 # These functions contain the backend-facing worker operations; their bodies are reviewed below.
 WORKER_OPERATIONS = ("start", "run_backend", "command_prompt", "resume", "remove_session",
                      "opencode_model", "claude_launch_id", "validate_session", "verify_visible", "worker_api",
                      "CodexClient", "CodexRpcError", "start_native", "native_thread_check", "native_listing",
-                     "native_params", "codex_socket", "sandbox_mode")
+                     "native_params", "codex_socket", "sandbox_mode", "orca_executable", "orca_call",
+                     "orca_result", "orca_workspace", "orca_mutation", "orca_confirm", "verify_orca",
+                     "finish_orca_start", "start_orca", "resume_orca", "finish_orca_resume",
+                     "recover_orca", "release_orca", "orca_empty_workspace")
 
 
 def digest(data):
@@ -47,7 +49,7 @@ def commands(root):
         if not metadata.get("description") or not metadata.get("argument-hint"):
             raise ValueError(f"Command needs description and argument-hint: {path}")
         body = parts[2].strip()
-        # New harness interpolation needs an explicit adapter, not literal copying into a skill.
+        # New command interpolation needs an explicit adapter, not literal copying into a skill.
         if "$ARGUMENTS" not in body or "$" in body.replace("$ARGUMENTS", "") or "!`" in body:
             raise ValueError(f"Unsupported command interpolation: {path}")
         result[path.stem] = {**metadata, "body": body}
@@ -60,7 +62,7 @@ def generate(root=ROOT):
     """Preserve the OpenCode V2 command and permission representation."""
     settings = json.loads((root / ".claude/settings.json").read_text())
     if set(settings) != {"$schema", "permissions", "hooks"}:
-        raise ValueError("Review new or removed Claude settings for backend compatibility")
+        raise ValueError("Review new or removed Claude settings for integration compatibility")
     if set(settings["permissions"]) != {"allow", "deny"}:
         raise ValueError("Unsupported Claude permission category")
     permissions = []
@@ -85,10 +87,10 @@ def owned_skills(root):
     return previous
 
 
-def inventory(root, generated):
+def inventory(root, generated, targets):
     """Discover inputs independently of compatibility records so omissions fail closed."""
     found = {"instructions", "permissions", "command-description", "command-arguments",
-             "command-argument-hint", "worktree-script", "worker-lifecycle"}
+             "command-argument-hint", "worktree-script", "worker-lifecycle", "development-setup"}
     settings = json.loads((root / ".claude/settings.json").read_text())
     found.update("setting:" + key for key in settings)
     found.update("permission:" + key for key in settings.get("permissions", {}))
@@ -100,15 +102,16 @@ def inventory(root, generated):
                 relative = path.relative_to(root).as_posix()
                 if relative not in generated:
                     found.add("file:" + relative)
-    for name in ("CLAUDE.md", "AGENTS.md", "opencode.json", ".mcp.json"):
+    for name in ("CLAUDE.md", "AGENTS.md", "opencode.json", ".mcp.json", "orca.yaml"):
         if (root / name).exists():
             found.add("file:" + name)
     tree = ast.parse((root / "scripts/worker.py").read_text())
     worker_backends = next(ast.literal_eval(node.value) for node in tree.body
                            if isinstance(node, ast.Assign)
                            and any(isinstance(t, ast.Name) and t.id == "BACKENDS" for t in node.targets))
-    if set(worker_backends) != set(BACKENDS):
-        raise ValueError("Worker backend list changed; review compatibility policy")
+    execution_backends = {name for name, target in targets.items() if target["kind"] == "backend"}
+    if set(worker_backends) != execution_backends:
+        raise ValueError("Worker execution backends differ from compatibility target classifications")
     functions = {node.name for node in tree.body if isinstance(node, (ast.FunctionDef, ast.ClassDef))}
     for operation in WORKER_OPERATIONS:
         if operation not in functions:
@@ -125,15 +128,24 @@ def local_path(root, value):
 
 
 def validate(root, manifest, outputs):
-    if manifest.get("version") != 1 or manifest.get("backends") != list(BACKENDS):
-        raise ValueError("Unsupported compatibility manifest version/backends")
+    if manifest.get("version") != 2:
+        raise ValueError("Unsupported compatibility manifest version")
+    targets = manifest.get("targets")
+    if not isinstance(targets, dict) or not targets:
+        raise ValueError("Compatibility targets must define backends and hosts")
+    for name, target in targets.items():
+        if (not re.fullmatch(r"[a-z][a-z0-9-]*", name) or not isinstance(target, dict)
+                or set(target) != {"kind", "name"} or target["kind"] not in ("backend", "host")
+                or not isinstance(target["name"], str) or not target["name"].strip()
+                or any(c in target["name"] for c in "|\n\r")):
+            raise ValueError(f"Invalid compatibility target: {name}")
     covered, identifiers = set(), set()
     for entry in manifest["integrations"]:
         if entry["id"] in identifiers:
             raise ValueError(f"Duplicate compatibility integration: {entry['id']}")
         identifiers.add(entry["id"])
-        if set(entry["backends"]) != set(BACKENDS):
-            raise ValueError(f"Every backend needs a disposition: {entry['id']}")
+        if set(entry["support"]) != set(targets):
+            raise ValueError(f"Every compatibility target needs a disposition: {entry['id']}")
         date.fromisoformat(entry["reviewed"])
         if not entry["covers"] or not entry["evidence"]:
             raise ValueError(f"Missing coverage/evidence: {entry['id']}")
@@ -144,43 +156,53 @@ def validate(root, manifest, outputs):
             if feature in covered:
                 raise ValueError(f"Duplicate compatibility coverage: {feature}")
             covered.add(feature)
-        for backend, support in entry["backends"].items():
+        for target_name, support in entry["support"].items():
             if support["status"] not in ("native", "alternative", "unsupported") or not support["detail"].strip():
-                raise ValueError(f"Invalid disposition: {entry['id']}/{backend}")
+                raise ValueError(f"Invalid disposition: {entry['id']}/{target_name}")
             if not support["references"]:
-                raise ValueError(f"Missing implementation/fallback reference: {entry['id']}/{backend}")
+                raise ValueError(f"Missing implementation/fallback reference: {entry['id']}/{target_name}")
             for reference in support["references"]:
                 if reference not in outputs:
                     local_path(root, reference)
-    found = inventory(root, set(outputs) | set(owned_skills(root)))
+    found = inventory(root, set(outputs) | set(owned_skills(root)), targets)
     if found != covered:
         raise ValueError(f"Compatibility coverage differs; missing={sorted(found - covered)}, "
                          f"obsolete={sorted(covered - found)}")
     # Changes in hooks and backend CLI/API code must be reviewed, even with unchanged feature names.
-    required_reviews = {".claude/settings.json", "CLAUDE.md", "scripts/worktree.sh", "scripts/worker.py"}
+    required_reviews = {".claude/settings.json", "CLAUDE.md", "scripts/worktree.sh", "scripts/worker.py",
+                        "scripts/dev-setup.sh", "orca.yaml"}
     if set(manifest["reviewed_inputs"]) != required_reviews:
         raise ValueError("Compatibility review inputs changed")
     for name, expected in manifest["reviewed_inputs"].items():
         if digest(local_path(root, name).read_bytes()) != expected:
-            raise ValueError(f"Revalidate backend compatibility and update reviewed_inputs: {name}")
+            raise ValueError(f"Revalidate integration compatibility and update reviewed_inputs: {name}")
 
 
 def render_matrix(manifest):
-    lines = ["# Agent backend compatibility", "",
-             "<!-- Generated from config/agent-backends.json; do not edit by hand. -->", "",
+    lines = ["# Agent integration compatibility", "",
+             "<!-- Generated from config/agent-integrations.json; do not edit by hand. -->", "",
              "Support describes this repository integration, not every upstream product capability.",
-             "**native** uses a backend mechanism; **alternative** uses an implemented adapter or an",
+             "**native** uses the target's own mechanism; **alternative** uses an implemented adapter or an",
              "explicit script; **unsupported** has no repository equivalent for that feature.", "",
              "In Claude Code and OpenCode use `/plan`, `/implement`, `/lightweight`, `/inbox`, or",
              "`/dispatch`. In Codex CLI use `$iw-plan`, `$iw-implement`, `$iw-lightweight`,",
              "`$iw-inbox`, or `$iw-dispatch` followed by the same inputs, or select through `/skills`.",
-             "Codex skills require explicit invocation. Dispatch starts workers only when requested.", "",
-             "| Integration | Claude Code | Codex CLI | OpenCode V2 | Reviewed |",
-             "|-------------|-------------|-----------|-------------|----------|"]
+             "Codex skills require explicit invocation. Dispatch starts workers only when requested.",
+             "Orca is a session host, not a worker execution backend. Reuse the hosted backend's",
+             "existing commands or generated skills; no separate Orca workflow commands are needed.",
+             "Repository workers select their session host independently of their execution backend;",
+             "Orca launch, continuation and guarded cleanup preserve repository approval gates.",
+             "See [local setup](../../setup/local.md#orca-workspaces).", "",
+             "An execution backend runs the agent; a session host launches, displays and manages",
+             "its sessions. Each compatibility target below declares its role.", ""]
+    headers = ["Capability", *(f"{target['name']} ({target['kind']})"
+                               for target in manifest["targets"].values()), "Reviewed"]
+    lines += ["| " + " | ".join(headers) + " |",
+              "| " + " | ".join("---" for _ in headers) + " |"]
     for entry in manifest["integrations"]:
         cells = []
-        for backend in BACKENDS:
-            support = entry["backends"][backend]
+        for target_name in manifest["targets"]:
+            support = entry["support"][target_name]
             links = ", ".join(f"[{Path(p).name}](../../../{p})" for p in support["references"])
             cells.append(f"**{support['status']}**: {support['detail']} ({links})")
         lines.append("| " + " | ".join([entry["name"], *cells, entry["reviewed"]]) + " |")
@@ -188,15 +210,15 @@ def render_matrix(manifest):
     for key, source in manifest["sources"].items():
         lines.append(f"- **{key}**: {source}")
     lines += ["", "## Maintenance", "",
-              "Follow [ADR-0014](../adr/0014-cover-harness-integrations-across-supported-backends.md).",
+              "Follow [ADR-0014](../adr/0014-cover-agent-integrations-across-backends-and-hosts.md).",
               "Edit the compatibility manifest and canonical Claude commands/settings, then run",
               "`python3 scripts/sync-agent-config.py`. Do not edit generated skills, this matrix, or",
               "`opencode.json`. The same script with `--check` runs through documentation checks in CI.",
               "The generator-owned file list is `.agents/generated-skills.json`; regeneration removes",
               "obsolete owned files only when their previous content is intact, preserving other skills.", "",
-              "When changing backend CLI/API code, hooks, or permissions, review every affected backend",
+              "When changing agent CLI/API code, hooks, or permissions, review every affected target",
               "and update the reviewed input hashes and affected review dates in the manifest. Revalidate",
-              "official sources when upgrading a backend. Dates record evidence review, not an expiry or",
+              "official sources when upgrading a backend or host. Dates record evidence review, not an expiry or",
               "a guarantee that CI detects upstream changes. Record newly introduced configuration files",
               "and mechanisms in the same change; review is still needed for integrations outside the",
               "known directories and worker operations. Local Claude settings are developer-owned and",

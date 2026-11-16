@@ -51,11 +51,13 @@ tasks.withType<BrowserContainerTask>().configureEach {
 val frontendBrowserCheck = tasks.register<BrowserContainerTask>("frontendBrowserCheck") {
   dependsOn(frontendBuild, ":frontend:frontendCatalogueBuild")
 }
+val frontendPort = providers.gradleProperty("frontendPort").orElse("4200")
+val frontendProxyConfig = providers.gradleProperty("frontendProxyConfig").orElse("proxy.json")
 tasks.register<ManagedPnpmTask>("frontendServe") {
   dependsOn(":frontend:frontendUiBuild")
-  arguments.set(frontendApplication.angularProject.map {
-    listOf("exec", "ng", "serve", it, "--host", "127.0.0.1", "--proxy-config", "proxy.json")
-  })
+  arguments.set(frontendApplication.angularProject.zip(frontendPort) { project, port ->
+    listOf("exec", "ng", "serve", project, "--host", "127.0.0.1", "--port", port)
+  }.zip(frontendProxyConfig) { arguments, proxy -> arguments + listOf("--proxy-config", proxy) })
 }
 tasks.register<BrowserContainerTask>("frontendUpdateSnapshots") {
   dependsOn(frontendBuild, ":frontend:frontendCatalogueBuild")

@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import socket
 import struct
 import subprocess
@@ -313,6 +314,10 @@ def backend(worker):
 
 
 def sandbox_mode(record, override=None):
+    if record.get("host") == "orca":
+        if override is not None or record.get("sandbox") is not None:
+            raise ValueError("Orca inherits backend permissions; --sandbox overrides are unsupported")
+        return None
     selected = override if override is not None else record.get("sandbox")
     if backend(record) != "codex":
         if selected is not None:
@@ -389,6 +394,13 @@ def read_status(path, record=None):
             or (data["agent_policy"] != "named" and data.get("selected_agent") is not None)):
         raise ValueError("agent selection does not match its policy")
     sandbox_mode(data)
+    if data.get("host", "backend") not in ("backend", "orca"):
+        raise ValueError("invalid session host")
+    if data.get("host") == "orca":
+        info = data.get("orca")
+        if (not isinstance(info, dict) or not {"cli", "workspace", "instance", "agent"}.issubset(info)
+                or any(not isinstance(v, str) or not v for v in info.values())):
+            raise ValueError("invalid Orca worker identity")
     for field in ("transport", "native_socket", "parent_session", "server"):
         if field in data and not isinstance(data[field], str):
             raise ValueError("invalid worker transport field: " + field)
@@ -405,6 +417,9 @@ def read_status(path, record=None):
     if data.get("backend_session") is not None:
         native_id(data["backend_session"])
     if record:
+        for field in ("host", "orca"):
+            if record.get(field) != data.get(field):
+                raise ValueError("registry/status host identity conflict: " + field)
         sandbox_mode(record)
         for field in ("transport", "native_socket", "parent_session", "server"):
             if record.get(field) != data.get(field):
@@ -426,6 +441,9 @@ def write_status(directory, record, phase, **changes):
     data = previous or {key: record.get(key) for key in IDENTITY}
     data.update(backend=backend(record), schema_version=1, branch=branch_at(path),
                 agent_policy=record.get("agent_policy", "legacy-unspecified"))
+    for field in ("host", "orca"):
+        if field in record:
+            data[field] = record[field]
     if backend(record) == "codex" and "sandbox" in record:
         data["sandbox"] = sandbox_mode(record)
     for field in ("transport", "native_socket", "parent_session", "server"):
@@ -494,8 +512,277 @@ def claude_launch_id(text):
     return native_id(match[1])
 
 
+def orca_executable():
+    selected = os.environ.get("ORCA_CLI_COMMAND")
+    if not selected:
+        selected = "orca-dev" if os.environ.get("ORCA_DEV_REPO_ROOT") else (
+            "orca-ide" if sys.platform.startswith("linux") else "orca")
+    executable = shutil.which(selected)
+    if not executable:
+        raise ValueError("Orca CLI unavailable: " + selected)
+    return executable
+
+
+def orca_call(cli, arguments, *, input_text=None, cwd=None):
+    result = subprocess.run([cli, *arguments, "--environment", "local", "--json"],
+                            input=input_text, cwd=cwd, text=True, capture_output=True, timeout=120)
+    try:
+        envelope = json.loads(result.stdout)
+    except ValueError as exc:
+        raise ValueError("Orca returned no structured receipt; inspect the host before retrying") from exc
+    return envelope
+
+
+def orca_result(envelope):
+    if not envelope.get("ok"):
+        error = envelope.get("error", {})
+        raise ValueError("Orca " + str(error.get("code")) + ": " + str(error.get("message")))
+    return envelope["result"]
+
+
+def orca_workspace(record):
+    info = record["orca"]
+    workspace = orca_result(orca_call(info["cli"], ["worktree", "show", "--worktree", info["workspace"]]))["worktree"]
+    if (workspace.get("path") != record["worktree"] or workspace.get("hostId") != "local"
+            or workspace.get("identity", {}).get("key") != info["instance"]):
+        raise ValueError("Orca workspace identity/path/host mismatch")
+    return workspace
+
+
+def orca_mutation(directory, record, arguments, *, input_text=None, operation):
+    # Preserve the exact argv/body for server-issued replay IDs, even on failed receipts.
+    pending = record.get("orca_pending")
+    if pending:
+        if pending["operation"] != operation:
+            raise ValueError("Orca operation outcome pending; run worker.py recover " + record["name"])
+        arguments = pending["arguments"]
+        input_text = pending["input"]
+        request = pending.get("request")
+        if not request:
+            raise ValueError("Orca reply lost without a replay ID; inspect the host, do not launch again")
+        arguments = [*arguments, "--retry-request", request]
+    else:
+        record["orca_pending"] = {"operation": operation, "arguments": arguments, "input": input_text}
+        save(directory / (record["name"] + ".json"), record)
+    envelope = orca_call(record["orca"]["cli"], arguments, input_text=input_text, cwd=record["worktree"])
+    request = (envelope.get("result", {}).get("mutation", {}).get("requestId")
+               or envelope.get("error", {}).get("data", {}).get("orchestrationRequestId"))
+    try:
+        uuid.UUID(request)
+    except (ValueError, TypeError, AttributeError):
+        request = None
+    if request:
+        record["orca_pending"]["request"] = request
+    receipts = directory / "orca-receipts"
+    receipts.mkdir(exist_ok=True)
+    save(receipts / (record["name"] + ".json"), envelope)
+    save(directory / (record["name"] + ".json"), record)
+    return envelope
+
+
+def orca_confirm(directory, record):
+    record.pop("orca_pending", None)
+    save(directory / (record["name"] + ".json"), record)
+
+
+def verify_orca(record):
+    info = record["orca"]
+    shown = orca_result(orca_call(info["cli"], ["orchestration", "worker-show", "--dispatch", info["dispatch"], "--full"]))
+    worker = shown["worker"]
+    dispatch = shown["dispatch"]
+    if (dispatch.get("id") != info["dispatch"] or dispatch.get("taskId") != info["task"]
+            or worker.get("worktreeId") != info["workspace_id"]):
+        raise ValueError("Orca worker assignment/workspace identity mismatch")
+    conversation = dispatch.get("processIncarnation")
+    if info.get("conversation") and conversation != info["conversation"]:
+        raise ValueError("Orca conversation identity changed")
+    handle = worker.get("agentTerminalHandle")
+    if (not handle or (info.get("handle") and handle != info["handle"])
+            or (dispatch.get("assigneeHandle") and dispatch["assigneeHandle"] != handle)):
+        raise ValueError("Orca worker handle missing or changed; inspect before continuing")
+    orca_workspace(record)
+    return shown, handle
+
+
+def finish_orca_start(directory, record, envelope):
+    result = orca_result(envelope)
+    info = record["orca"] | {k: result[key] for k, key in
+                                 (("dispatch", "dispatchId"), ("task", "taskId"), ("run", "runId"))
+                             if result.get(key)}
+    if "run" not in info and result.get("run", {}).get("id"):
+        info["run"] = result["run"]["id"]
+    # Save server identities even if readiness/visibility validation fails.
+    update_identity(directory, record, orca=info)
+    if not {"dispatch", "task", "run"}.issubset(info):
+        raise ValueError("Orca receipt has incomplete assignment identity")
+    effective = result.get("launch", {}).get("effective", {})
+    if effective.get("agent") != info["agent"]:
+        raise ValueError("Orca did not confirm the requested execution backend")
+    if record.get("model") and effective.get("model") != record["model"]:
+        raise ValueError("Orca did not confirm the requested model")
+    if result.get("state") != "ready" or not result.get("keptOpen"):
+        raise ValueError("Orca worker not confirmed ready and kept open; inspect recorded receipt")
+    shown, handle = verify_orca(record)
+    surface = result.get("mode", {}).get("mode")
+    if surface not in ("structured", "terminal"):
+        raise ValueError("Orca did not report the actual worker surface")
+    update_identity(directory, record, orca=record["orca"] | {"handle": handle, "surface": surface,
+                                                          "conversation": shown["dispatch"]["processIncarnation"]})
+    orca_confirm(directory, record)
+    print(f"{record['name']}: {record['backend']} in Orca {surface}; dispatch={info['dispatch']} worktree={record['worktree']}")
+
+
+def start_orca(args, directory, kind):
+    unsupported = ("agent", "sandbox", "codex_socket", "parent_session", "server")
+    for option in unsupported:
+        if getattr(args, option, None):
+            raise ValueError("Orca host does not support --" + option.replace("_", "-") + "; no worker started")
+    if args.backend == "opencode" and args.model and "#" in args.model:
+        raise ValueError("Orca OpenCode model variants are unsupported; no worker started")
+    path = worktree_path(args.worktree)
+    if (directory / (args.name + ".json")).exists() or path in records(directory):
+        raise ValueError("worker name or worktree already registered")
+    if (Path(path) / STATUS).exists() or (Path(path) / STATUS).is_symlink():
+        raise ValueError("worktree already has status; inspect before starting")
+    if os.environ.get("ORCA_PAIRING_CODE") or os.environ.get("ORCA_ENVIRONMENT", "local") not in ("", "local"):
+        raise ValueError("Orca worker adapter supports local dispatch only")
+    cli = orca_executable()
+    runtime = orca_result(orca_call(cli, ["status"]))["runtime"]
+    required = {"orchestration.contract.v1", "orchestration.worker-keep-open.v1",
+                "orchestration.worker-launch-preferences.v1", "worktree.remove-branch-policy.v1"}
+    if not runtime.get("reachable") or not required.issubset(runtime.get("capabilities", [])):
+        raise ValueError("Orca runtime lacks required worker identity/release/branch guarantees")
+    selector = getattr(args, "orca_workspace", None) or "path:" + path
+    workspace = orca_result(orca_call(cli, ["worktree", "show", "--worktree", selector]))["worktree"]
+    if workspace.get("path") != path or workspace.get("hostId") != "local":
+        raise ValueError("Orca requires the exact local worktree")
+    instance = workspace["identity"]["key"]
+    agent = {"codex": "codex", "claude": "claude", "opencode": "opencode2"}[args.backend]
+    info = {"cli": cli, "workspace": "identity:" + instance, "workspace_id": workspace["id"],
+            "instance": instance, "agent": agent}
+    record = {"name": args.name, "backend": args.backend, "host": "orca", "orca": info,
+              "model": args.model, "selected_agent": None, "agent_policy": "default",
+              "worktree": path, "session": None, "backend_session": None, "command": args.command}
+    save(directory / (args.name + ".json"), record)
+    write_status(directory, record, "discussing" if kind == "plan" else "implementing")
+    prompt = command_prompt(args.command, args.name) + (
+        "\nYou are an Orca assignment. Preserve .worker-status.json approval gates when you pause. "
+        "Report this assignment with Orca worker_done (using its preamble Task/Dispatch IDs) "
+        "before ending your turn, including when awaiting developer approval. Report the real "
+        "outcome and pending approval phase; settling an assignment is not repository completion. "
+        "Never change the repository phase to done just to report an Orca assignment.")
+    arguments = ["orchestration", "worker-start", "--spec-file", "-", "--task-title", args.name,
+                 "--worktree", info["workspace"], "--agent", agent, "--keep-open", "--full"]
+    if args.model:
+        arguments += ["--model", args.model]
+    try:
+        receipt = orca_mutation(directory, record, arguments, input_text=prompt, operation="start")
+        finish_orca_start(directory, record, receipt)
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as exc:
+        phase = read_status(path, record)["phase"]
+        if phase not in ("awaiting-plan-approval", "awaiting-commit-review"):
+            phase = "blocked"
+        write_status(directory, record, phase, detail="Orca launch incomplete: " + str(exc))
+        raise
+
+
+def resume_orca(directory, record, sandbox=None):
+    sandbox_mode(record, sandbox)
+    if record.get("orca_pending") or record.get("session_deleted"):
+        raise ValueError("Orca operation incomplete or released; inspect/recover recorded assignment")
+    status = read_status(record["worktree"], record)
+    phase = status["phase"] if status else "discussing"
+    if phase in ("done", "awaiting-merge"):
+        phase = "discussing"
+    write_status(directory, record, phase, detail="developer resumed in Orca; approval gates remain")
+    try:
+        verify_orca(record)
+        args = ["orchestration", "send", "--to", "dispatch:" + record["orca"]["dispatch"],
+                "--subject", "Continue repository worker", "--body",
+                "Continue the same repository worker in this conversation. Read .worker-status.json "
+                "and preserve its phase and approval gates. Resume is not implementation or commit approval. "
+                "Report the current Orca assignment when pausing again.", "--full"]
+        envelope = orca_mutation(directory, record, args, operation="resume")
+        finish_orca_resume(directory, record, envelope)
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as exc:
+        phase = read_status(record["worktree"], record)["phase"]
+        write_status(directory, record, phase, detail="Orca resume incomplete: " + str(exc))
+        raise
+    print("Continued Orca worker " + record["name"] + "; approval gates remain")
+    return None
+
+
+def finish_orca_resume(directory, record, envelope):
+    result = orca_result(envelope)
+    info = record["orca"].copy()
+    for field, key in (("dispatch", "dispatchId"), ("task", "taskId"), ("run", "runId")):
+        if result.get(key):
+            info[field] = result[key]
+    # A follow-up transfers resource ownership to its new assignment, not a new conversation.
+    update_identity(directory, record, orca=info)
+    if result.get("state") not in (None, "ready"):
+        raise ValueError("Orca continuation not confirmed ready; retain receipt for recovery")
+    if result.get("state") != "ready" and not result.get("message", {}).get("id"):
+        raise ValueError("Orca continuation has no accepted message or ready assignment")
+    shown, _ = verify_orca(record)
+    if not info.get("conversation"):
+        update_identity(directory, record, orca=info | {"conversation": shown["dispatch"]["processIncarnation"]})
+    orca_confirm(directory, record)
+
+
+def recover_orca(directory, record):
+    pending = record.get("orca_pending")
+    if record.get("host") != "orca" or not pending:
+        raise ValueError("no pending Orca operation to recover")
+    status = read_status(record["worktree"], record)
+    phase = status["phase"] if status else "discussing"
+    if phase in ("done", "awaiting-merge"):
+        phase = "discussing"
+    write_status(directory, record, phase, detail="recovering recorded Orca operation; approval gates remain")
+    envelope = orca_mutation(directory, record, [], operation=pending["operation"])
+    if pending["operation"] == "start":
+        finish_orca_start(directory, record, envelope)
+    else:
+        finish_orca_resume(directory, record, envelope)
+
+
+def release_orca(record):
+    if record.get("orca_pending"):
+        raise ValueError("Orca operation outcome unresolved; cleanup blocked")
+    info = record["orca"]
+    if not info.get("dispatch"):
+        raise ValueError("Orca dispatch identity missing; cleanup blocked")
+    result = orca_result(orca_call(info["cli"], ["orchestration", "worker-release", "--dispatch", info["dispatch"], "--full"]))
+    if result.get("dispatchId") != info["dispatch"] or result.get("state") not in ("released", "already_released"):
+        raise ValueError("Orca worker release unconfirmed/retained; cleanup blocked")
+
+
+def orca_empty_workspace(record):
+    info = record["orca"]
+    result = orca_result(orca_call(info["cli"], ["worktree", "ps", "--limit", "10000"]))
+    if result.get("truncated") is not False:
+        raise ValueError("Orca resource inventory incomplete")
+    rows = [row for row in result["worktrees"] if row.get("identity", {}).get("key") == info["instance"]]
+    if (len(rows) != 1 or not isinstance(rows[0].get("agents"), list)
+            or rows[0]["agents"] or rows[0].get("liveTerminalCount") != 0
+            or rows[0].get("unverifiableTerminalCount") != 0):
+        raise ValueError("Orca workspace has agent/terminal resources or incomplete evidence; preserve unrelated sessions")
+    terminals = orca_result(orca_call(info["cli"], ["terminal", "list", "--worktree", info["workspace"]]))
+    if (not isinstance(terminals.get("terminals"), list)
+            or terminals["terminals"] or terminals.get("truncated")):
+        raise ValueError("Orca workspace has terminal tabs or incomplete evidence; cleanup blocked")
+
+
 def start(args, directory):
     kind, _ = command_parts(args.command)
+    host = getattr(args, "host", "backend")
+    if host == "auto":
+        host = "orca" if any(os.environ.get(k) for k in
+                               ("ORCA_CLI_COMMAND", "ORCA_SESSION_ID", "ORCA_TERMINAL_ID")) else "backend"
+    if host == "orca":
+        return start_orca(args, directory, kind)
+    if getattr(args, "orca_workspace", None):
+        raise ValueError("--orca-workspace requires an Orca session host")
     sandbox = sandbox_mode({"backend": args.backend}, getattr(args, "sandbox", None))
     server = getattr(args, "server", None)
     native_socket_path = getattr(args, "codex_socket", None)
@@ -680,6 +967,8 @@ def git_safety(path, merged_head=None, *, removing=True):
 
 
 def remove_session(record):
+    if record and record.get("host") == "orca":
+        return release_orca(record)
     if not record or not record.get("session"):
         return
     session = record["session"]
@@ -747,7 +1036,16 @@ def cleanup(directory, path, entry, *, session_only=False):
         raise ValueError("lifecycle changed during cleanup")
     git_safety(path, merged_head, removing=not session_only)
     if not session_only:
-        call(["git", "worktree", "remove", str(path)])
+        if record.get("host") == "orca":
+            orca_workspace(record)
+            orca_empty_workspace(record)
+            orca_result(orca_call(record["orca"]["cli"], ["worktree", "rm", "--worktree", record["orca"]["workspace"]]))
+            record["orca_workspace_removed"] = True
+            save(record_path, record)
+            if Path(path).exists():
+                raise ValueError("Orca did not remove the recorded worktree")
+        else:
+            call(["git", "worktree", "remove", str(path)])
         call(["git", "branch", "--quiet", "-D", branch])
     else:
         (Path(path) / STATUS).unlink(missing_ok=True)
@@ -761,6 +1059,13 @@ def finish_cleanup(record_path, record):
     if (not record.get("cleanup_pending") or not record.get("session_deleted")
             or Path(record["worktree"]).exists() or not branch or branch == "master"):
         raise ValueError("missing worktree without a confirmed cleanup checkpoint; inspect manually")
+    if record.get("host") == "orca" and not record.get("orca_workspace_removed"):
+        info = record["orca"]
+        envelope = orca_call(info["cli"], ["worktree", "show", "--worktree", info["workspace"]])
+        error = envelope.get("error", {})
+        if (envelope.get("ok") or error.get("code") != "selector_not_found"
+                or error.get("data", {}).get("selector") != info["workspace"]):
+            raise ValueError("Orca workspace removal unconfirmed; cleanup checkpoint retained")
     tip = call(["git", "rev-parse", "--verify", "refs/heads/" + branch], check=False)
     if tip.returncode == 0:
         if tip.stdout.strip() != record["cleanup_head"]:
@@ -825,7 +1130,10 @@ def show(path, record=None):
             return
         print(f"{name}\t{backend(identity) or '-'}\t{identity.get('selected_agent') or identity.get('agent_policy', 'legacy-unspecified')}"
               f"\t{identity.get('model') or '-'}\t{phase}\t{path}\t{git}"
-              f"\tsandbox={sandbox_mode(identity) or '-'}\ttransport={identity.get('transport', 'legacy')}"
+              f"\tsandbox={sandbox_mode(identity) or '-'}\thost={identity.get('host', 'backend')}"
+              f"\ttransport={identity.get('transport', 'orchestration' if identity.get('host') == 'orca' else 'legacy')}"
+              f"\tsession={identity.get('session') or identity.get('orca', {}).get('conversation', '-')}"
+              f"\tdispatch={identity.get('orca', {}).get('dispatch', '-')}"
               f"\tplan={(status or {}).get('plan', '-')}\tpr={(status or {}).get('pr', {}).get('url', '-')}"
               f"\t{detail}\tresume: python3 scripts/worker.py resume {name}")
     except (OSError, ValueError, KeyError, TypeError) as exc:
@@ -853,6 +1161,8 @@ def update(args, directory, record):
 
 
 def resume(directory, record, sandbox=None):
+    if record.get("host") == "orca":
+        return resume_orca(directory, record, sandbox)
     selected_sandbox = sandbox_mode(record, sandbox)
     if not record.get("session") or record.get("session_deleted"):
         raise ValueError("worker has no resumable recorded session; inspect launch/cleanup diagnostics")
@@ -894,15 +1204,18 @@ def main():
     sub = parser.add_subparsers(dest="action", required=True)
     launch = sub.add_parser("start")
     launch.add_argument("--backend", choices=BACKENDS, required=True)
+    launch.add_argument("--host", choices=("auto", "backend", "orca"), default="auto",
+                        help="auto uses Orca in Orca sessions, the backend's native interface elsewhere")
+    launch.add_argument("--orca-workspace", help="exact local Orca workspace selector when path selection is ambiguous")
     selection = launch.add_mutually_exclusive_group(required=True)
-    selection.add_argument("--agent", help="explicit named agent, separate from model")
+    selection.add_argument("--agent", help="explicit named backend agent, separate from model; backend host only")
     selection.add_argument("--default-agent", action="store_true", help="deliberately use backend default")
-    launch.add_argument("--model", help="backend model name; OpenCode provider/model[#variant]")
+    launch.add_argument("--model", help="backend model name; OpenCode provider/model (#variant requires backend host)")
     launch.add_argument("--sandbox", choices=SANDBOX_MODES,
-                        help="Codex only; default: danger-full-access (no filesystem/network sandbox)")
-    launch.add_argument("--codex-socket", help="existing shared Codex control socket; never starts a private server")
-    launch.add_argument("--parent-session", help="Codex task to fork for inherited model/configuration; creates an independent task")
-    launch.add_argument("--server", help="OpenCode shared server URL; omit to use its default service")
+                        help="backend-hosted Codex only; default: danger-full-access (no filesystem/network sandbox)")
+    launch.add_argument("--codex-socket", help="backend-hosted Codex shared control socket; never starts a private server")
+    launch.add_argument("--parent-session", help="backend-hosted Codex task to fork; creates an independent task")
+    launch.add_argument("--server", help="backend-hosted OpenCode server URL; omit to use its default service")
     launch.add_argument("--worktree", required=True)
     launch.add_argument("--name", required=True)
     launch.add_argument("--command", required=True)
@@ -913,8 +1226,8 @@ def main():
     resuming = sub.add_parser("resume")
     resuming.add_argument("name")
     resuming.add_argument("--sandbox", choices=SANDBOX_MODES,
-                          help="Codex only; persist an override for this and future resumes")
-    for action in ("status", "remove", "_codex-run", "_opencode-run"):
+                          help="backend-hosted Codex only; persist override for this and future resumes")
+    for action in ("status", "remove", "recover", "_codex-run", "_opencode-run"):
         sub.add_parser(action).add_argument("name")
     updating = sub.add_parser("update")
     updating.add_argument("name")
@@ -970,6 +1283,8 @@ def main():
                 update(args, directory, record)
             elif args.action == "resume":
                 resume_command = resume(directory, record, args.sandbox)
+            elif args.action == "recover":
+                recover_orca(directory, record)
             elif args.action == "record-session":
                 if backend(record) != "claude" or record.get("backend_session"):
                     raise ValueError("record-session only fills a missing Claude job identity")

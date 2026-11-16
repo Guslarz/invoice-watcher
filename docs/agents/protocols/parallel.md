@@ -3,8 +3,39 @@
 Use for independent topics that proceed in separate workers. Related topics that touch the same
 files are grouped on one branch. The dispatcher never implements or drafts workers' plans.
 
-Backend integration support and operational alternatives are recorded in the
-[compatibility matrix](../guidelines/agent-backends.md), maintained under ADR-0014.
+Agent integration support across execution backends and session hosts, and operational alternatives are recorded in the
+[compatibility matrix](../guidelines/agent-integrations.md), maintained under ADR-0014.
+
+## Session hosts
+
+The execution backend runs the agent; the session host launches and displays its conversation.
+`worker.py start --host auto` selects Orca in an Orca session and the backend's native interface
+elsewhere. `--host orca` and `--host backend` choose explicitly. Orca transport behavior is
+specified in [Orca-hosted repository workers](../specs/orca-workers.md).
+
+Create the worktree with the shared script first. Orca launches into that existing workspace,
+following the user's Chat/CLI preference, and keeps the worker open across approval pauses.
+If several registered Orca projects expose that checkout, pass `--orca-workspace` with the exact
+selector shown by `orca worktree show` or `orca worktree ps`; never guess a repository entry.
+Orca dispatch currently supports local workers and default backend agents. Named backend agents,
+explicit sandbox overrides, Codex source sockets/forks and explicit OpenCode servers are rejected
+before launch. Orca inherits its configured backend permissions; the adapter does not claim an
+applied sandbox override. OpenCode V2 maps to Orca's `opencode2` agent ID.
+
+Orca Run/Task/Dispatch state describes assignment delivery and resources. It never replaces the
+repository lifecycle authority. At an approval pause, report the actual Orca assignment outcome
+with `worker_done`, retaining the approval phase in .worker-status.json. `worker.py resume`
+continues the same conversation through Orca and updates assignment IDs when ownership transfers.
+A pending receipt can be replayed with `worker.py recover <name>` only using Orca's recorded
+mutation request ID. If no such ID was returned, inspect the exact assignment; never start again
+or fabricate a replay ID. Raw receipts are retained in the common Git directory's
+`agent-workers/orca-receipts/` directory.
+
+Prune still derives eligibility solely from repository status, PR reconciliation and Git checks.
+For an eligible Orca worker it requests exact guarded worker release, preserves unrelated tabs,
+and removes the exact workspace through Orca without force, archive hooks or branch deletion.
+Unknown, retained, unsettled or user-owned resources block cleanup. The repository retires the
+branch and registry after confirmed removal. Historical Orca coordination records remain.
 
 ## Dispatch and approval
 
@@ -29,7 +60,7 @@ Backend integration support and operational alternatives are recorded in the
   cleanup-eligible worker to `discussing` before opening its session. Worker instructions require
   phase updates before further work, including when resumed through native backend tools.
   Resume reuses the same session and worktree; it grants no approval by itself.
-- **WORKER-012** Codex workers use `danger-full-access` by default. `start --sandbox <mode>`
+- **WORKER-012** Backend-hosted Codex workers use `danger-full-access` by default. `start --sandbox <mode>`
   selects `read-only`, `workspace-write`, or `danger-full-access` explicitly. The launcher
   records the effective mode in the registry and lifecycle status, displays it in status
   reports, and passes it to Codex on start and resume. `resume --sandbox <mode>` changes the
@@ -42,7 +73,8 @@ Backend integration support and operational alternatives are recorded in the
   subagents, Claude uses named background sessions listed by agent view, and OpenCode uses
   sessions on the same shared service as its UI. Dispatch does not silently substitute a
   headless session when native dispatch is unavailable. Visibility verification is part of
-  launch validation and is independent of lifecycle completion.
+  launch validation and is independent of lifecycle completion. Orca-hosted workers instead
+  verify their assignment and conversation in the exact Orca workspace.
 - **WORKER-014** Native dispatch protects the assigned worktree before starting a turn and
   records the returned session identity before further execution. Resume and follow-up reuse
   that session and worktree, preserve pending approval gates, and provide a backend-native
@@ -78,7 +110,7 @@ available and sandboxed execution is desired.
    overlapping topics; never run them in parallel.
 2. Determine planning versus lightweight and select backend/agent as above. Use the developer's
    backend, otherwise the dispatcher's; ask if unknown. Do not infer an agent from a model.
-3. Create each assigned worktree with `scripts/worktree.sh new <type>/<slug>` and launch:
+3. Select the session host as above. Create each assigned worktree with `scripts/worktree.sh new <type>/<slug>` and launch:
 
    ```sh
    python3 scripts/worker.py start --backend "$BACKEND" --agent "$AGENT" --name example --worktree /absolute/path/to/worktree --command '/plan description or inbox path'
@@ -89,6 +121,7 @@ available and sandboxed execution is desired.
    Optional `--model` is independent: OpenCode accepts `provider/model#variant`,
    Claude/Codex accept their own model names. Codex currently supports default-agent operation,
    not named-agent selection; a Codex configuration profile is not an agent.
+   The following backend-native launch details apply to `--host backend`.
    Codex uses the existing local shared app-server daemon, with `danger-full-access` by default.
    Start `codex agents` first if the daemon is unavailable; `--codex-socket` selects another local
    control socket. The launcher never starts a private server or falls back to `codex exec`.
@@ -102,7 +135,9 @@ available and sandboxed execution is desired.
    using an explicit server. The URL is retained for listing, submission, resume, and cleanup.
    Neither adapter uses a private/standalone server. For lightweight work use `/lightweight`;
    `/implement` requires an already approved plan.
-4. Give the developer the worker name and `python3 scripts/worker.py resume <name>` command.
+4. For Orca-hosted workers, use the visible Orca conversation and the repository resume command;
+   the backend-native UI directions below apply to backend-hosted workers.
+   Give the developer the worker name and `python3 scripts/worker.py resume <name>` command.
    Requirements questions and approvals belong in that worker, not the dispatcher. A failed
    launch remains protected; inspect its diagnostics rather than starting another worker.
    Open Codex workers in `codex agents`, Claude workers in `claude agents`, and OpenCode workers
@@ -154,7 +189,7 @@ verify again; regenerate generated reference pages instead of resolving them by 
 - **WORKER-007** Prune and status commands do not query backend session activity. Prune derives
   eligibility only from the status file (or its absence), plus PR reconciliation and Git safety.
   Old registry entries, unavailable session-status APIs, and unregistered legacy worktrees do
-  not independently prevent cleanup. Backends are contacted for session deletion, not lifecycle
+  not independently prevent cleanup. Session hosts/backends are contacted for resource deletion, not repository lifecycle
   discovery. Short-lived script locks serialize updates, resume handoff, and cleanup; an
   attached-session lock is not a second lifecycle authority.
 - **WORKER-008** For `awaiting-merge`, prune checks the recorded repository and PR number/URL
