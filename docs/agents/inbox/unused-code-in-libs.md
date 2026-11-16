@@ -3,20 +3,11 @@ title: Remove unused code in libs
 kind: tech-debt
 area: persistence
 added: 2026-10-24
-status: ready
+status: later
 size: S
-blocked-by: []
+blocked-by: [event-processing/mail-event-source-identity]
 ---
 
-Found by grep, no callers or readers:
-- `UserDaoService.add(User)` and both implementations. The JPA one (`UserDaoServiceJpaImpl.java:35`)
-  would also save only the root, as `UserEntity.scanConfigs` cascades only `REMOVE` (verify).
-- `MailProcessorContext.scanConfig` is set but never read.
-- `MailCredentialsVisitor.visit(MailCredentials)` duplicates `BaseMailCredentialsVisitor.visit`;
-  `FirestoreMapper.java:114` calls `accept` directly. `MailCredentialsMapper` both extends
-  `BaseMailCredentialsVisitor<MailCredentialsEntity>` and implements
-  `MailCredentialsEntityVisitor<MailCredentials>` — two `visit` overloads in opposite directions.
-- `SecretFactoryAesImpl` is annotated `@ConfigurationPropertiesBinding` without being a
-  converter.
-- `MailProducerMockUserProperties.enabled` — only `@ConditionalOnBooleanProperty` uses the key.
-- `@RequiredArgsConstructor` on `SecretHelperRunner`, which has no fields.
+`MailProcessorContext.scanConfig` is set but never read. Recheck and remove it after the
+event-processing source-identity change, which owns the mail-producer handover, context,
+service and their tests. Keep this cleanup separate from that concurrent change.

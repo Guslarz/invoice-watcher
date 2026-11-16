@@ -4,11 +4,9 @@ import com.guslarz.invoicewatcher.secret.api.Secret;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
 import com.guslarz.invoicewatcher.util.aes.AesUtil;
 import javax.crypto.SecretKey;
-import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationPropertiesBinding
 public class SecretFactoryAesImpl implements SecretFactory {
 
   private final SecretKey key;

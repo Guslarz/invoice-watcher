@@ -23,11 +23,6 @@ public class UserDaoServiceJpaImpl implements UserDaoService {
   }
 
   @Override
-  public void add(User user) {
-    userRepository.save(userMapper.convert(user));
-  }
-
-  @Override
   @Transactional
   public void upsertUserByName(User user) {
     UserEntity newUserEntity = userMapper.convert(user);

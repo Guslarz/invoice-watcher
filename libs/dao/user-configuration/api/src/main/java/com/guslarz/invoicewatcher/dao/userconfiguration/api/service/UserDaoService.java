@@ -7,7 +7,5 @@ public interface UserDaoService {
 
   List<User> findAll();
 
-  void add(User user);
-
   void upsertUserByName(User user);
 }
