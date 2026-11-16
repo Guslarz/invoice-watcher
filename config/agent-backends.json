@@ -22,12 +22,13 @@
     "codex-app-server": "https://learn.chatgpt.com/docs/app-server",
     "claude-agent-view": "https://code.claude.com/docs/en/agent-view",
     "opencode-sdk": "https://opencode.ai/docs/build/sdk",
-    "worker-live-visibility": "Local smoke evidence on 2026-11-11: Codex native task was listed by the current TUI and executed pwd/branch checks in its assigned worktree; OpenCode created, read, listed, and deleted a sibling-worktree session without a model turn. Claude native listing shape checked against the installed CLI; new launch validation uses mocked regression tests."
+    "worker-live-visibility": "Local smoke evidence on 2026-11-11: Codex native task was listed by the current TUI and executed pwd/branch checks in its assigned worktree; OpenCode created, read, listed, and deleted a sibling-worktree session without a model turn. Claude native listing shape checked against the installed CLI; new launch validation uses mocked regression tests.",
+    "worktree-local-configuration": "Repository fixture tests cover explicit and Claude-hook creation, sibling-master source selection, current/future backend resource paths, preserved destinations, shared edits, ignore checks, private output, failure retention and source preservation on removal. No backend API or CLI contract changes."
   },
   "reviewed_inputs": {
     ".claude/settings.json": "8dbfba4d85ecdb6ded94679ec80fbd5a7bdcd6bd9ae357e7aa43e4365cc6a047",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
-    "scripts/worktree.sh": "ecb7996f1d63aaa43748d7d54e278eb43ca4fd7d1e44ecb3651200d395aff7a1",
+    "scripts/worktree.sh": "7790c1a0a6393b496ab42d41be27d18d5124bdc034f69e559c9208b914124269",
     "scripts/worker.py": "7542e80fcbd9a8d8631396cd608248497c6430c6c259d23e27b64b049f1445f5"
   },
   "integrations": [
@@ -384,7 +385,7 @@
       "backends": {
         "claude": {
           "status": "native",
-          "detail": "WorktreeCreate calls hook-create; Claude JSON name and CLAUDE_PROJECT_DIR feed the shared script.",
+          "detail": "WorktreeCreate calls hook-create; Claude JSON name and CLAUDE_PROJECT_DIR feed the shared script. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
           "references": [
             ".claude/settings.json",
             "scripts/worktree.sh"
@@ -392,23 +393,24 @@
         },
         "codex": {
           "status": "alternative",
-          "detail": "No native hook adapter installed. Run scripts/worktree.sh new explicitly.",
+          "detail": "No native hook adapter installed. Run scripts/worktree.sh new explicitly. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
           "references": [
             "scripts/worktree.sh"
           ]
         },
         "opencode": {
           "status": "alternative",
-          "detail": "No native hook adapter installed. Run scripts/worktree.sh new explicitly.",
+          "detail": "No native hook adapter installed. Run scripts/worktree.sh new explicitly. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
           "references": [
             "scripts/worktree.sh"
           ]
         }
       },
-      "reviewed": "2026-11-11",
+      "reviewed": "2026-11-16",
       "evidence": [
         "claude-hooks",
-        "repository-tests"
+        "repository-tests",
+        "worktree-local-configuration"
       ]
     },
     {
@@ -496,29 +498,30 @@
       "backends": {
         "claude": {
           "status": "alternative",
-          "detail": "Shared script supports explicit operations and Claude hook entry points.",
+          "detail": "Shared script supports explicit operations and Claude hook entry points. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
           "references": [
             "scripts/worktree.sh"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Shared script is required for repository worktree operations.",
+          "detail": "Shared script is required for repository worktree operations. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
           "references": [
             "scripts/worktree.sh"
           ]
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Shared script is required for repository worktree operations.",
+          "detail": "Shared script is required for repository worktree operations. New worktrees link ignored backend application-local.yml files from sibling master at matching resource paths, including future applications.",
           "references": [
             "scripts/worktree.sh"
           ]
         }
       },
-      "reviewed": "2026-11-11",
+      "reviewed": "2026-11-16",
       "evidence": [
-        "repository-tests"
+        "repository-tests",
+        "worktree-local-configuration"
       ]
     },
     {

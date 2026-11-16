@@ -16,3 +16,14 @@ dependencies {
   implementation(libs.spring.boot.plugin)
   implementation(libs.spring.dependency.management.plugin)
 }
+
+testing {
+  suites {
+    named<JvmTestSuite>("test") {
+      useJUnitJupiter()
+      dependencies {
+        implementation(libs.assertj.core)
+      }
+    }
+  }
+}

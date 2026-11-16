@@ -13,6 +13,26 @@ scripts/verify.sh         # the above + documentation checks and regenerated ref
 `scripts/verify.sh` is what every pull request must pass. It regenerates the pages in
 [Reference](../reference/index.md); commit them with the change.
 
+## Local configuration in worktrees
+
+Keep backend local configuration in the sibling `master` checkout. When you create a worktree
+with `scripts/worktree.sh new <type>/<slug>`, existing ignored `application-local.yml` files are
+linked from master into matching `apps/*/src/main/resources` directories. This also applies to
+Claude Code's worktree-creation hook; Codex and OpenCode use the explicit script.
+
+Prepare the producer and registration backend files in master using the setup instructions
+below. Future backend applications participate automatically when their master resource directory
+contains an ignored `application-local.yml` and the new checkout has the matching directory.
+The script skips missing files or an absent master checkout, and preserves any existing destination,
+including symbolic links. It does not generate configuration or credentials.
+
+Edits through a link change the shared file used by other linked worktrees. Removing a worktree
+leaves the files in master intact. Existing worktrees are not retrofitted automatically: create a
+link to the corresponding master file yourself after preserving any worktree-specific settings.
+Keep master in place while using its shared configuration. Configuration paths and diagnostics
+appear on stderr; successful creation still prints only the new checkout path on stdout.
+If linking fails, creation returns an error and retains the checkout for inspection.
+
 ## Run the mail producer
 
 1. Start Kafka:

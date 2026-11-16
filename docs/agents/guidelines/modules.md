@@ -55,5 +55,9 @@
   with a `@param` per component — it becomes the property description, and a property without
   one fails the docs build (`scripts/gen-reference.py`). Every description starts with
   "Required." or "Optional.", with the condition where it applies (e.g. "Required in `jpa` mode.").
+- After compilation, the Spring convention describes `Secret` properties as `java.lang.String`
+  in configuration metadata, matching their encrypted scalar input. Java property types and
+  runtime converters remain unchanged. Keep this adjustment in the shared convention so new
+  secret properties receive the same IDE assistance and reference representation.
 - In k8s, properties are set as env vars in `overlays/<env>/config/.env` of the app
   (`invoice-watcher.mail-producer.task.topic` → `INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC`).

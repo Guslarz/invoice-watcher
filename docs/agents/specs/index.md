@@ -13,6 +13,7 @@ checked against them, and user pages explain the same behavior in their own word
 | [SPEC-SECRET](secret-encryption.md) | Secret encryption — mailbox passwords and the `secret-helper` tool | implemented |
 | [SPEC-DEPLOY](deployment.md) | Deployment — creating an environment and running the application on GKE | implemented |
 | [SPEC-RELEASE](build-and-release.md) | Build and release — checks, snapshot images and releases | implemented |
+| [SPEC-WORKTREE](worktrees.md) | Developer worktrees — shared local backend configuration | implemented |
 
 A clause marked *(gap: …)* describes intended behavior that the code does not meet yet; the
 referenced note tracks the fix.

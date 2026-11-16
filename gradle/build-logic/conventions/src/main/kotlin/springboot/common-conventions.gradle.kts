@@ -21,6 +21,7 @@ dependencyManagement {
 // recompiled no longer has: an incremental compile would write metadata without them.
 tasks.named<JavaCompile>("compileJava") {
   options.isIncremental = false
+  doLast(SecretMetadata())
 }
 
 dependencies {
