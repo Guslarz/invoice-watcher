@@ -28,7 +28,7 @@ Module `:libs:google-oauth-api`.
 | Property | Type | Default | Description |
 |---|---|---|---|
 | `invoice-watcher.google-oauth.client-id`<br>`INVOICE_WATCHER_GOOGLE_OAUTH_CLIENT_ID` | `String` |  | Required. Google web OAuth client identifier. |
-| `invoice-watcher.google-oauth.client-secret`<br>`INVOICE_WATCHER_GOOGLE_OAUTH_CLIENT_SECRET` | `Secret` |  | Required. Google web OAuth client secret, provided outside version control. |
+| `invoice-watcher.google-oauth.client-secret`<br>`INVOICE_WATCHER_GOOGLE_OAUTH_CLIENT_SECRET` | `String` |  | Required. Google web OAuth client secret, provided outside version control. |
 
 ## `invoice-watcher.mail-connector.imap` { #invoice-watcher-mail-connector-imap }
 
@@ -49,7 +49,7 @@ Module `:libs:mail-producer-mock-user`.
 | `invoice-watcher.mail-producer.mock.user.enabled`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_ENABLED` | `Boolean` |  | Optional. Whether to create the mock user at startup. |
 | `invoice-watcher.mail-producer.mock.user.folders`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_FOLDERS` | `List<String>` |  | Required when enabled, at least one. Folders to scan, e.g. `INBOX`, `Invoices`. |
 | `invoice-watcher.mail-producer.mock.user.host`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_HOST` | `String` |  | Required when enabled. IMAP server host of the mock user's mailbox. |
-| `invoice-watcher.mail-producer.mock.user.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PASSWORD` | `Secret` |  | Required when enabled. Mailbox password, encrypted with `secret-helper encrypt`. |
+| `invoice-watcher.mail-producer.mock.user.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PASSWORD` | `String` |  | Required when enabled. Mailbox password, encrypted with `secret-helper encrypt`. |
 | `invoice-watcher.mail-producer.mock.user.port`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PORT` | `Integer` | `993` | Optional. IMAP server port (IMAPS), between 1 and 65535. |
 
 ## `invoice-watcher.mail-producer.scheduler` { #invoice-watcher-mail-producer-scheduler }

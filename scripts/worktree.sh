@@ -27,6 +27,41 @@ fetch() {
   git -C "$root" fetch --quiet origin >&2 || echo "WARN: git fetch failed, using local $base" >&2
 }
 
+# Match resource paths in the new checkout; master owns shared, ignored local configuration.
+link_local_configuration() {
+  local dir=$1 source_dir="$root/master" resources relative source destination
+  if [[ ! -d "$source_dir" ]]; then
+    echo "Local configuration: no master checkout at $source_dir; skipping" >&2
+    return 0
+  fi
+  for resources in "$dir"/apps/*/src/main/resources; do
+    [[ -d "$resources" ]] || continue
+    relative=${resources#"$dir"/}/application-local.yml
+    source="$source_dir/$relative"
+    destination="$dir/$relative"
+    if [[ -e "$destination" || -L "$destination" ]]; then
+      echo "Local configuration: preserving $destination" >&2
+      continue
+    fi
+    if [[ ! -f "$source" ]]; then
+      echo "Local configuration: no source file at $source; skipping" >&2
+      continue
+    fi
+    if ! git -C "$source_dir" check-ignore -q -- "$relative" \
+      || ! git -C "$dir" check-ignore -q -- "$relative" \
+      || [[ -n "$(git -C "$source_dir" ls-files -- "$relative")" ]] \
+      || [[ -n "$(git -C "$dir" ls-files -- "$relative")" ]]; then
+      echo "Local configuration: $relative must be ignored and untracked in both checkouts; skipping" >&2
+      continue
+    fi
+    if ! ln -s -- "$source" "$destination"; then
+      echo "Local configuration: failed to link $destination; worktree retained at $dir" >&2
+      return 1
+    fi
+    echo "Local configuration: linked $destination" >&2
+  done
+}
+
 # Creates the worktree for <type>/<slug>; progress goes to stderr, the absolute path to stdout.
 create() {
   local branch=$1 slug=${1#*/}
@@ -38,6 +73,7 @@ create() {
     || { echo "branch $branch already exists" >&2; exit 1; }
   fetch
   git -C "$root" worktree add --quiet --no-track -b "$branch" "$dir" "$base" >&2
+  link_local_configuration "$dir"
   echo "$dir"
 }
 
