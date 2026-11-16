@@ -7,12 +7,16 @@ description: "Implement an approved plan following docs/agents/protocols/impleme
 
 Resolve repository paths from the worktree root. Read `AGENTS.md` before following the workflow.
 
-Inputs: `docs/agents/projects/<slug>.md`. Use the inputs supplied with `$iw-implement`; ask for missing required inputs before dependent work.
+Inputs: `PLAN.md`. Use the inputs supplied with `$iw-implement`; ask for missing required inputs before dependent work.
 
 Follow `docs/agents/protocols/implement.md` exactly for the plan:
 
 For a registered worker, require explicit plan approval in this worker session, reuse its
 assigned worktree, and maintain lifecycle through `scripts/worker.py update`. Stop uncommitted
 at the separate commit review gate; dispatch/resume never grants approval.
+
+Existing plans under `docs/agents/projects/<slug>.md` or `docs/agents/plans/<slug>.md`
+remain valid inputs; continue using
+the recorded path without moving another worker's file or resetting its approval gate.
 
 the inputs supplied alongside this skill invocation

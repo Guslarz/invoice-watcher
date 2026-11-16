@@ -1,6 +1,7 @@
 # Protocol implement
 
-Input: an approved plan `docs/agents/projects/<slug>.md`.
+Input: an approved root `PLAN.md`. Existing plans under `docs/agents/projects/<slug>.md`
+or `docs/agents/plans/<slug>.md` remain valid inputs; use their actual recorded path.
 Output: a pull request to `master` containing spec, code, tests and docs — and no plan file.
 
 ## Steps
@@ -17,8 +18,9 @@ Output: a pull request to `master` containing spec, code, tests and docs — and
    `results/` pages that describe the changed behavior — in prose for users, without quoting or
    linking specs and ADRs. Add the ADR if planned.
 5. **Verify.** Run `scripts/verify.sh`. Fix failures; do not weaken checks.
-6. **Delete the plan file** `docs/agents/projects/<slug>.md` and the inbox note it came from,
-   if any. Git history keeps both.
+6. **Delete the plan at its actual path** and the source inbox note, if any, before commit
+   review. Git history retains a source note only if it was committed; it does not retain an
+   uncommitted plan. Specs preserve lasting behavior; ADRs preserve lasting decisions.
 7. Stop and ask the developer to review the working tree (summarize `git status` / diff stat).
    Write `.gitmessage` and set `awaiting-commit-review` for a registered worker.
    Only after approval: commit, push the branch and open a pull request to `master`

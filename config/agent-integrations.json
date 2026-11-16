@@ -163,14 +163,14 @@
       "support": {
         "claude": {
           "status": "native",
-          "detail": "Invoke /implement with workflow inputs.",
+          "detail": "Invoke /implement with workflow inputs. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
           "references": [
             ".claude/commands/implement.md"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Invoke $iw-implement with workflow inputs; generated explicit-only skill.",
+          "detail": "Invoke $iw-implement with workflow inputs; generated explicit-only skill. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
           "references": [
             ".agents/skills/iw-implement/SKILL.md",
             ".agents/skills/iw-implement/agents/openai.yaml"
@@ -178,14 +178,14 @@
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Invoke /implement; generated V2 command.",
+          "detail": "Invoke /implement; generated V2 command. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
           "references": [
             "opencode.json"
           ]
         },
         "orca": {
           "status": "alternative",
-          "detail": "Reuse the hosted backend workflow: /implement in Claude Code/OpenCode, or $iw-implement in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "detail": "Reuse the hosted backend workflow: /implement in Claude Code/OpenCode, or $iw-implement in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
           "references": [
             "docs/setup/local.md",
             ".claude/commands/implement.md",
@@ -307,14 +307,14 @@
       "support": {
         "claude": {
           "status": "native",
-          "detail": "Invoke /plan with workflow inputs.",
+          "detail": "Invoke /plan with workflow inputs. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
           "references": [
             ".claude/commands/plan.md"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Invoke $iw-plan with workflow inputs; generated explicit-only skill.",
+          "detail": "Invoke $iw-plan with workflow inputs; generated explicit-only skill. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
           "references": [
             ".agents/skills/iw-plan/SKILL.md",
             ".agents/skills/iw-plan/agents/openai.yaml"
@@ -322,14 +322,14 @@
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Invoke /plan; generated V2 command.",
+          "detail": "Invoke /plan; generated V2 command. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
           "references": [
             "opencode.json"
           ]
         },
         "orca": {
           "status": "alternative",
-          "detail": "Reuse the hosted backend workflow: /plan in Claude Code/OpenCode, or $iw-plan in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "detail": "Reuse the hosted backend workflow: /plan in Claude Code/OpenCode, or $iw-plan in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
           "references": [
             "docs/setup/local.md",
             ".claude/commands/plan.md",

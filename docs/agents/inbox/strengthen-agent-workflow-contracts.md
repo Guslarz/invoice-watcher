@@ -24,7 +24,7 @@ into independently reviewable changes during planning; coordinate overlapping pr
   commands, outcomes and skips. Current lifecycle detail is free text and can outlive the diff it
   describes. Define when changed scope requires renewed review or verification, keeping human
   approval distinct from script-managed lifecycle state. Preserve a concise handoff after the
-  temporary plan is deleted; coordinate with `clarify-temporary-plan-storage.md`.
+  temporary plan is deleted; preserve the lifecycle documented in [Protocol plan](../protocols/plan.md).
 - Show active topic assignments during inbox triage. `scripts/inbox.py ready` reads note
   frontmatter without consulting worker assignments, so an active note remains a launch
   candidate. Track normalized source-note/topic identities in workers and surface conflicts
@@ -35,6 +35,7 @@ into independently reviewable changes during planning; coordinate overlapping pr
   that the requested result has been observed.
 
 Spec-to-test coverage enforcement is already tracked in `remaining-spec-test-coverage.md`;
-do not duplicate it here. Directory terminology is tracked separately in the existing inbox and
-temporary-plan storage notes. Update affected backend definitions and generated integrations
+do not duplicate it here. Inbox directory terminology is tracked separately in
+`rename-inbox-to-backlog.md`; temporary-plan storage is documented in [Protocol plan](../protocols/plan.md).
+Update affected backend definitions and generated integrations
 together when these follow-ups change workflow commands or worker adapters.

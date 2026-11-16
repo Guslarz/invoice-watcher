@@ -303,6 +303,26 @@ class WorkerTest(RepositoryTest):
         self.assertEqual(status["phase"], "awaiting-plan-approval")
         self.assertIn("resume failed", status["detail"])
 
+    def test_WORKER_005_006_plan_paths_and_gates_survive_updates_and_resume(self):
+        for index, backend in enumerate(worker.BACKENDS):
+            path, record = self.tree("plan-path-" + str(index), backend=backend, phase="planning")
+            for plan in ("PLAN.md", "docs/agents/plans/topic.md", "docs/agents/projects/topic.md"):
+                artifact = path / plan
+                artifact.parent.mkdir(parents=True, exist_ok=True)
+                artifact.write_text("approved plan")
+                for phase in ("awaiting-plan-approval", "awaiting-commit-review"):
+                    with self.subTest(backend=backend, plan=plan, phase=phase):
+                        args = SimpleNamespace(phase=phase, plan=plan, pr=None, detail=None)
+                        worker.update(args, self.directory, record)
+                        args.plan = None
+                        args.detail = "Continuing at existing gate"
+                        worker.update(args, self.directory, record)
+                        worker.resume(self.directory, record)
+                        status = worker.read_status(path, record)
+                        self.assertEqual(status["phase"], phase)
+                        self.assertEqual(status["plan"], plan)
+                        self.assertEqual(artifact.read_text(), "approved plan")
+
     def test_WORKER_002_005_013_codex_native_launch_captures_identity_not_done(self):
         path, _ = self.tree(registered=False)
         expected = {"worktree": str(path), "name": path.name}

@@ -191,6 +191,22 @@ class OrcaWorkerTest(RepositoryTest):
             worker.resume(self.directory, record)
         self.assertFalse(any(c[0][:2] == ["orchestration", "send"] for c in self.calls))
 
+    def test_ORCAWORKER_004_005_resume_preserves_canonical_and_legacy_plan_references(self):
+        record = self.start()
+        for plan in ("PLAN.md", "docs/agents/plans/topic.md", "docs/agents/projects/topic.md"):
+            with self.subTest(plan=plan):
+                artifact = self.path / plan
+                artifact.parent.mkdir(parents=True, exist_ok=True)
+                artifact.write_text("plan awaiting approval")
+                worker.write_status(self.directory, record, "awaiting-plan-approval", plan=plan)
+                conversation = record["orca"]["conversation"]
+                worker.resume(self.directory, record)
+                status = worker.read_status(self.path, record)
+                self.assertEqual(status["plan"], plan)
+                self.assertEqual(status["phase"], "awaiting-plan-approval")
+                self.assertEqual(record["orca"]["conversation"], conversation)
+                self.assertTrue(artifact.is_file())
+
     def test_ORCAWORKER_006_unknown_start_replays_only_server_request(self):
         self.reply_state = "outcome_unknown"
         with self.assertRaisesRegex(ValueError, "not confirmed ready"):

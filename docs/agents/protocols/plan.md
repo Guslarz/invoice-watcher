@@ -2,7 +2,14 @@
 
 Use for changes that hit a planning trigger (see `AGENTS.md` → Workflow selection).
 Input: a request from the developer or a note from `docs/agents/inbox/`.
-Output: one plan file in `docs/agents/projects/`. **No production code.**
+Output: one temporary, uncommitted `PLAN.md` at the worktree root.
+**No production code.**
+
+Plan files are local working material and are not committed separately. Delete the implementation
+plan before commit review. Keep it unignored so it appears in the changes view. Documentation
+and PR checks reject tracked temporary plans; an untracked plan is allowed locally. Specs
+preserve lasting behavior; ADRs preserve lasting decisions.
+Git history does not preserve a plan that was never committed.
 
 ## Steps
 
@@ -14,7 +21,7 @@ Output: one plan file in `docs/agents/projects/`. **No production code.**
 2. Load context: affected spec(s) in `docs/agents/specs/`, `docs/agents/adr/index.md`, relevant guideline.
 3. Discuss requirements and resolve assumptions with the developer in this session. A registered
    worker sets `discussing`, then `planning`, using `python3 scripts/worker.py update <name> --phase <phase>`.
-   Copy `docs/agents/templates/plan.md` to `docs/agents/projects/<slug>.md` and fill it in:
+   Copy `docs/agents/templates/plan.md` to `PLAN.md` and fill it in:
    - **Goal** — one paragraph, user/operator perspective.
    - **Spec changes** — for each affected spec: clauses added / changed / removed, written exactly
      as they will appear in the spec. A new capability gets a new spec from
