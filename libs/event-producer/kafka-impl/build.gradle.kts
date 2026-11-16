@@ -14,6 +14,5 @@ dependencies {
   // JacksonJsonSerializer needs it; spring-kafka declares it only as optional
   runtimeOnly(libs.jackson.databind)
 
-  testImplementation(projects.libs.mailConnectorApi)
   testImplementation(libs.jackson.databind)
 }

@@ -23,3 +23,4 @@ this list is usually enough; open a record to see why.
 | [0016](0016-share-user-configuration-storage-and-daos-between-applications.md) | Share user configuration storage and DAOs between applications | accepted |
 | [0017](0017-keep-google-consent-in-registration-and-scan-gmail-with-imap-xoauth2.md) | Keep Google consent in registration and scan Gmail with IMAP XOAUTH2 | accepted |
 | [0018](0018-deploy-angular-registration-separately-and-share-ui-tokens-and-components.md) | Deploy Angular registration separately and share UI tokens and components | accepted |
+| [0019](0019-wrap-published-events-in-a-typed-versioned-envelope.md) | Wrap published events in a typed, versioned envelope | accepted |

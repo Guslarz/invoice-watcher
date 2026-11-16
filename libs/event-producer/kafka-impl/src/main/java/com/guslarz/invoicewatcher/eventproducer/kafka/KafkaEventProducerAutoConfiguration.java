@@ -41,7 +41,8 @@ public class KafkaEventProducerAutoConfiguration {
     return Map.of(
         ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.bootstrapServers(),
         ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class
+        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class,
+        JacksonJsonSerializer.ADD_TYPE_INFO_HEADERS, false
     );
   }
 }

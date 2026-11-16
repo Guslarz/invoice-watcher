@@ -133,10 +133,13 @@ property's description in the [configuration reference](../reference/configurati
 Every picked-up message becomes exactly one event on a single Kafka topic (`all-mails` in the dev
 environment), in the order the server received the messages, oldest first. The event key is
 the user's e-mail address, so all events of one user land in the same partition, in order. The
-value is a JSON object:
+value is a JSON envelope. `eventType` is `mail.ingested`, and integer `schemaVersion` is `1`.
+Together they identify the complete contract, including the payload. The `payload` object
+contains:
 
 | Field | Type | Content |
 |-------|------|---------|
+| `sourceId` | string | Deterministic identity for this message occurrence in this user’s mailbox folder |
 | `sender` | string | The `From` address, e.g. `Shop <billing@shop.example>`; `null` when the message has none |
 | `title` | string | Subject |
 | `date` | date-time | When the message was sent, in UTC; when the server received it if the message has no valid sent date |
@@ -145,14 +148,43 @@ value is a JSON object:
 
 Other multipart containers select the first supported body in MIME order; alternative bodies are
 not concatenated. Consumers must treat HTML as untrusted and sanitize it before displaying it.
-Historical events have no `contentType` field.
+Older records may also lack `contentType`.
+
+The source ID starts with `imap-v1:` followed by a SHA-256 digest derived from the owning user,
+IMAP host and port, mailbox login, folder, UIDVALIDITY and message UID. Host casing and the
+special `INBOX` name are normalized; other names are preserved exactly. Retries, resetting
+scan progress, recreating configuration and renewing credentials retain the same identity
+when those inputs stay the same. Passwords, tokens and message content never enter the hash.
+The identifier does not expose the raw mailbox login, but hashing is not encryption or an
+access-control mechanism.
+
+This identifies a message occurrence in a folder. Moving or copying mail to another folder,
+changing the mailbox endpoint or account, or a server UIDVALIDITY reset may produce a new ID
+for the same logical message. Consumers still need separate business rules to recognize the
+same invoice or payment across different messages.
+
+### Event format migration
+
+The envelope is a breaking change from the earlier flat JSON. Update consumers before
+rolling out the producer: message fields now live under `payload`, and newly published records
+have no Java class-name type headers. Dispatch using `eventType` and `schemaVersion`, ignore
+unknown additive fields, and explicitly reject unsupported types or versions.
+
+The configured topic and user key remain the same. Retained flat records are not rewritten;
+a replay can therefore contain both formats. Records without an envelope are legacy mail
+with no guaranteed source identity. Consumers must handle legacy records explicitly or stop
+with an unsupported-format outcome; they must not invent source IDs from content or Kafka
+offsets. This change does not dual-publish or automatically backfill historical records.
 
 A message counts as published once Kafka has confirmed its event. The folder's scan position is
 saved once, after every event of the folder is confirmed. If an event is not confirmed, the folder
 counts as failed: its position is saved at the last confirmed event and the next scan continues
 from there. An event can still be published twice — for example when the application stops after
 Kafka confirmed an event but before the position was saved. Delivery is therefore *at least once*:
-consumers must be ready to receive the same message twice.
+consumers must be ready to receive the same message twice and can use `payload.sourceId`
+to deduplicate the same source occurrence. If required source identity inputs are invalid,
+the message is not published; the folder fails and its position stops at the last confirmed
+event.
 
 An example of a published event is shown in [In action](../results/index.md).
 

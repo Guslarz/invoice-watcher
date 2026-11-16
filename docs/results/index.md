@@ -22,19 +22,33 @@ value:
 
 ```json
 {
-  "sender": "Example Shop <billing@shop.example>",
-  "title": "Invoice 10/2026",
-  "date": "2026-10-13T08:15:00Z",
-  "content": "<p>Invoice for October 2026</p>",
-  "contentType": "text/html"
+  "eventType": "mail.ingested",
+  "schemaVersion": 1,
+  "payload": {
+    "sourceId": "imap-v1:7eb26f99e274aed76da443ddcdef89475138481c49f8149026f23973ffbba9dc",
+    "sender": "Example Shop <billing@shop.example>",
+    "title": "Invoice 10/2026",
+    "date": "2026-10-13T08:15:00Z",
+    "content": "<p>Invoice for October 2026</p>",
+    "contentType": "text/html"
+  }
 }
 ```
 
 HTML bodies are preferred in multipart alternatives and preserved without conversion or
 sanitization (HTML is untrusted). Related resources, attachments and attached messages are
 excluded. When no supported body exists, `content` and `contentType` are both `null`; an empty
-supported body is published as an empty string with its media type. Historical events lack
-`contentType`.
+supported body is published as an empty string with its media type.
+
+The example source ID uses user `jan@example.com`, host `imap.example.com`, port 993,
+account `jan.login`, folder `INBOX`, UIDVALIDITY 7 and UID 13. Retries of that occurrence keep
+its ID; copies, moves and UIDVALIDITY resets can change it.
+
+This envelope replaces the old flat format on the same topic. Existing consumers must be
+updated before rollout; newly published records omit Java class-name headers and are identified
+by `eventType` and `schemaVersion`. Historical flat records remain unchanged, lack a guaranteed
+source ID, and may lack `contentType`. See [event format migration](../system/index.md#event-format-migration)
+for replay and consumer handling.
 
 ### Watch the topic
 

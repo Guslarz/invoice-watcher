@@ -7,5 +7,5 @@ public interface EventProducer {
    *
    * @throws EventDeliveryException if the backend does not confirm the event
    */
-  void send(String topic, Event event);
+  <T> void send(String topic, Event<T> event);
 }
