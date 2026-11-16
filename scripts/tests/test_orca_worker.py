@@ -13,8 +13,11 @@ class OrcaWorkerTest(RepositoryTest):
     def setUp(self):
         super().setUp()
         self.path, _ = self.tree(registered=False)
-        self.info = {"id": "repo::" + str(self.path), "path": str(self.path), "hostId": "local",
+        self.info = {"id": "repo::" + str(self.path), "repoId": "repo",
+                     "path": str(self.path), "hostId": "local",
                      "identity": {"key": "wt2:local:instance"}}
+        self.repo_info = {"id": "repo"}
+        self.caller_info = {"repoId": "repo", "path": str(self.repo), "hostId": "local"}
         self.worker = {"worktreeId": self.info["id"], "agentTerminalHandle": "structworker_test"}
         self.dispatch = {"id": "dispatch-test", "taskId": "task-test",
                          "processIncarnation": "structured:conversation-test"}
@@ -39,7 +42,11 @@ class OrcaWorkerTest(RepositoryTest):
                 "orchestration.contract.v1", "orchestration.worker-keep-open.v1",
                 "orchestration.worker-launch-preferences.v1", "worktree.remove-branch-policy.v1"]}})
         if args[:2] == ["worktree", "show"]:
+            if args[-1] == "current":
+                return self.envelope({"worktree": self.caller_info})
             return self.envelope({"worktree": self.info})
+        if args[:2] == ["repo", "show"]:
+            return self.envelope({"repo": self.repo_info})
         if args[:2] == ["orchestration", "worker-start"]:
             status = worker.load(self.path / worker.STATUS)
             self.assertEqual(status["host"], "orca")
@@ -104,6 +111,55 @@ class OrcaWorkerTest(RepositoryTest):
         self.assertIn("worker_done", kw["input_text"])
         self.assertNotIn("--surface", args)
         self.assertIsNone(worker.sandbox_mode(record))
+
+    def test_ORCAWORKER_001_002_duplicate_checkout_uses_callers_project(self):
+        real = self.respond
+        def duplicate(cli, args, **kw):
+            if args[:2] == ["worktree", "show"] and args[-1] == "path:" + str(self.path):
+                return self.envelope({"worktree": {**self.info, "repoId": "hidden-duplicate",
+                    "id": "hidden-duplicate::" + str(self.path)}})
+            return real(cli, args, **kw)
+        with patch.object(worker, "orca_call", side_effect=duplicate):
+            record = self.start()
+        selectors = [args[-1] for args, _ in self.calls if args[:2] == ["worktree", "show"]]
+        self.assertIn("id:repo::" + str(self.path), selectors)
+        self.assertNotIn("path:" + str(self.path), selectors)
+        self.assertEqual(record["orca"]["workspace_id"], "repo::" + str(self.path))
+
+    def test_ORCAWORKER_001_002_hidden_project_and_archived_workspace_start_nothing(self):
+        for explicit in (None, "identity:wt2:local:instance"):
+            for hidden, archived in ((True, False), (False, True)):
+                self.repo_info = {"id": "repo", "hiddenAt": 123 if hidden else None}
+                self.info["isArchived"] = archived
+                with self.subTest(explicit=explicit, hidden=hidden, archived=archived):
+                    with self.assertRaisesRegex(ValueError, "visible|hidden"):
+                        self.start(orca_workspace=explicit)
+                    self.assertFalse((self.path / worker.STATUS).exists())
+                    self.assertFalse((self.directory / "example.json").exists())
+        self.assertFalse(any(args[:2] == ["orchestration", "worker-start"] for args, _ in self.calls))
+
+    def test_ORCAWORKER_001_missing_caller_project_requires_explicit_workspace(self):
+        self.caller_info.pop("repoId")
+        with self.assertRaisesRegex(ValueError, "--orca-workspace explicitly"):
+            self.start()
+        self.assertFalse((self.path / worker.STATUS).exists())
+        record = self.start(orca_workspace="identity:wt2:local:instance")
+        self.assertEqual(record["orca"]["workspace_id"], self.info["id"])
+
+    def test_ORCAWORKER_001_wrong_project_resolution_starts_nothing(self):
+        self.info["repoId"] = "wrong-project"
+        with self.assertRaisesRegex(ValueError, "exact local worktree"):
+            self.start()
+        self.assertFalse((self.path / worker.STATUS).exists())
+
+    def test_ORCAWORKER_005_project_hidden_after_launch_blocks_resume(self):
+        record = self.start()
+        worker.write_status(self.directory, record, "awaiting-plan-approval")
+        self.repo_info["hiddenAt"] = 123
+        with self.assertRaisesRegex(ValueError, "project is hidden"):
+            worker.resume(self.directory, record)
+        self.assertEqual(worker.read_status(self.path, record)["phase"], "awaiting-plan-approval")
+        self.assertFalse(any(args[:2] == ["orchestration", "send"] for args, _ in self.calls))
 
     def test_ORCAWORKER_003_unsupported_options_cause_no_effects(self):
         for changes in ({"agent": "named"}, {"sandbox": "workspace-write"}, {"server": "http://example"},
