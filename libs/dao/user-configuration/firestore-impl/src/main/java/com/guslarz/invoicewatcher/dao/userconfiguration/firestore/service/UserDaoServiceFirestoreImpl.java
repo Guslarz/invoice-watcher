@@ -33,15 +33,6 @@ public class UserDaoServiceFirestoreImpl implements UserDaoService {
   }
 
   @Override
-  public void add(User user) {
-    User userWithFolderIds = assignFolderIds(user);
-    saveFolders(userWithFolderIds);
-
-    UserDocument doc = mapper.toUserDocument(userWithFolderIds);
-    userRepository.save(doc);
-  }
-
-  @Override
   public void upsertUserByName(User user) {
     deleteUserByName(user.name());
 

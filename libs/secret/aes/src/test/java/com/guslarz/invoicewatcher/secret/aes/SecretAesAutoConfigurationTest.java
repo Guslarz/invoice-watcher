@@ -12,9 +12,12 @@ import javax.crypto.SecretKey;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.context.properties.bind.validation.BindValidationException;
 import org.springframework.boot.context.properties.source.ConfigurationPropertyName;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.validation.FieldError;
 
@@ -113,6 +116,37 @@ class SecretAesAutoConfigurationTest {
       assertThat(secret.getEncrypted()).isEqualTo(encrypted);
       assertThat(secret.getDecrypted()).isEqualTo("password");
     });
+  }
+
+  @Test
+  @DisplayName("SECRET-003 SECRET-004: binds encrypted secret properties through the factory")
+  void bindsSecretPropertyThroughFactory() {
+    // given
+    String key = Base64.getEncoder().encodeToString(new byte[32]);
+    String encrypted = AesUtil.encrypt("password", AesUtil.decodeSecretKey(key));
+    ApplicationContextRunner runner = uut
+        .withUserConfiguration(SecretPropertyConfiguration.class)
+        .withPropertyValues(
+            "invoice-watcher.secret.aes.key=" + key,
+            "fixture.value=" + encrypted);
+
+    // when
+    runner.run(context -> {
+      // then
+      assertThat(context).hasNotFailed();
+      Secret secret = context.getBean(SecretProperty.class).value();
+      assertThat(secret.getEncrypted()).isEqualTo(encrypted);
+      assertThat(secret.getDecrypted()).isEqualTo("password");
+    });
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  @EnableConfigurationProperties(SecretProperty.class)
+  static class SecretPropertyConfiguration {
+  }
+
+  @ConfigurationProperties("fixture")
+  record SecretProperty(Secret value) {
   }
 
   @Test

@@ -5,14 +5,12 @@ import java.security.InvalidKeyException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import javax.crypto.AEADBadTagException;
-import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine;
 
 @Component
-@RequiredArgsConstructor
 public class SecretHelperRunner implements CommandLineRunner {
 
   private static final String SPRING_ARGUMENT_PREFIX = "--spring.";
