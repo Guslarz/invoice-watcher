@@ -99,10 +99,12 @@ packages accept only classic tokens:
 
 ## Configure Google sign-in and Gmail
 
-Before the first environment `up`, create the Google web OAuth client and set its encrypted secret
-as described in [Google sign-in and Gmail registration](registration.md#configure-google-once).
-The manual Google configuration survives environment teardown; environment copies of its settings
-are recreated by `up`.
+Before the first environment `up`, configure the Google Auth Platform app and Web application
+OAuth client in the Google Cloud console, reusing them if they already exist, and set the encrypted
+secret as described in [Google sign-in and Gmail registration](registration.md#configure-google-once).
+This is a manual step separate from the persistent OpenTofu bootstrap: the Google provider does
+not support this standard web-client/consent setup. The app and client have persistent lifetime
+and survive environment teardown; only environment copies of their settings are recreated by `up`.
 
 ## 4. Configure the GitHub repository
 

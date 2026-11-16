@@ -13,7 +13,7 @@ import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailScan
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailServer;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.User;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.RegistrationDao;
-import com.guslarz.invoicewatcher.googleoauth.api.GoogleOauthService;
+import com.guslarz.invoicewatcher.oauth.google.api.GoogleOauthService;
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.GmailOauthCredentials;
 import com.guslarz.invoicewatcher.secret.api.Secret;
 import java.net.URL;

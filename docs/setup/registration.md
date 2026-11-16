@@ -28,6 +28,15 @@ It does not revoke Google-side permissions. Recreating the environment does not 
 
 ## Configure Google once
 
+Configure the Google Auth Platform app and its Web application client manually once in the
+Google Cloud console. Reuse them if they already exist. The standard web-client and consent
+setup has no supported Terraform resource in the Google provider used here, so it is separate
+from OpenTofu bootstrap. Google's IAM OAuth client resource targets Workforce Identity Federation;
+the former IAP OAuth Admin API has been shut down. Neither provides this app's Google sign-in
+and Gmail client. See [Google's consent setup](https://developers.google.com/workspace/guides/configure-oauth-consent),
+[web-client setup](https://developers.google.com/workspace/guides/create-credentials) and
+[IAP API retirement](https://docs.cloud.google.com/iap/docs/deprecations/migrate-oauth-client).
+
 1. In the Google Cloud console, open **Google Auth Platform** for your project. Configure Branding
    with the application name, support email and developer contact. Supply the public application
    URLs and authorized domain where required.
@@ -56,9 +65,17 @@ It does not revoke Google-side permissions. Recreating the environment does not 
    both Java workloads after changing client settings. Changing the AES key requires re-encrypting
    the client secret and existing stored grants; automatic key rotation is not provided.
 
-Google client configuration is created manually and survives environment `down`; the environment's
-Secret Manager copies and database do not. The source GitHub secrets also survive. After `up`, use
+The Google Auth Platform app and client have a persistent lifetime and survive environment `down`;
+neither is created, replaced or destroyed by `up` or `down`. If supported Terraform management
+becomes available, they belong in the persistent layer, adopting the existing client.
+The environment's Secret Manager copies and database do not survive `down`. The source GitHub secrets also survive. After `up`, use
 the same Google client and register again. Do not put secret values in installation configuration.
+
+Both Java applications bind the client settings under `invoice-watcher.oauth.google`.
+Kubernetes injects `INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_ID` and
+`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_SECRET`; GitHub Actions inputs remain
+`GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`. Each provider has independent settings,
+so configuring Google does not select an exclusive OAuth provider.
 
 In External / Testing mode, Gmail authorization and refresh tokens expire after seven days; sign-in
 then continues through consent again. This expiry is not the intended public-production experience.

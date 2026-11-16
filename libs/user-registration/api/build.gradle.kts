@@ -5,7 +5,7 @@ plugins {
 description = "Registration contracts and public origin settings."
 
 dependencies {
-  api(projects.libs.googleOauthApi)
+  api(projects.libs.oauthGoogleApi)
 
   implementation(libs.spring.boot)
   implementation(libs.spring.boot.starter.validation)
