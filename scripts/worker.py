@@ -540,12 +540,23 @@ def orca_result(envelope):
     return envelope["result"]
 
 
+def orca_visible_project(cli, workspace):
+    repo_id = workspace.get("repoId")
+    if not repo_id or workspace.get("isArchived"):
+        raise ValueError("Orca requires an unarchived Git workspace in a visible project")
+    repo = orca_result(orca_call(cli, ["repo", "show", "--repo", "id:" + repo_id]))["repo"]
+    if repo.get("id") != repo_id or repo.get("hiddenAt"):
+        raise ValueError("Orca project is hidden or changed; select a visible project before launching or resuming")
+
+
 def orca_workspace(record):
     info = record["orca"]
     workspace = orca_result(orca_call(info["cli"], ["worktree", "show", "--worktree", info["workspace"]]))["worktree"]
     if (workspace.get("path") != record["worktree"] or workspace.get("hostId") != "local"
-            or workspace.get("identity", {}).get("key") != info["instance"]):
+            or workspace.get("identity", {}).get("key") != info["instance"]
+            or workspace.get("id") != info["workspace_id"]):
         raise ValueError("Orca workspace identity/path/host mismatch")
+    orca_visible_project(info["cli"], workspace)
     return workspace
 
 
@@ -652,10 +663,21 @@ def start_orca(args, directory, kind):
                 "orchestration.worker-launch-preferences.v1", "worktree.remove-branch-policy.v1"}
     if not runtime.get("reachable") or not required.issubset(runtime.get("capabilities", [])):
         raise ValueError("Orca runtime lacks required worker identity/release/branch guarantees")
-    selector = getattr(args, "orca_workspace", None) or "path:" + path
+    selector = getattr(args, "orca_workspace", None)
+    caller_repo = None
+    if not selector:
+        caller = orca_result(orca_call(cli, ["worktree", "show", "--worktree", "current"]))["worktree"]
+        caller_repo = caller.get("repoId")
+        if not caller_repo or caller.get("hostId") != "local":
+            raise ValueError("Orca caller has no local Git project; select --orca-workspace explicitly")
+        # The same checkout can exist under several project registrations. A path-only
+        # selector can silently pick a hidden duplicate instead of the caller's project.
+        selector = "id:" + caller_repo + "::" + path
     workspace = orca_result(orca_call(cli, ["worktree", "show", "--worktree", selector]))["worktree"]
-    if workspace.get("path") != path or workspace.get("hostId") != "local":
+    if (workspace.get("path") != path or workspace.get("hostId") != "local"
+            or (caller_repo and workspace.get("repoId") != caller_repo)):
         raise ValueError("Orca requires the exact local worktree")
+    orca_visible_project(cli, workspace)
     instance = workspace["identity"]["key"]
     agent = {"codex": "codex", "claude": "claude", "opencode": "opencode2"}[args.backend]
     info = {"cli": cli, "workspace": "identity:" + instance, "workspace_id": workspace["id"],
@@ -1206,7 +1228,7 @@ def main():
     launch.add_argument("--backend", choices=BACKENDS, required=True)
     launch.add_argument("--host", choices=("auto", "backend", "orca"), default="auto",
                         help="auto uses Orca in Orca sessions, the backend's native interface elsewhere")
-    launch.add_argument("--orca-workspace", help="exact local Orca workspace selector when path selection is ambiguous")
+    launch.add_argument("--orca-workspace", help="explicit local Orca workspace; otherwise use the caller's project")
     selection = launch.add_mutually_exclusive_group(required=True)
     selection.add_argument("--agent", help="explicit named backend agent, separate from model; backend host only")
     selection.add_argument("--default-agent", action="store_true", help="deliberately use backend default")

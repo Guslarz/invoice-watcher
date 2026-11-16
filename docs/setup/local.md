@@ -107,9 +107,12 @@ resume continues its conversation without granting approval. Orca can create a n
 within that conversation, so the launcher records updated assignment identities. The worker
 reports its current Orca assignment when pausing and retains its repository approval phase.
 
-If more than one Orca workspace matches the checkout, select the intended exact workspace from
-`orca worktree ps --json` or inspect the error's selectors with `orca worktree show`. Pass that
-selector as `--orca-workspace '<exact-selector>'` to start. Local workers and default backend
+Launch resolves the assigned checkout within the caller's Orca project registration, so a
+duplicate registration for the same path cannot capture the worker. Hidden projects and archived
+workspaces are rejected before launch and checked again before continuation. If the caller's
+project cannot be resolved, inspect `orca worktree ps --json` and `orca worktree show`, then pass
+the intended visible workspace as `--orca-workspace '<exact-selector>'`. The launcher does not
+create, unhide or delete project registrations to resolve ambiguity. Local workers and default backend
 agents are supported. Named-agent selection, explicit sandbox overrides, Codex source sockets
 or parent-task forks, explicit OpenCode servers and OpenCode model variants are rejected rather
 than dropped. Orca uses its configured backend permissions. Supported model selection uses

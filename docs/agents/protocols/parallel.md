@@ -15,8 +15,10 @@ specified in [Orca-hosted repository workers](../specs/orca-workers.md).
 
 Create the worktree with the shared script first. Orca launches into that existing workspace,
 following the user's Chat/CLI preference, and keeps the worker open across approval pauses.
-If several registered Orca projects expose that checkout, pass `--orca-workspace` with the exact
-selector shown by `orca worktree show` or `orca worktree ps`; never guess a repository entry.
+The launcher resolves the checkout within the caller's project registration and rejects hidden
+projects and archived workspaces. If the caller's project cannot be resolved, pass `--orca-workspace`
+with the intended visible workspace's exact selector from `orca worktree show` or `orca worktree ps`;
+never guess a repository entry or create a duplicate registration to bypass a selection error.
 Orca dispatch currently supports local workers and default backend agents. Named backend agents,
 explicit sandbox overrides, Codex source sockets/forks and explicit OpenCode servers are rejected
 before launch. Orca inherits its configured backend permissions; the adapter does not claim an
