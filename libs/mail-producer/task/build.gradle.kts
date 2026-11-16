@@ -13,5 +13,8 @@ dependencies {
   implementation(libs.spring.boot.autoconfigure)
   implementation(libs.spring.boot.starter.validation)
 
+  testImplementation(libs.spring.kafka)
+  testImplementation(libs.jackson.databind)
+
   implementation(libs.slf4j.api)
 }

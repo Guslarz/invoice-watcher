@@ -12,8 +12,9 @@ establish that the initiative's goals have been met.
 ## Current baseline
 
 - Mail scanning publishes one at-least-once event per picked-up message to a single Kafka topic
-  (SPEC-MAIL, SPEC-EVENT). The event key is the user e-mail address; the value contains `sender`,
-  `title`, `date`, `content` and `bodyMediaType`.
+  (SPEC-MAIL, SPEC-EVENT). The event key is the user e-mail address; the versioned envelope and
+  stable IMAP occurrence identity are defined in [event publishing](../../specs/event-publishing.md).
+  Retained legacy flat events have no guaranteed source identity.
 - Message bodies are read according to MAIL-030–032 in the
   [mail-scanning spec](../../specs/mail-scanning.md); attachments remain out of scope of scanning.
 - There are no downstream consumers, recognition modules, matching logic or payment-status storage.
@@ -105,7 +106,7 @@ included in this roadmap change.
 | Prerequisite | Why | Tracking |
 |---|---|---|
 | Read useful message content | Invoice/payment recognition needs evidence beyond sender/title/date | Implemented: MAIL-030–032 in the [mail-scanning spec](../../specs/mail-scanning.md); attachments remain a separate prerequisite |
-| Stable mail source identity in ingestion input | Source-level dedup/replay for recognition (ADR-0011) | [`mail-event-source-identity.md`](mail-event-source-identity.md) |
+| Stable mail source identity in ingestion input | Source-level dedup/replay for recognition (ADR-0011) | Implemented: EVENT-004–008 in [event publishing](../../specs/event-publishing.md) |
 | Attachment extraction/access strategy | Many invoices and remittance advices are attachments; sensitive-data handling required | [`mail-attachment-extraction.md`](mail-attachment-extraction.md) |
 | Event schema/compatibility convention for new topics/records | Safe evolution across producers/consumers (ADR-0011) | Stage 0 below |
 | Source authentication, transfer-state mapping, matching rules, currency/FX/tolerance and manual-review ownership | Safely derive paid status from accepted executed-transfer records (ADR-0012) | Specify per stage; bank e-mails are the selected initial source |
@@ -129,7 +130,10 @@ ADR-0010/0011; duplicate input processing is defined as idempotent upsert; a fai
 quarantined and replayed without manual database surgery; no raw credentials or unnecessary message
 body/attachment content appears in logs.
 
-**Tracking:** [`mail-event-source-identity.md`](mail-event-source-identity.md),
+**Progress:** mail ingestion identity and its versioned envelope are implemented (EVENT-004–008);
+Stage 0 remains incomplete. Recognition result contracts and operations remain future work.
+
+**Tracking:**
 [`event-processor-operational-foundations.md`](event-processor-operational-foundations.md).
 
 ### Stage 1 — Invoice recognition

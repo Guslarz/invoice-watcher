@@ -3,9 +3,9 @@ title: Define operational foundations for event processors
 kind: idea
 area: events
 added: 2026-11-11
-status: later
+status: ready
 size: M
-blocked-by: [event-processing/mail-event-source-identity]
+blocked-by: []
 ---
 
 Stage 0 in the [initiative roadmap](README.md). Before building recognition consumers, define

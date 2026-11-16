@@ -105,10 +105,11 @@ public class MailProducerTaskImpl implements MailProducerTask {
    * after all of them, or at the last confirmed one when handing over fails.
    */
   private void processEmailMessages(MailProcessorContext context, MailFolderMessages folderMessages) {
+    MailSourceIdentity.requireImapId(folderMessages.uidValidity());
     Long lastConfirmedUid = null;
     try {
       for (FolderMessage message : folderMessages.messages()) {
-        mailProcessorService.processMail(context, message.message());
+        mailProcessorService.processMail(context, folderMessages.uidValidity(), message);
         lastConfirmedUid = message.uid();
       }
     } finally {

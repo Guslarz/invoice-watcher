@@ -22,6 +22,8 @@ import com.guslarz.invoicewatcher.secret.api.Secret;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -195,9 +197,9 @@ class MailProducerTaskImplTest {
     uut.execute();
 
     // then
-    ArgumentCaptor<Event> events = ArgumentCaptor.forClass(Event.class);
+    ArgumentCaptor<Event<MailIngestedPayload>> events = ArgumentCaptor.captor();
     verify(eventProducer, times(3)).send(any(), events.capture());
-    MailMessage second = (MailMessage) events.getAllValues().get(1).value();
+    MailIngestedPayload second = events.getAllValues().get(1).value().payload();
     assertThat(second.sender()).isNull();
     assertThat(second.date()).isNull();
     verify(folderConfigDaoService).updateScanPosition(inbox, new ScanPosition(UID_VALIDITY, 3));
@@ -316,9 +318,12 @@ class MailProducerTaskImplTest {
     uut.execute();
 
     // then
-    ArgumentCaptor<Event> events = ArgumentCaptor.forClass(Event.class);
+    ArgumentCaptor<Event<MailIngestedPayload>> events = ArgumentCaptor.captor();
     verify(eventProducer, times(3)).send(eq("all-mails"), events.capture());
-    assertThat(events.getAllValues()).extracting(Event::value).containsExactly(html, plain, absent);
+    assertThat(events.getAllValues()).extracting(event -> event.value().payload())
+        .extracting(payload -> new MailMessage(payload.sender(), payload.title(), payload.date(),
+            payload.content(), payload.contentType()))
+        .containsExactly(html, plain, absent);
     assertThat(events.getAllValues()).extracting(Event::key).containsOnly("jan@example.com");
   }
 
@@ -341,6 +346,80 @@ class MailProducerTaskImplTest {
     assertThat(output).contains("Error scanning folder INBOX of mailbox imap.example.com of user jan@example.com");
   }
 
+  @Test
+  @DisplayName("EVENT-005: retry after confirmation but failed position save retains source identity")
+  void retainsIdentityWhenProgressSaveFails(CapturedOutput output) {
+    // given
+    givenUserWithFolders(folder("INBOX", null));
+    when(mailConnection.getEmailMessages(any())).thenReturn(messages(UID_VALIDITY, 13));
+    doThrow(new IllegalStateException("Position write failed")).doNothing()
+        .when(folderConfigDaoService).updateScanPosition(any(), any());
+
+    // when
+    uut.execute();
+    uut.execute();
+
+    // then
+    ArgumentCaptor<Event<MailIngestedPayload>> events = ArgumentCaptor.captor();
+    verify(eventProducer, times(2)).send(eq("all-mails"), events.capture());
+    assertThat(events.getAllValues().get(0).value().payload().sourceId())
+        .isEqualTo(events.getAllValues().get(1).value().payload().sourceId());
+    assertThat(output).contains("Position write failed");
+  }
+
+  @ParameterizedTest
+  @ValueSource(longs = {-1, 0, 4294967296L})
+  @DisplayName("EVENT-008: invalid first UID publishes nothing and preserves progress without leaking credentials")
+  void rejectsInvalidFirstUid(long uid, CapturedOutput output) {
+    // given
+    givenUserWithFolders(folder("INBOX", null), folder("Bills", null));
+    when(mailConnection.getEmailMessages(any())).thenReturn(messages(UID_VALIDITY, uid, 13));
+
+    // when
+    uut.execute();
+
+    // then
+    verify(eventProducer, never()).send(any(), any());
+    verify(folderConfigDaoService, never()).updateScanPosition(any(), any());
+    verify(mailConnection).getEmailMessages(any());
+    assertThat(output).contains("Missing or invalid mail source identity component")
+        .doesNotContain("jan.login");
+  }
+
+  @Test
+  @DisplayName("EVENT-008: invalid later UID stops progress at the last confirmed event")
+  void stopsAtLastValidUid() {
+    // given
+    FolderConfig inbox = folder("INBOX", null);
+    givenUserWithFolders(inbox, folder("Bills", null));
+    when(mailConnection.getEmailMessages(any()))
+        .thenReturn(messages(UID_VALIDITY, 13, 4294967296L, 15));
+
+    // when
+    uut.execute();
+
+    // then
+    verify(eventProducer).send(any(), any());
+    verify(folderConfigDaoService).updateScanPosition(inbox, new ScanPosition(UID_VALIDITY, 13));
+    verify(mailConnection).getEmailMessages(any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(longs = {-1, 0, 4294967296L})
+  @DisplayName("EVENT-008: invalid UIDVALIDITY fails the folder before publishing or changing progress")
+  void rejectsInvalidUidValidity(long uidValidity) {
+    // given
+    givenUserWithFolders(folder("INBOX", new ScanPosition(UID_VALIDITY, 12)));
+    when(mailConnection.getEmailMessages(any())).thenReturn(messages(uidValidity, 13));
+
+    // when
+    uut.execute();
+
+    // then
+    verify(eventProducer, never()).send(any(), any());
+    verify(folderConfigDaoService, never()).updateScanPosition(any(), any());
+  }
+
   private void givenUserWithFolders(FolderConfig... folders) {
     when(userDaoService.findAll()).thenReturn(List.of(user("jan@example.com", folders)));
     when(mailConnectionFactory.createConnection(any())).thenReturn(mailConnection);
@@ -356,6 +435,7 @@ class MailProducerTaskImplTest {
   private static MailScanConfig scanConfig(String host, FolderConfig... folders) {
     return MailScanConfig.builder()
         .server(MailServer.builder().host(host).port(993).build())
+        .credentials(new BasicAuthMailCredentials("jan.login", null))
         .folders(List.of(folders))
         .build();
   }

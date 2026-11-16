@@ -15,7 +15,7 @@ public class KafkaEventProducer implements EventProducer {
   private final KafkaTemplate<String, Object> kafkaTemplate;
 
   @Override
-  public void send(String topic, Event event) {
+  public <T> void send(String topic, Event<T> event) {
     try {
       kafkaTemplate.send(new ProducerRecord<>(
           topic,
