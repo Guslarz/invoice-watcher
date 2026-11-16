@@ -37,6 +37,11 @@ Developers share local backend configuration consistently across worktrees.
   A failure to create an otherwise eligible link returns a nonzero status, identifies the
   affected path, and preserves the created worktree for inspection.
 
+- **WORKTREE-007** Developers can explicitly apply the same shared-configuration linking to
+  an existing checkout. It targets the checkout containing the invoked entry point regardless
+  of current directory, preserves existing entries and uses the same source, ignore and
+  diagnostic rules as creation. Repeated invocation is safe and starts no application.
+
 ## Acceptance
 
 - **WORKTREE-001** Given worktrees alongside master, When creation runs from master, from
@@ -60,6 +65,11 @@ Developers share local backend configuration consistently across worktrees.
   contains only the new absolute checkout path. Given an injected link-creation error, When
   creation runs, Then it fails with a path diagnostic on stderr and retains the worktree.
 
+- **WORKTREE-007** Given an existing checkout with missing local configuration, When the
+  explicit linking entry point runs twice from another directory, Then eligible files link
+  from sibling master, existing entries remain unchanged and no configuration values appear
+  in output.
+
 ## Configuration
 
 Local backend configuration uses ignored `application-local.yml` files in application resource
@@ -67,5 +77,5 @@ directories. No additional application properties or command options are require
 
 ## Out of scope
 
-- Sharing other ignored files, generating application configuration, retrofitting existing
-  worktrees, changing runtime properties or cleanup eligibility.
+- Sharing other ignored files, generating application configuration, changing runtime properties
+  or cleanup eligibility.

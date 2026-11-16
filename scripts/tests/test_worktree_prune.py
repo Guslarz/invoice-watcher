@@ -134,6 +134,26 @@ class LocalConfigurationTest(unittest.TestCase):
         self.assertEqual(self.local(self.repo).read_text(), "shared edit")
         self.assertEqual(self.local(self.root / "hook").read_text(), "shared edit")
 
+    def test_WORKTREE_007_existing_checkout_links_idempotently_from_another_directory(self):
+        self.create("existing")
+        checkout = self.root / "existing"
+        self.local(self.repo).write_text(self.secret)
+        script = checkout / "scripts/worktree.sh"
+        for _ in range(2):
+            result = subprocess.run(["bash", str(script), "link-config"], cwd="/tmp",
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn(self.secret, result.stdout + result.stderr)
+            self.assertEqual(result.stdout, "")
+            self.assertTrue(self.local(checkout).is_symlink())
+            self.assertEqual(self.local(checkout).read_text(), self.secret)
+        self.local(checkout).unlink()
+        self.local(checkout).write_text("private existing configuration")
+        result = subprocess.run(["bash", str(script), "link-config"], cwd="/tmp",
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.local(checkout).read_text(), "private existing configuration")
+
     def test_WORKTREE_002_source_symlink_is_accepted(self):
         source = self.root / "shared.yml"
         source.write_text(self.secret)

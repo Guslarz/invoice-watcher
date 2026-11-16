@@ -4,7 +4,6 @@ services:
     hostname: kafka
     ports:
       - '9092:9092'
-      - '9093:9093'
     env_file: ../../deployments/k8s-apps/workloads/kafka/overlays/dev/config/.env
     environment:
       # the app runs on the host, not in the cluster

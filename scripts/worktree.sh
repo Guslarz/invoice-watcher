@@ -10,6 +10,7 @@ base=origin/master
 usage() {
   cat >&2 <<EOF
 usage: $0 new <type>/<slug>    create ../<slug> on a new branch from $base
+       $0 link-config          link shared local configuration into this checkout
        $0 list                 show worktrees and what they are waiting for
        $0 rm <slug>            remove ../<slug> and its branch (only when nothing would be lost)
        $0 prune [--all]        remove safe worktrees with done/merged or missing lifecycle status
@@ -102,6 +103,7 @@ branch_for_name() {
 
 case "${1:-}" in
   new) [[ $# -eq 2 ]] || usage; create "$2" ;;
+  link-config) [[ $# -eq 1 ]] || usage; link_local_configuration "$(cd "$(dirname "$0")/.." && pwd)" ;;
   list) list ;;
   rm) [[ $# -eq 2 ]] || usage; remove "$root/${2##*/}" ;;
   prune) [[ $# -eq 1 || ( $# -eq 2 && "$2" == --all ) ]] || usage; prune "${2:-}" ;;

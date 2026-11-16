@@ -1,4 +1,4 @@
-"""Backend compatibility coverage, generated skill lifecycle, and adapter regression tests."""
+"""Agent integration compatibility coverage, generated skill lifecycle, and adapter regression tests."""
 
 import importlib.util
 import json
@@ -22,7 +22,7 @@ class AgentConfigTest(unittest.TestCase):
             shutil.copytree(uut.ROOT / directory, self.root / directory)
         manifest = json.loads((uut.ROOT / uut.MANIFEST).read_text())
         references = {reference for entry in manifest["integrations"]
-                      for backend in entry["backends"].values() for reference in backend["references"]}
+                      for support in entry["support"].values() for reference in support["references"]}
         references.update(manifest["reviewed_inputs"])
         references.update((uut.MANIFEST, "opencode.json"))
         for name in references:
@@ -81,23 +81,69 @@ class AgentConfigTest(unittest.TestCase):
 
     def test_changed_hook_definition_requires_new_review_even_with_same_event(self):
         self.settings(lambda s: s["hooks"]["WorktreeCreate"][0]["hooks"][0].update(command="other"))
-        with self.assertRaisesRegex(ValueError, "Revalidate backend compatibility"):
+        with self.assertRaisesRegex(ValueError, "Revalidate integration compatibility"):
+            uut.synchronize(self.root)
+
+    def test_changed_setup_script_requires_review(self):
+        path = self.root / "scripts/dev-setup.sh"
+        path.write_text(path.read_text() + "\necho changed\n")
+        with self.assertRaisesRegex(ValueError, "Revalidate integration compatibility"):
             uut.synchronize(self.root)
 
     def test_changed_worker_code_requires_review(self):
         path = self.root / "scripts/worker.py"
         path.write_text(path.read_text().replace('"--bg"', '"--background"'))
-        with self.assertRaisesRegex(ValueError, "Revalidate backend compatibility"):
+        with self.assertRaisesRegex(ValueError, "Revalidate integration compatibility"):
             uut.synchronize(self.root)
 
-    def test_missing_backend_disposition_fails(self):
-        self.manifest(lambda m: m["integrations"][0]["backends"].pop("codex"))
-        with self.assertRaisesRegex(ValueError, "Every backend"):
+    def test_missing_target_disposition_fails(self):
+        self.manifest(lambda m: m["integrations"][0]["support"].pop("codex"))
+        with self.assertRaisesRegex(ValueError, "Every compatibility target"):
             uut.synchronize(self.root)
 
-    def test_unsupported_backend_requires_reason(self):
+    def test_orca_has_a_disposition_in_every_existing_table_row(self):
+        manifest = json.loads((self.root / uut.MANIFEST).read_text())
+        self.assertEqual({name for name, target in manifest["targets"].items()
+                          if target["kind"] == "backend"}, {"claude", "codex", "opencode"})
+        self.assertEqual(manifest["targets"]["orca"]["kind"], "host")
+        matrix = (self.root / uut.MATRIX).read_text()
+        self.assertIn("| OpenCode V2 (backend) | Orca (host) | Reviewed |", matrix)
+        for entry in manifest["integrations"]:
+            self.assertIn("orca", entry["support"])
+            if entry["id"].startswith("command-"):
+                self.assertEqual(entry["support"]["orca"]["status"], "alternative")
+        self.manifest(lambda m: m["integrations"][0]["support"].pop("orca"))
+        with self.assertRaisesRegex(ValueError, "Every compatibility target"):
+            uut.synchronize(self.root)
+
+    def test_changed_orca_setup_hook_requires_review(self):
+        path = self.root / "orca.yaml"
+        path.write_text(path.read_text().replace("bash scripts/dev-setup.sh", "echo changed"))
+        with self.assertRaisesRegex(ValueError, "Revalidate integration compatibility"):
+            uut.synchronize(self.root)
+
+    def test_orca_cannot_be_added_as_a_worker_execution_backend(self):
+        self.manifest(lambda m: m["targets"]["orca"].update(kind="backend"))
+        with self.assertRaisesRegex(ValueError, "Worker execution backends differ"):
+            uut.synchronize(self.root)
+
+    def test_target_kind_and_required_support_are_validated(self):
+        original = (self.root / uut.MANIFEST).read_text()
+        for kind in ("harness", "", None):
+            with self.subTest(kind=kind):
+                (self.root / uut.MANIFEST).write_text(original)
+                self.manifest(lambda m: m["targets"]["orca"].update(kind=kind))
+                with self.assertRaisesRegex(ValueError, "Invalid compatibility target: orca"):
+                    uut.synchronize(self.root)
+        (self.root / uut.MANIFEST).write_text(original)
+        self.manifest(lambda m: m["targets"].update(
+            another={"kind": "host", "name": "Another host"}))
+        with self.assertRaisesRegex(ValueError, "Every compatibility target"):
+            uut.synchronize(self.root)
+
+    def test_unsupported_target_requires_reason(self):
         def change(manifest):
-            support = manifest["integrations"][0]["backends"]["codex"]
+            support = manifest["integrations"][0]["support"]["codex"]
             support.update(status="unsupported", detail=" ")
         self.manifest(change)
         with self.assertRaisesRegex(ValueError, "Invalid disposition"):
@@ -109,7 +155,7 @@ class AgentConfigTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "missing=.*command:review"):
             uut.synchronize(self.root)
 
-    def test_new_harness_file_requires_coverage(self):
+    def test_new_integration_file_requires_coverage(self):
         path = self.root / ".codex/config.toml"
         path.parent.mkdir()
         path.write_text('model = "example"\n')

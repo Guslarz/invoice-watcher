@@ -27,11 +27,166 @@ The script skips missing files or an absent master checkout, and preserves any e
 including symbolic links. It does not generate configuration or credentials.
 
 Edits through a link change the shared file used by other linked worktrees. Removing a worktree
-leaves the files in master intact. Existing worktrees are not retrofitted automatically: create a
-link to the corresponding master file yourself after preserving any worktree-specific settings.
+leaves the files in master intact. Existing worktrees can apply the same linking rules with
+`bash scripts/worktree.sh link-config`, or as part of the setup command below. Existing files
+and links remain untouched; preserve worktree-specific settings before replacing them.
 Keep master in place while using its shared configuration. Configuration paths and diagnostics
 appear on stderr; successful creation still prints only the new checkout path on stdout.
 If linking fails, creation returns an error and retains the checkout for inspection.
+
+## Orca workspaces
+
+Use JDK 25, Python 3 with venv support (or virtualenv), Git and Docker with Compose accessible
+to your user.
+From a checkout, run:
+
+```shell
+bash scripts/dev-setup.sh --check   # check prerequisites only
+bash scripts/dev-setup.sh          # also link local config and install frontend dependencies
+bash scripts/dev-setup.sh --warm-up # additionally compile Java main/test classes
+```
+
+The script always targets its own checkout, even when invoked by absolute path from another
+working directory. It checks Java and Docker access and probes Python venv creation in a temporary
+directory. It reuses Gradle's pinned Node/pnpm toolchain and frozen dependency installation.
+Repeated runs preserve existing local configuration. Missing configuration files are reported
+with their source paths; prepare them in master using the instructions on this page. Credentials
+are unnecessary for compiling the project. Setup does not start applications, Kafka or H2, initialize
+a database, or scan mail. A successful setup is not verification: run the build commands above.
+
+In Orca's repository settings, select `origin/master` as the default base and show external
+worktrees. Fetch before starting new work and use the repository commands for creation/removal:
+
+```shell
+git fetch origin
+scripts/worktree.sh new chore/my-change
+scripts/worktree.sh list
+# After work has been reviewed, pushed and merged, remove it through the safety checks:
+scripts/worktree.sh rm my-change
+```
+
+Orca displays the resulting external checkout. Open that checkout for editing and run setup
+there. The shared script enforces branch naming and the sibling worktree layout. Native Orca
+removal and automatic cleanup do not run the repository's lifecycle checks; disable automatic
+cleanup for this project and use the shared removal command. Do not use an archive hook for cleanup.
+
+The committed `orca.yaml` declares `bash scripts/dev-setup.sh` as the setup command and
+`wait-for-setup` as the agent startup policy. Both files reach new checkouts together when the
+change is merged into their base branch. Existing external worktrees still run setup explicitly.
+Review and trust the shared setup command when Orca asks. If repository settings select local-only
+scripts, select shared scripts to use this file; clear an old local setup command to avoid running
+setup twice. Base ref, external-worktree visibility and cleanup rules remain Orca settings,
+not fields in this setup file. Keep the local archive command empty. No default application tabs
+or shared build directories are configured.
+
+### Workflow commands
+
+Use the hosted backend's existing project commands or generated skills in Orca. There are no
+separate Orca workflow definitions. For example, Codex uses `$iw-lightweight` with the workflow
+inputs, while Claude Code and OpenCode use their existing slash commands. Native chat discovery
+uses the backend's reported command/skill catalogue; make sure the session is attached to the
+intended project checkout. Orca's built-in Plan mode is a conversation control and is distinct
+from the repository's planning workflow.
+
+### Parallel workers and cleanup
+
+The repository launcher selects the execution backend and session host separately. In an
+Orca session it starts the worker visibly in Orca, using the Chat/CLI preference configured for
+that backend. Outside Orca it uses the backend's native interface. Choose explicitly with
+`--host orca` or `--host backend` when needed:
+
+```shell
+scripts/worktree.sh new chore/my-worker
+python3 scripts/worker.py start --host orca --backend codex --default-agent --name my-worker --worktree "$(cd ../my-worker && pwd)" --command '/plan describe the intended change'
+python3 scripts/worker.py status my-worker
+python3 scripts/worker.py resume my-worker
+```
+
+The worktree is protected before launch. The worker remains open for discussion and approval;
+resume continues its conversation without granting approval. Orca can create a new assignment
+within that conversation, so the launcher records updated assignment identities. The worker
+reports its current Orca assignment when pausing and retains its repository approval phase.
+
+If more than one Orca workspace matches the checkout, select the intended exact workspace from
+`orca worktree ps --json` or inspect the error's selectors with `orca worktree show`. Pass that
+selector as `--orca-workspace '<exact-selector>'` to start. Local workers and default backend
+agents are supported. Named-agent selection, explicit sandbox overrides, Codex source sockets
+or parent-task forks, explicit OpenCode servers and OpenCode model variants are rejected rather
+than dropped. Orca uses its configured backend permissions. Supported model selection uses
+`--model`; no separate Orca command definitions or worker execution backend are introduced.
+
+Repository status remains the authority for pruning. A completed Orca assignment or closed tab
+does not mark repository work complete. After merge, `scripts/worktree.sh rm my-worker` or the
+normal prune command checks repository lifecycle, PR and Git safety, requests release of the
+exact recorded worker, then removes its Orca workspace and branch. Unrelated tabs, retained or
+unconfirmed resources block removal with a diagnostic; cleanup does not force removal or run
+archive hooks. Partial cleanup retains checkpoints for a safe retry. Saved Orca history remains.
+
+Failed or ambiguous launch/continuation receipts are retained under `agent-workers/orca-receipts`
+in the common Git directory. `python3 scripts/worker.py recover my-worker` replays an unresolved
+operation only if Orca returned its mutation request ID. Without it, inspect the host and recorded
+assignment before any recovery; do not start another worker. Existing backend-native workers
+continue to use their recorded native sessions and are not migrated automatically.
+
+### Shared services and parallel work
+
+Keep one running registration/producer stack by default, with parallel editing and builds in
+other checkouts. Start Kafka from one designated checkout using the command below. Its host
+port is 9092; its controller listener stays inside Docker, leaving host port 9093 for H2.
+Run the H2 server and initialize its empty disposable database from one designated checkout.
+That checkout owns `libs/dao/user-configuration/jpa-impl/build/local-h2` (the module's build
+output); do not clean or remove it while using its data. Other checkouts connect to the same
+H2 server. Kafka's container lifecycle belongs to its designated checkout too: do not run a
+second Compose project against the same host port.
+
+Build outputs, project `.gradle`, frontend `node_modules` and `.venv-docs` stay private to each
+checkout. Gradle manages its user-level dependency cache and locking; do not link build or
+installation directories between checkouts.
+
+For an explicitly separate runtime stack, allocate its own ports and separate mailbox/user
+configuration before starting another producer. Sharing credentials and a database does not
+coordinate scans: two producers can scan the same mailbox concurrently. Preserve the shared
+configuration sources; use dedicated ignored local configuration in the second checkout.
+Separate scans need distinct mailboxes and persistence, with matching backend/producer DAO and
+AES settings within that stack. HTTP port overrides alone do not isolate scanning.
+
+For example, after preparing that independent configuration, start its backend and producer
+in separate terminals:
+
+```shell
+./gradlew :apps:user-registration-backend-app:bootRun --args='--spring.profiles.active=local --server.port=8180 --invoice-watcher.user-registration.public-base-url=http://localhost:4300 --invoice-watcher.user-registration.secure-cookies=false'
+./gradlew :apps:mail-producer-app:bootRun --args='--spring.profiles.active=local --server.port=8181'
+```
+
+Prepare a private frontend proxy file targeting the second backend:
+
+```shell
+mkdir -p frontend/build
+python3 - <<'PYPROXY'
+import json
+from pathlib import Path
+proxy = json.loads(Path("frontend/proxy.json").read_text())
+for route in proxy.values():
+    route["target"] = "http://127.0.0.1:8180"
+Path("frontend/build/proxy-secondary.json").write_text(json.dumps(proxy, indent=2) + "\n")
+PYPROXY
+./gradlew :apps:user-registration-frontend-app:frontendServe -PfrontendPort=4300 -PfrontendProxyConfig=build/proxy-secondary.json
+```
+
+These Gradle properties override only the development server; their defaults are port 4200
+and `proxy.json`. Following [Google client setup](registration.md#configure-google-once), register
+both callbacks on the second stack's public frontend origin:
+
+```text
+http://localhost:4300/login/oauth2/code/google
+http://localhost:4300/login/oauth2/code/gmail
+```
+
+The frontend proxy forwards both callbacks to the backend on port 8180.
+Use the same hostname consistently, and avoid logging into both stacks in the same browser
+profile: cookies are shared across ports on the same host. Setup never changes OAuth settings.
+For another docs preview, use `.venv-docs/bin/zensical serve --dev-addr 127.0.0.1:8001` after
+verification has prepared its virtualenv.
 
 ## Run the mail producer
 

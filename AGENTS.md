@@ -80,18 +80,22 @@ an ADR only when relevant), and the guideline for the area you touch (`docs/agen
 
 ## Git workflow
 
-- Keep every harness-specific integration covered for Claude Code, Codex CLI and OpenCode V2
-  according to [ADR-0014](docs/agents/adr/0014-cover-harness-integrations-across-supported-backends.md)
-  and the [compatibility matrix](docs/agents/guidelines/agent-backends.md). In the same change,
+- Keep every agent integration covered for the execution backends Claude Code, Codex CLI and
+  OpenCode V2, and the session host Orca
+  according to [ADR-0014](docs/agents/adr/0014-cover-agent-integrations-across-backends-and-hosts.md)
+  and the [compatibility matrix](docs/agents/guidelines/agent-integrations.md). In the same change,
   implement an equivalent, document an explicit alternative, or mark it unsupported with a reason
-  for every backend. Revalidate affected integrations when upgrading a backend.
+  for every compatibility target. Revalidate affected integrations when upgrading a backend or host.
 - Canonical workflow commands and shell permissions live in `.claude/`. After changing them,
-  update `config/agent-backends.json` and run `python3 scripts/sync-agent-config.py`. This generates
+  update `config/agent-integrations.json` and run `python3 scripts/sync-agent-config.py`. This generates
   `opencode.json`, Codex `.agents/skills/iw-*` skills, and the compatibility matrix; never edit
   generated files by hand. Codex invocation: `$iw-plan`, `$iw-implement`, `$iw-lightweight`,
   `$iw-inbox`, `$iw-dispatch` with workflow inputs. Native Claude/OpenCode commands use `/`.
   Codex permission translation is unsupported; native sandbox/approvals remain in effect.
-  In Codex and OpenCode use `scripts/worktree.sh` for worktree creation/removal; Claude's
+  In Orca reuse the hosted backend's commands/skills. `orca.yaml` configures checkout setup;
+  Orca is a session host, not a worker execution backend. Repository workers use
+  `--host auto|backend|orca` independently of their execution backend; see Protocol parallel.
+  In Orca, Codex and OpenCode use `scripts/worktree.sh` for worktree creation/removal; Claude's
   worktree hooks call the same script. Process approval gates do not enforce shell permissions.
 
 - Release automation alone may push its release/restoration commits with the dedicated GitHub App

@@ -1,0 +1,4 @@
+# Run only checkout preparation; application services remain explicit.
+scripts:
+  setup: bash scripts/dev-setup.sh
+setupAgentStartupPolicy: wait-for-setup
