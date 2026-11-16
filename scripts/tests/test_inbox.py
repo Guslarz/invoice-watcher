@@ -21,11 +21,14 @@ class InboxInitiativeTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.inbox = self.root / "docs/agents/inbox"
         for directory in ("scripts", "docs/agents/specs", "docs/agents/adr",
-                          "docs/agents/projects", "docs/agents/inbox/initiative"):
+                          "docs/agents/plans", "docs/agents/inbox/initiative"):
             (self.root / directory).mkdir(parents=True, exist_ok=True)
         for name in ("AGENTS.md", "zensical.toml", "scripts/sync-agent-config.py",
-                     "docs/agents/specs/index.md", "docs/agents/projects/README.md"):
+                     "docs/agents/specs/index.md", "docs/agents/plans/README.md"):
             (self.root / name).write_text("")
+        subprocess.run(["git", "init", str(self.root)], check=True, capture_output=True)
+        (self.root / "scripts/check-no-plans.sh").write_text(
+            (ROOT / "scripts/check-no-plans.sh").read_text())
         (self.root / "scripts/check-docs.sh").write_text(
             (ROOT / "scripts/check-docs.sh").read_text())
         (self.inbox / "README.md").write_text("# Inbox\n")
@@ -39,6 +42,35 @@ class InboxInitiativeTest(unittest.TestCase):
     def check(self):
         return subprocess.run(["bash", "scripts/check-docs.sh"], cwd=self.root,
                               text=True, capture_output=True)
+
+    def test_checks_root_and_legacy_untracked_plans(self):
+        valid = ("---\nslug: test\nbranch: docs/test\nimpact: INTERNAL\n"
+                 "specs: []\nsource: none\n---\n")
+        for name in ("PLAN.md", "docs/agents/plans/test.md", "docs/agents/projects/test.md"):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            for content, diagnostic in ((valid, None), ("# Missing keys\n", "missing frontmatter"),
+                                        (valid.replace("INTERNAL", "INVALID"), "impact must be"),
+                                        (valid.replace("source: none", "source: missing.md"),
+                                         "does not exist")):
+                with self.subTest(name=name, diagnostic=diagnostic):
+                    path.write_text(content)
+                    result = self.check()
+                    if diagnostic is None:
+                        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    else:
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn(diagnostic, result.stderr)
+            path.unlink()
+
+    def test_checks_with_empty_or_absent_plan_directories(self):
+        (self.root / "docs/agents/plans/README.md").unlink()
+        for present in (True, False):
+            with self.subTest(present=present):
+                if not present:
+                    (self.root / "docs/agents/plans").rmdir()
+                result = self.check()
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_discovers_flat_and_nested_notes_with_inbox_relative_identifiers(self):
         self.note("prerequisite")

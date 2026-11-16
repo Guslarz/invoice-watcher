@@ -69,7 +69,7 @@
     },
     "implement": {
       "description": "Implement an approved plan following docs/agents/protocols/implement.md",
-      "template": "Follow `docs/agents/protocols/implement.md` exactly for the plan:\n\nFor a registered worker, require explicit plan approval in this worker session, reuse its\nassigned worktree, and maintain lifecycle through `scripts/worker.py update`. Stop uncommitted\nat the separate commit review gate; dispatch/resume never grants approval.\n\n$ARGUMENTS"
+      "template": "Follow `docs/agents/protocols/implement.md` exactly for the plan:\n\nFor a registered worker, require explicit plan approval in this worker session, reuse its\nassigned worktree, and maintain lifecycle through `scripts/worker.py update`. Stop uncommitted\nat the separate commit review gate; dispatch/resume never grants approval.\n\nExisting plans under `docs/agents/projects/<slug>.md` or `docs/agents/plans/<slug>.md`\nremain valid inputs; continue using\nthe recorded path without moving another worker's file or resetting its approval gate.\n\n$ARGUMENTS"
     },
     "inbox": {
       "description": "Add an idea or TODO to docs/agents/inbox",

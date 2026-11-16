@@ -177,6 +177,12 @@ available and sandboxed execution is desired.
 Workers use `python3 scripts/worker.py update <name> --phase <phase>` before changing activities;
 add `--plan <relative-path>` at plan approval, `--detail <text>` for a blocker, and
 `--pr <https://github.com/owner/repo/pull/number>` at `awaiting-merge`. Do not hand-edit JSON.
+New plans use one root `PLAN.md` per worktree. Existing plans under
+`docs/agents/projects/<slug>.md` or `docs/agents/plans/<slug>.md` remain valid inputs
+to implementation and worker lifecycle updates. Continue using the recorded path until the
+plan's normal deletion; do not move another worker's file or reset its approval gate to
+adopt the new storage location.
+
 The registry in the common Git directory indexes names/session identities and serializes
 operations; it is not a second lifecycle authority. An update never grants developer approval.
 

@@ -8,6 +8,8 @@ source: none             # or docs/agents/inbox/<slug>.md
 
 # Plan: <title>
 
+<!-- Temporary, uncommitted working material; follow Protocol plan and Protocol implement. -->
+
 ## Goal
 
 ## Spec changes

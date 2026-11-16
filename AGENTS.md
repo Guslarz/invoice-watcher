@@ -36,7 +36,6 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `docs/agents/adr/` | Decisions whose reasoning must survive. Title is the instruction. | no |
 | `docs/agents/protocols/` | How to plan / implement / do lightweight changes. | no |
 | `docs/agents/guidelines/` | Coding, module, build and k8s conventions. | no |
-| `docs/agents/projects/` | Temporary plans, one per change; deleted by the PR that implements them. | no |
 | `docs/agents/inbox/` | Pending work: standalone notes or initiative directories with a temporary roadmap (`docs/agents/inbox/README.md`). | no |
 | `docs/agents/templates/` | Templates for specs, ADRs and plans. | no |
 
@@ -44,6 +43,10 @@ Rules:
 - Specs are the single normative source of behavior. User pages explain the same behavior in
   their own words and are updated in the same change as the spec. Otherwise one fact has one
   place: link, do not copy.
+- Each worktree uses one root `PLAN.md`, visible in Git status and not ignored. It is temporary
+  working material, deleted before commit review. Checks reject tracked temporary plans.
+  Specs preserve lasting behavior; ADRs preserve lasting decisions. Git history does not
+  retain an uncommitted plan.
 - Specs describe *what* the system does, not *how* the code is structured.
 - A spec clause the code does not meet yet is marked `*(gap: docs/agents/inbox/<note>.md)*`;
   the change that fixes it removes the marker and the note.

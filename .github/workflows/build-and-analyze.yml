@@ -18,6 +18,9 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Reject tracked temporary plans
+        run: bash scripts/check-no-plans.sh
+
       # HEAD is the pull request merge commit, HEAD^1 the tip of the base branch
       - name: Detect changes outside docs/ and in deployments/ or .github/workflows/
         id: diff

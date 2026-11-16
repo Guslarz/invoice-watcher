@@ -7,6 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 python3 scripts/sync-agent-config.py --check
+bash scripts/check-no-plans.sh
 
 errors=0
 fail() {
@@ -58,8 +59,9 @@ for adr in docs/agents/adr/[0-9]*.md; do
 done
 
 # Plans: frontmatter, referenced specs and source exist.
-for plan in docs/agents/projects/*.md; do
-  [[ "$plan" == docs/agents/projects/README.md ]] && continue
+for plan in PLAN.md docs/agents/plans/*.md docs/agents/projects/*.md; do
+  [[ -f "$plan" ]] || continue
+  [[ "${plan##*/}" == README.md ]] && continue
   require_keys "$plan" slug branch impact specs source
   impact=$(frontmatter "$plan" impact)
   [[ "$impact" =~ ^(BEHAVIOR|OPERATIONS|INTERNAL)$ ]] || fail "$plan: impact must be BEHAVIOR|OPERATIONS|INTERNAL"
