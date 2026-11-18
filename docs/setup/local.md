@@ -367,3 +367,9 @@ Changes are spec-driven: behavior is described in specifications in the reposito
 implemented and tested against numbered clauses. Every change goes through a pull request to
 `master`. The rules for AI agents — a good summary for humans too — are in
 [`AGENTS.md`](https://github.com/Guslarz/invoice-watcher/blob/master/AGENTS.md).
+
+## Processor recovery tests
+
+The [processor preparation guide](event-processing.md) explains how to exercise synthetic
+processing, quarantine and replay against isolated Testcontainers Kafka/Datastore services.
+There is no standalone replay helper or recognition application to start yet.

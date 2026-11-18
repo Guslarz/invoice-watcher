@@ -101,7 +101,8 @@ and remove their registration without editing storage or handling mailbox creden
 - **REG-015** Registration stores configuration in the selected Firestore or JPA database.
   Both modes support the same self-service ownership, Gmail OAuth credentials, atomic edits,
   conflicts and scan-position preservation. Registration and the producer use the same database.
-  Missing or invalid storage-mode configuration fails startup naming the invalid property.
+  Missing or unsupported storage-mode configuration fails startup identifying the required storage
+  interface; ambiguous required storage implementations also fail startup.
 
 ## Acceptance
 
@@ -164,7 +165,8 @@ and remove their registration without editing storage or handling mailbox creden
 - **REG-015** Given Firestore or JPA/H2 selected for both applications against one database,
   when a user registers, edits, reconnects or deletes a mailbox, then the next producer scan sees
   the committed result with equivalent ownership/conflict and progress guarantees in both modes;
-  missing or unknown DAO mode fails startup naming invoice-watcher.user-configuration.dao.mode.
+  missing or unknown DAO mode, or ambiguous storage implementations, fail startup identifying the
+  required storage interface.
 
 - **REG-016** Given Google settings under `invoice-watcher.oauth.google`, when the applications
   start, then client ID and encrypted secret bind and validate without selecting an exclusive

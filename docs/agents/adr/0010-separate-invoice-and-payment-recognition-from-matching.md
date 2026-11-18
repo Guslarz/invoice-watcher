@@ -72,3 +72,7 @@ information relevant to several documents.
 - **Must keep doing:** distinguish proposals/evidence from confirmed accounting facts; document event
   schemas and compatibility before producers and consumers are deployed; treat extraction confidence
   and manual review as first-class outcomes, not exceptions hidden in logs.
+
+Reassess Kafka Streams specifically when designing matching/status projection, or earlier if
+measured needs justify managed state, changelog recovery and joins/windows. Exactly-once stream
+processing does not alone deduplicate separate records sharing a source ID or cover external effects.

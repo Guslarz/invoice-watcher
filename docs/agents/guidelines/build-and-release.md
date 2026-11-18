@@ -25,6 +25,8 @@
 - Dependency versions live in `gradle/libs.versions.toml`; Spring-managed ones have no version.
   Spring modules import the `spring-cloud-gcp-dependencies` BOM (catalog) and then the Spring Boot
   BOM, which wins where both manage a version; libraries do not apply the Spring Boot plugin.
+  Included build-logic test suites also import the catalog's Spring Boot BOM instead of pinning
+  separately managed test libraries such as AssertJ.
 - Version comes from git tags via axion-release (`scmVersion`). Never hard-code versions.
 - Docker images are separate modules in `images/` that consume an app's `bootJar` through the
   `dockerImageResource` configuration. An image module is named `<image>-docker`; the published
@@ -61,3 +63,8 @@ later commit. It atomically pushes both commits and the tag using the dedicated 
 then checks out the tag to build and publish. Never force a tag or branch update. A retry uses
 the original workflow source SHA recorded in the release commit; a newly dispatched stale run fails.
 The App setup and ruleset exception are documented in the one-time setup instructions.
+
+- Mode metadata is generated from implementation conditions during compilation. The application
+  convention merges classpath contributions into its own metadata; the compiler's runtime-metadata
+  classpath is a declared cache input. Shared APIs remain free of runtime selector registration.
+  Metadata conflicts fail generation instead of depending on classpath order.

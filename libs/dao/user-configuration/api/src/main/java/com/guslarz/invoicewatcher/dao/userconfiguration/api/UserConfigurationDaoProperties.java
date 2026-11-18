@@ -1,6 +1,6 @@
 package com.guslarz.invoicewatcher.dao.userconfiguration.api;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -8,17 +8,12 @@ import org.springframework.validation.annotation.Validated;
 /**
  * Storage of users and their mailbox configuration.
  *
- * @param mode Required. Storage backend: `firestore` or `jpa`.
+ * @param mode Required. Implementation selector for an active capability; available implementations
+ *     contribute values.
  */
 @Validated
 @ConfigurationProperties(prefix = UserConfigurationDaoProperties.Constants.PREFIX)
-public record UserConfigurationDaoProperties(@NotNull Mode mode) {
-
-  /** Supported values of {@code mode}. */
-  public enum Mode {
-    FIRESTORE,
-    JPA
-  }
+public record UserConfigurationDaoProperties(@NotBlank String mode) {
 
   @UtilityClass
   public class Constants {

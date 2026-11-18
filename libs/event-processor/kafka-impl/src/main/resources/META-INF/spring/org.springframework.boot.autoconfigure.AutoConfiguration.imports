@@ -1,0 +1,2 @@
+com.guslarz.invoicewatcher.eventprocessor.kafka.configuration.ProcessorKafkaAutoConfiguration
+com.guslarz.invoicewatcher.eventprocessor.kafka.configuration.ProcessorKafkaLifecycleAutoConfiguration

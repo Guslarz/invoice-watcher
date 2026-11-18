@@ -77,45 +77,65 @@ def cell(text):
 
 
 def configuration_page(modules):
-    sections = []
+    sections = {}
+    hints = {}
+    declarations = {}
     for module in modules:
         path = ROOT / module["dir"] / METADATA
         if not path.exists():
             continue
         metadata = json.loads(path.read_text())
+        for hint in metadata.get("hints", []):
+            values = hints.setdefault(hint["name"], {})
+            for value in hint.get("values", []):
+                key = json.dumps(value["value"], sort_keys=True)
+                if key in values and values[key] != value:
+                    fail(f"conflicting value hints for {hint['name']}")
+                values[key] = value
         names = [group["name"] for group in metadata.get("groups", [])]
-        # Top-level groups are the @ConfigurationProperties prefixes; nested groups are folded in.
         tops = [n for n in names if not any(n.startswith(o + ".") for o in names if o != n)]
         for top in tops:
-            properties = [p for p in metadata.get("properties", [])
-                          if p["name"].startswith(top + ".")]
-            for prop in properties:
+            group = next(g for g in metadata["groups"] if g["name"] == top)
+            section = sections.setdefault(top, {"group": group, "modules": set(), "properties": {}})
+            section["modules"].add(module["path"])
+            for prop in metadata.get("properties", []):
+                if not prop["name"].startswith(top + "."):
+                    continue
                 if not prop.get("description"):
                     fail(f"property {prop['name']} has no description - add @param Javadoc "
                          f"to its *Properties record ({module['dir']})")
-            group = next(g for g in metadata["groups"] if g["name"] == top)
-            sections.append((top, group, module, sorted(properties, key=lambda p: p["name"])))
+                previous = declarations.get(prop["name"])
+                if previous:
+                    for field in ("type", "defaultValue", "description", "deprecation"):
+                        if previous.get(field) != prop.get(field):
+                            fail(f"conflicting metadata for {prop['name']} ({field})")
+                declarations[prop["name"]] = prop
+                section["properties"][prop["name"]] = (prop, module)
 
     lines = [
-        "# Configuration properties",
-        "",
+        "# Configuration properties", "",
         "Every property can also be set as an environment variable (shown below each name), which",
-        "is how the deployed environments configure the applications.",
-        "",
+        "is how the deployed environments configure the applications.", "",
+        "Suggested values are merged from implementation metadata. They support configuration",
+        "assistance; active capabilities validate that a selected implementation is available.", "",
     ]
-    for top, group, module, properties in sorted(sections):
+    for top, section in sorted(sections.items()):
+        group = section["group"]
         lines += [f"## `{top}` {{ #{anchor(top)} }}", ""]
         if group.get("description"):
             lines += [group["description"], ""]
-        lines += [f"Module `{module['path']}`.", ""]
-        lines += ["| Property | Type | Default | Description |", "|---|---|---|---|"]
-        for prop in properties:
+        lines += ["Modules: " + ", ".join(f"`{name}`" for name in sorted(section["modules"])) + ".", ""]
+        lines += ["| Property | Type | Default | Suggested values | Description |",
+                  "|---|---|---|---|---|"]
+        for name, (prop, module) in sorted(section["properties"].items()):
             default = prop.get("defaultValue")
+            values = " / ".join("`" + cell(item["value"]) + "`"
+                                for _, item in sorted(hints.get(name, {}).items()))
             lines.append(
-                f"| `{prop['name']}`<br>`{env_var(prop['name'])}` "
+                f"| `{name}`<br>`{env_var(name)}` "
                 f"| `{cell(property_type(prop.get('type'), module['dir']))}` "
                 f"| {'`' + cell(default) + '`' if default is not None else ''} "
-                f"| {cell(prop['description'])} |")
+                f"| {values} | {cell(prop['description'])} |")
         lines.append("")
     return "\n".join(lines)
 

@@ -37,7 +37,9 @@ Recorded in the [ADR index](../../adr/index.md); open each record for rationale:
 Selected starting runtime: plain stateful Spring consumers/services consistent with existing module
 conventions (ADR-0003), with durable idempotency/state storage per stage. A stream-processing
 framework (Kafka Streams/Flink or similar) is **not selected**; reconsider only with evidence that
-join/window/latency requirements justify its operational cost.
+join/window/latency requirements justify its operational cost. Reassess **Kafka Streams when
+designing matching/status projection**, as recorded in
+[ADR-0010](../../adr/0010-separate-invoice-and-payment-recognition-from-matching.md).
 
 ## Boundaries and data flow
 
@@ -130,11 +132,16 @@ ADR-0010/0011; duplicate input processing is defined as idempotent upsert; a fai
 quarantined and replayed without manual database surgery; no raw credentials or unnecessary message
 body/attachment content appears in logs.
 
-**Progress:** mail ingestion identity and its versioned envelope are implemented (EVENT-004–008);
-Stage 0 remains incomplete. Recognition result contracts and operations remain future work.
+**Progress:** mail ingestion identity/envelope (EVENT-004–008) and shared operational foundations
+([SPEC-PROCESSOR](../../specs/event-processing.md)) are implemented. The runtime provides durable
+claims, bounded retries, an outbox, quarantine and a reusable replay service, with Firestore
+behind the processing DAO API. Synthetic fixtures exercise them without a recognition application.
+No standalone helper application is introduced.
 
-**Tracking:**
-[`event-processor-operational-foundations.md`](event-processor-operational-foundations.md).
+Stage 0's capability-specific recognition result contracts remain incomplete and are reviewed
+with the Stage 1/2 pipeline plans below. The first actual processor must expose an authenticated
+operational recovery interface backed by the shared service and satisfy its production
+security/durability prerequisites; library delivery alone is not deployed operator functionality.
 
 ### Stage 1 — Invoice recognition
 

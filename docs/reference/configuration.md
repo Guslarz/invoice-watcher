@@ -5,114 +5,177 @@
 Every property can also be set as an environment variable (shown below each name), which
 is how the deployed environments configure the applications.
 
+Suggested values are merged from implementation metadata. They support configuration
+assistance; active capabilities validate that a selected implementation is available.
+
+## `invoice-watcher.event-processing.dao` { #invoice-watcher-event-processing-dao }
+
+Modules: `:libs:dao-event-processing-api`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.event-processing.dao.mode`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_MODE` | `String` |  | `firestore` | Required. Implementation selector for an active capability; available implementations contribute values. |
+
+## `invoice-watcher.event-processing.dao.firestore` { #invoice-watcher-event-processing-dao-firestore }
+
+Modules: `:libs:dao-event-processing-firestore-impl`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.event-processing.dao.firestore.database-id`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_FIRESTORE_DATABASE_ID` | `String` | `(default)` |  | Optional. Datastore database identifier. |
+| `invoice-watcher.event-processing.dao.firestore.host`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_FIRESTORE_HOST` | `String` |  |  | Optional. Explicit local Datastore emulator endpoint; omitting uses Google credentials. |
+| `invoice-watcher.event-processing.dao.firestore.namespace`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_FIRESTORE_NAMESPACE` | `String` | `event-processing` |  | Optional. Namespace isolating processing state from user configuration. |
+| `invoice-watcher.event-processing.dao.firestore.project-id`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_FIRESTORE_PROJECT_ID` | `String` |  |  | Required. Google Cloud project, or synthetic emulator project. |
+
+## `invoice-watcher.event-processor` { #invoice-watcher-event-processor }
+
+Modules: `:libs:event-processor-api`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.event-processor.handler-timeout`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_HANDLER_TIMEOUT` | `Duration` | `30s` |  | Optional. Maximum handler execution time. |
+| `invoice-watcher.event-processor.lease`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_LEASE` | `Duration` | `120s` |  | Optional. Exclusive claim lifetime, longer than the handler timeout. |
+| `invoice-watcher.event-processor.max-attempts`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_MAX_ATTEMPTS` | `Integer` | `4` |  | Optional. Total admitted handler attempts, including the initial attempt. |
+| `invoice-watcher.event-processor.max-result-bytes`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_MAX_RESULT_BYTES` | `Integer` | `524288` |  | Optional. Total serialized result bytes allowed per processing outcome. |
+| `invoice-watcher.event-processor.outbox-batch`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_OUTBOX_BATCH` | `Integer` | `100` |  | Optional. Maximum pending outcomes handled in a recovery pass. |
+| `invoice-watcher.event-processor.outbox-interval`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_OUTBOX_INTERVAL` | `Duration` | `5s` |  | Optional. Interval between durable pending-output recovery passes. |
+| `invoice-watcher.event-processor.recovery-interval`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_RECOVERY_INTERVAL` | `Duration` | `30s` |  | Optional. Delay before rechecking unavailable shared infrastructure. |
+| `invoice-watcher.event-processor.replay.max-rate`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_REPLAY_MAX_RATE` | `Double` | `1` |  | Optional. Maximum replay publications per second. |
+| `invoice-watcher.event-processor.replay.max-records`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_REPLAY_MAX_RECORDS` | `Integer` | `100` |  | Optional. Maximum records selected by one request. |
+| `invoice-watcher.event-processor.retry-delays`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_RETRY_DELAYS` | `List<Duration>` | `[1s, 5s, 30s]` |  | Optional. Base delays for retries, with twenty percent bounded jitter. |
+
+## `invoice-watcher.event-processor.kafka` { #invoice-watcher-event-processor-kafka }
+
+Modules: `:libs:event-processor-kafka-impl`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.event-processor.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_BOOTSTRAP_SERVERS` | `String` |  |  | Required. Broker endpoints for processor consumers and publication. |
+| `invoice-watcher.event-processor.kafka.concurrency`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_CONCURRENCY` | `Integer` | `1` |  | Optional. Consumer threads per stage; retries pause the affected thread's assignments. |
+| `invoice-watcher.event-processor.kafka.group-prefix`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_GROUP_PREFIX` | `String` | `invoice-processor-` |  | Optional. Prefix for independent stage consumer groups. |
+| `invoice-watcher.event-processor.kafka.max-publication-bytes`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_MAX_PUBLICATION_BYTES` | `Integer` | `4194304` |  | Optional. Upper bound including Kafka record overhead for publication. |
+| `invoice-watcher.event-processor.kafka.offset-reset`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_OFFSET_RESET` | `String` |  |  | Required. Explicit new-group behavior: earliest, latest or none. |
+| `invoice-watcher.event-processor.kafka.quarantine-retention-ms`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_QUARANTINE_RETENTION_MS` | `Long` | `604800000` |  | Optional. Required time-based quarantine recovery window in milliseconds. |
+
 ## `invoice-watcher.event-producer` { #invoice-watcher-event-producer }
 
-Module `:libs:event-producer-api`.
+Modules: `:apps:mail-producer-app`, `:libs:event-producer-api`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.event-producer.mode`<br>`INVOICE_WATCHER_EVENT_PRODUCER_MODE` | `kafka` |  | Required. Event backend; the only supported value is `kafka`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  |  | Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`. |
+| `invoice-watcher.event-producer.mode`<br>`INVOICE_WATCHER_EVENT_PRODUCER_MODE` | `String` |  | `kafka` | Required. Implementation selector for an active capability; available implementations contribute values. |
 
 ## `invoice-watcher.event-producer.kafka` { #invoice-watcher-event-producer-kafka }
 
-Module `:libs:event-producer-kafka-impl`.
+Modules: `:libs:event-producer-kafka-impl`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  | Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  |  | Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`. |
 
 ## `invoice-watcher.mail-connector.imap` { #invoice-watcher-mail-connector-imap }
 
-Module `:libs:mail-connector-impl`.
+Modules: `:apps:mail-producer-app`, `:libs:mail-connector-impl`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.mail-connector.imap.connect-timeout`<br>`INVOICE_WATCHER_MAIL_CONNECTOR_IMAP_CONNECT_TIMEOUT` | `Duration` | `30s` | Optional. How long connecting to the mail server may take, at least one second, e.g. `30s`. |
-| `invoice-watcher.mail-connector.imap.read-timeout`<br>`INVOICE_WATCHER_MAIL_CONNECTOR_IMAP_READ_TIMEOUT` | `Duration` | `60s` | Optional. How long to wait for each response of the mail server, at least one second, e.g. `60s`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-connector.imap.connect-timeout`<br>`INVOICE_WATCHER_MAIL_CONNECTOR_IMAP_CONNECT_TIMEOUT` | `Duration` | `30s` |  | Optional. How long connecting to the mail server may take, at least one second, e.g. `30s`. |
+| `invoice-watcher.mail-connector.imap.read-timeout`<br>`INVOICE_WATCHER_MAIL_CONNECTOR_IMAP_READ_TIMEOUT` | `Duration` | `60s` |  | Optional. How long to wait for each response of the mail server, at least one second, e.g. `60s`. |
 
 ## `invoice-watcher.mail-producer.mock.user` { #invoice-watcher-mail-producer-mock-user }
 
-Module `:libs:mail-producer-mock-user`.
+Modules: `:apps:mail-producer-app`, `:libs:mail-producer-mock-user`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.mail-producer.mock.user.email`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_EMAIL` | `String` |  | Required when enabled. E-mail address; used as the user name and the mailbox username. |
-| `invoice-watcher.mail-producer.mock.user.enabled`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_ENABLED` | `Boolean` |  | Optional. Whether to create the mock user at startup. |
-| `invoice-watcher.mail-producer.mock.user.folders`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_FOLDERS` | `List<String>` |  | Required when enabled, at least one. Folders to scan, e.g. `INBOX`, `Invoices`. |
-| `invoice-watcher.mail-producer.mock.user.host`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_HOST` | `String` |  | Required when enabled. IMAP server host of the mock user's mailbox. |
-| `invoice-watcher.mail-producer.mock.user.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PASSWORD` | `String` |  | Required when enabled. Mailbox password, encrypted with `secret-helper encrypt`. |
-| `invoice-watcher.mail-producer.mock.user.port`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PORT` | `Integer` | `993` | Optional. IMAP server port (IMAPS), between 1 and 65535. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-producer.mock.user.email`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_EMAIL` | `String` |  |  | Required when enabled. E-mail address; used as the user name and the mailbox username. |
+| `invoice-watcher.mail-producer.mock.user.enabled`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_ENABLED` | `Boolean` |  |  | Optional. Whether to create the mock user at startup. |
+| `invoice-watcher.mail-producer.mock.user.folders`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_FOLDERS` | `List<String>` |  |  | Required when enabled, at least one. Folders to scan, e.g. `INBOX`, `Invoices`. |
+| `invoice-watcher.mail-producer.mock.user.host`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_HOST` | `String` |  |  | Required when enabled. IMAP server host of the mock user's mailbox. |
+| `invoice-watcher.mail-producer.mock.user.password`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PASSWORD` | `String` |  |  | Required when enabled. Mailbox password, encrypted with `secret-helper encrypt`. |
+| `invoice-watcher.mail-producer.mock.user.port`<br>`INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_PORT` | `Integer` | `993` |  | Optional. IMAP server port (IMAPS), between 1 and 65535. |
 
 ## `invoice-watcher.mail-producer.scheduler` { #invoice-watcher-mail-producer-scheduler }
 
-Module `:libs:mail-producer-scheduler-impl`.
+Modules: `:apps:mail-producer-app`, `:libs:mail-producer-scheduler-impl`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.mail-producer.scheduler.rate`<br>`INVOICE_WATCHER_MAIL_PRODUCER_SCHEDULER_RATE` | `Duration` | `1h` | Optional. Time between the starts of consecutive scans, at least one second, e.g. `30s`, `5m`, `1h` or ISO-8601 `PT1H`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-producer.scheduler.rate`<br>`INVOICE_WATCHER_MAIL_PRODUCER_SCHEDULER_RATE` | `Duration` | `1h` |  | Optional. Time between the starts of consecutive scans, at least one second, e.g. `30s`, `5m`, `1h` or ISO-8601 `PT1H`. |
 
 ## `invoice-watcher.mail-producer.task` { #invoice-watcher-mail-producer-task }
 
-Module `:libs:mail-producer-task`.
+Modules: `:apps:mail-producer-app`, `:libs:mail-producer-task`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.mail-producer.task.topic`<br>`INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC` | `String` |  | Required. Topic every scanned message is published to, e.g. `all-mails`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-producer.task.topic`<br>`INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC` | `String` |  |  | Required. Topic every scanned message is published to, e.g. `all-mails`. |
 
 ## `invoice-watcher.oauth.google` { #invoice-watcher-oauth-google }
 
-Module `:libs:oauth-google-api`.
+Modules: `:apps:mail-producer-app`, `:apps:user-registration-backend-app`, `:libs:oauth-google-api`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.oauth.google.client-id`<br>`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_ID` | `String` |  | Required. Google web OAuth client identifier. |
-| `invoice-watcher.oauth.google.client-secret`<br>`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_SECRET` | `String` |  | Required. Google web OAuth client secret, provided outside version control. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.oauth.google.client-id`<br>`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_ID` | `String` |  |  | Required. Google web OAuth client identifier. |
+| `invoice-watcher.oauth.google.client-secret`<br>`INVOICE_WATCHER_OAUTH_GOOGLE_CLIENT_SECRET` | `String` |  |  | Required. Google web OAuth client secret, provided outside version control. |
 
 ## `invoice-watcher.secret.aes` { #invoice-watcher-secret-aes }
 
-Module `:libs:secret-aes`.
+Modules: `:apps:mail-producer-app`, `:apps:user-registration-backend-app`, `:libs:secret-aes`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.secret.aes.key`<br>`INVOICE_WATCHER_SECRET_AES_KEY` | `SecretKey` |  | Required. Base64-encoded AES-256 key, as printed by `secret-helper generate-key`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.secret.aes.key`<br>`INVOICE_WATCHER_SECRET_AES_KEY` | `SecretKey` |  |  | Required. Base64-encoded AES-256 key, as printed by `secret-helper generate-key`. |
 
 ## `invoice-watcher.user-configuration.dao` { #invoice-watcher-user-configuration-dao }
 
-Module `:libs:dao-user-configuration-api`.
+Modules: `:apps:mail-producer-app`, `:apps:user-registration-backend-app`, `:libs:dao-user-configuration-api`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.user-configuration.dao.mode`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_MODE` | `firestore / jpa` |  | Required. Storage backend: `firestore` or `jpa`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.user-configuration.dao.firestore.database-id`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_FIRESTORE_DATABASE_ID` | `String` |  |  | Optional. Id of the Firestore database (in Datastore mode). |
+| `invoice-watcher.user-configuration.dao.firestore.host`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_FIRESTORE_HOST` | `String` |  |  | Optional. Emulator `host:port`; when set, the emulator is used without credentials. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  |  | Optional. JDBC driver class, e.g. `Driver`. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  |  | Optional. Database password. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  |  | Required when `basic` is set. JDBC URL, e.g. `jdbc:h2:mem:invoice-watcher`. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  |  | Optional. Database username. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.gcp.database-name`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_GCP_DATABASE_NAME` | `String` |  |  | Required when `gcp` is set. Database name in the instance. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.gcp.instance-connection-name`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_GCP_INSTANCE_CONNECTION_NAME` | `String` |  |  | Required when `gcp` is set. Instance connection name, `project:region:instance`. |
+| `invoice-watcher.user-configuration.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DDL_AUTO` | `String` |  |  | Required in `jpa` mode. Hibernate schema handling (`hibernate.hbm2ddl.auto`), e.g. `update`. |
+| `invoice-watcher.user-configuration.dao.jpa.dialect`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DIALECT` | `String` |  |  | Required in `jpa` mode. Hibernate dialect class, e.g. `H2Dialect`. |
+| `invoice-watcher.user-configuration.dao.mode`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_MODE` | `String` |  | `firestore` / `jpa` | Required. Implementation selector for an active capability; available implementations contribute values. |
 
 ## `invoice-watcher.user-configuration.dao.firestore` { #invoice-watcher-user-configuration-dao-firestore }
 
-Module `:libs:dao-user-configuration-firestore-impl`.
+Modules: `:libs:dao-user-configuration-firestore-impl`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.user-configuration.dao.firestore.database-id`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_FIRESTORE_DATABASE_ID` | `String` |  | Optional. Id of the Firestore database (in Datastore mode). |
-| `invoice-watcher.user-configuration.dao.firestore.host`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_FIRESTORE_HOST` | `String` |  | Optional. Emulator `host:port`; when set, the emulator is used without credentials. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.user-configuration.dao.firestore.database-id`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_FIRESTORE_DATABASE_ID` | `String` |  |  | Optional. Id of the Firestore database (in Datastore mode). |
+| `invoice-watcher.user-configuration.dao.firestore.host`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_FIRESTORE_HOST` | `String` |  |  | Optional. Emulator `host:port`; when set, the emulator is used without credentials. |
 
 ## `invoice-watcher.user-configuration.dao.jpa` { #invoice-watcher-user-configuration-dao-jpa }
 
-Module `:libs:dao-user-configuration-jpa-impl`.
+Modules: `:libs:dao-user-configuration-jpa-impl`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  | Optional. JDBC driver class, e.g. `Driver`. |
-| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  | Optional. Database password. |
-| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  | Required when `basic` is set. JDBC URL, e.g. `jdbc:h2:mem:invoice-watcher`. |
-| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  | Optional. Database username. |
-| `invoice-watcher.user-configuration.dao.jpa.data-source.gcp.database-name`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_GCP_DATABASE_NAME` | `String` |  | Required when `gcp` is set. Database name in the instance. |
-| `invoice-watcher.user-configuration.dao.jpa.data-source.gcp.instance-connection-name`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_GCP_INSTANCE_CONNECTION_NAME` | `String` |  | Required when `gcp` is set. Instance connection name, `project:region:instance`. |
-| `invoice-watcher.user-configuration.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DDL_AUTO` | `String` |  | Required in `jpa` mode. Hibernate schema handling (`hibernate.hbm2ddl.auto`), e.g. `update`. |
-| `invoice-watcher.user-configuration.dao.jpa.dialect`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DIALECT` | `String` |  | Required in `jpa` mode. Hibernate dialect class, e.g. `H2Dialect`. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  |  | Optional. JDBC driver class, e.g. `Driver`. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  |  | Optional. Database password. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  |  | Required when `basic` is set. JDBC URL, e.g. `jdbc:h2:mem:invoice-watcher`. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  |  | Optional. Database username. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.gcp.database-name`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_GCP_DATABASE_NAME` | `String` |  |  | Required when `gcp` is set. Database name in the instance. |
+| `invoice-watcher.user-configuration.dao.jpa.data-source.gcp.instance-connection-name`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DATA_SOURCE_GCP_INSTANCE_CONNECTION_NAME` | `String` |  |  | Required when `gcp` is set. Instance connection name, `project:region:instance`. |
+| `invoice-watcher.user-configuration.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DDL_AUTO` | `String` |  |  | Required in `jpa` mode. Hibernate schema handling (`hibernate.hbm2ddl.auto`), e.g. `update`. |
+| `invoice-watcher.user-configuration.dao.jpa.dialect`<br>`INVOICE_WATCHER_USER_CONFIGURATION_DAO_JPA_DIALECT` | `String` |  |  | Required in `jpa` mode. Hibernate dialect class, e.g. `H2Dialect`. |
 
 ## `invoice-watcher.user-registration` { #invoice-watcher-user-registration }
 
-Module `:libs:user-registration-api`.
+Modules: `:apps:user-registration-backend-app`, `:libs:user-registration-api`.
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `invoice-watcher.user-registration.public-base-url`<br>`INVOICE_WATCHER_USER_REGISTRATION_PUBLIC_BASE_URL` | `URI` |  | Required. Public origin, HTTPS in deployments, HTTP permitted for local development. |
-| `invoice-watcher.user-registration.secure-cookies`<br>`INVOICE_WATCHER_USER_REGISTRATION_SECURE_COOKIES` | `Boolean` | `True` | Optional. Require HTTPS for session cookies; disable only for local HTTP development. |
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.user-registration.public-base-url`<br>`INVOICE_WATCHER_USER_REGISTRATION_PUBLIC_BASE_URL` | `URI` |  |  | Required. Public origin, HTTPS in deployments, HTTP permitted for local development. |
+| `invoice-watcher.user-registration.secure-cookies`<br>`INVOICE_WATCHER_USER_REGISTRATION_SECURE_COOKIES` | `Boolean` | `True` |  | Optional. Require HTTPS for session cookies; disable only for local HTTP development. |

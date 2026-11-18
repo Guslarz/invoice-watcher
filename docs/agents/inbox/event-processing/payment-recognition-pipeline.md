@@ -5,7 +5,7 @@ area: events
 added: 2026-11-11
 status: later
 size: L
-blocked-by: [event-processing/mail-attachment-extraction, event-processing/event-processor-operational-foundations]
+blocked-by: [event-processing/mail-attachment-extraction]
 ---
 
 Stage 2 in the [initiative roadmap](README.md) (ADR-0010, ADR-0011, ADR-0012). Implement a

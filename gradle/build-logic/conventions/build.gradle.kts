@@ -22,6 +22,7 @@ testing {
     named<JvmTestSuite>("test") {
       useJUnitJupiter()
       dependencies {
+        implementation(platform(libs.spring.boot.dependencies))
         implementation(libs.assertj.core)
       }
     }

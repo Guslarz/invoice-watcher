@@ -4,7 +4,13 @@
   SpotBugs exclusions in `config/spotbugs/exclude.xml` — add an exclusion only with a comment why.
 - Lombok is applied to every module (`jvm.common-conventions`). Prefer records +
   `@Builder` for data, `@RequiredArgsConstructor` for injection, `@Slf4j` for logging,
-  `@UtilityClass` for constant holders.
+  `@UtilityClass` for constant holders. Use `@Builder(toBuilder = true)` and named fields for
+  complex records; use `toBuilder()` for small updates. Keep explicit validation, defensive copies,
+  meaningful superclass initialization and diagnostic redaction. See
+  [ADR-0022](../adr/0022-use-lombok-for-boilerplate-and-named-builders-for-complex-records.md).
+- Prefer imports to fully qualified Java type references, including annotations and static utility
+  owners. Keep a qualified reference only when needed to resolve a name conflict. Class names in
+  reflective configuration strings remain fully qualified.
 - Nullness annotations come from jspecify (`org.jspecify.annotations`), declared as
   `implementation(libs.jspecify)` in every module that uses them; not JSR-305 `javax.annotation`.
 - Constants use `UPPER_SNAKE_CASE`, following
@@ -22,6 +28,13 @@
   outside the moment of use. Their values never go into the repository (ADR-0006).
 
 ## Readability
+
+- Keep reusable API records/enums as top-level types; reserve nesting for types owned by a single
+  declaration, such as a properties group's constants and defaults. Give public top-level types
+  names that identify their domain and role without relying on an import or package for context;
+  prefer `ProcessingOutcome` to `Outcome` and `ProcessingInput` to `Input`.
+- Compile reused regular expressions once as immutable `Pattern` constants, then create matchers
+  per use; `String.matches` recompiles its expression on every invocation.
 
 - Keep one level of transformation in an expression. Do not nest stream pipelines inside builder
   arguments inside other stream lambdas. Compute intermediate collections in named local variables

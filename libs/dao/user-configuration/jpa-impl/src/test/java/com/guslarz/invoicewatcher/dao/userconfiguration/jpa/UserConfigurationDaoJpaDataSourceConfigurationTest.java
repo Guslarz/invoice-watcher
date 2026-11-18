@@ -60,6 +60,7 @@ class UserConfigurationDaoJpaDataSourceConfigurationTest {
     // given
     ApplicationContextRunner runner =
         uut.withBean(
+                "userConfigurationJpaCredentials",
                 CredentialsProvider.class,
                 () -> serviceAccount("app-sa@proj.iam.gserviceaccount.com"))
             .withPropertyValues(GCP + "instance-connection-name=p:r:i", GCP + "database-name=iw");
@@ -158,7 +159,8 @@ class UserConfigurationDaoJpaDataSourceConfigurationTest {
     // given
     CredentialsProvider userCredentials = () -> mock(GoogleCredentials.class);
     ApplicationContextRunner runner =
-        uut.withBean(CredentialsProvider.class, () -> userCredentials)
+        uut.withBean(
+                "userConfigurationJpaCredentials", CredentialsProvider.class, () -> userCredentials)
             .withPropertyValues(GCP + "instance-connection-name=p:r:i", GCP + "database-name=iw");
 
     // when

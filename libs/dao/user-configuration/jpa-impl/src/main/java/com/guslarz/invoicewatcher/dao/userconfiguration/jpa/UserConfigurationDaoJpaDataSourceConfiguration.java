@@ -4,19 +4,20 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.auth.Credentials;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.spring.autoconfigure.sql.CloudSqlJdbcInfoProvider;
-import com.google.cloud.spring.autoconfigure.sql.DatabaseType;
-import com.google.cloud.spring.autoconfigure.sql.DefaultCloudSqlJdbcInfoProvider;
-import com.google.cloud.spring.autoconfigure.sql.GcpCloudSqlProperties;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.UserConfigurationDaoProperties;
 import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.BasicDataSourceProperties;
 import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.DataSourceProperties;
 import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.GcpDataSourceProperties;
 import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.properties.UserConfigurationDaoJpaProperties;
+import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,7 +32,8 @@ class UserConfigurationDaoJpaDataSourceConfiguration {
   @Bean(UserConfigurationDaoJpaAutoConfiguration.Beans.DATA_SOURCE)
   DataSource dataSource(
       UserConfigurationDaoJpaProperties properties,
-      ObjectProvider<CredentialsProvider> credentialsProvider)
+      @Qualifier("userConfigurationJpaCredentials")
+          ObjectProvider<CredentialsProvider> credentialsProvider)
       throws IOException {
     DataSourceProperties dataSource = properties.dataSource();
     BasicDataSourceProperties basic = dataSource == null ? null : dataSource.basic();
@@ -40,8 +42,7 @@ class UserConfigurationDaoJpaDataSourceConfiguration {
     if (basic != null) {
       return basicDataSource(basic);
     }
-    CredentialsProvider credentials =
-        credentialsProvider.getIfUnique(() -> GoogleCredentials::getApplicationDefault);
+    CredentialsProvider credentials = credentialsProvider.getObject();
     return cloudSqlDataSource(gcp, iamDatabaseUser(credentials.getCredentials()));
   }
 
@@ -70,25 +71,37 @@ class UserConfigurationDaoJpaDataSourceConfiguration {
   }
 
   private DataSource basicDataSource(BasicDataSourceProperties basic) {
-    return DataSourceBuilder.create()
-        .url(basic.url())
-        .username(basic.username())
-        .password(basic.password())
-        .driverClassName(basic.driver())
-        .build();
+    var dataSource = new HikariDataSource();
+    dataSource.setJdbcUrl(basic.url());
+    dataSource.setUsername(basic.username());
+    dataSource.setPassword(basic.password());
+    if (basic.driver() != null) {
+      dataSource.setDriverClassName(basic.driver());
+    }
+    return dataSource;
   }
 
   private DataSource cloudSqlDataSource(GcpDataSourceProperties gcp, String username) {
-    GcpCloudSqlProperties gcpProperties = new GcpCloudSqlProperties();
-    gcpProperties.setInstanceConnectionName(gcp.instanceConnectionName());
-    gcpProperties.setDatabaseName(gcp.databaseName());
-    gcpProperties.setEnableIamAuth(true);
-    CloudSqlJdbcInfoProvider infoProvider =
-        new DefaultCloudSqlJdbcInfoProvider(gcpProperties, DatabaseType.POSTGRESQL);
-    return DataSourceBuilder.create()
-        .url(infoProvider.getJdbcUrl())
-        .username(username)
-        .driverClassName(infoProvider.getJdbcDriverClass())
-        .build();
+    var dataSource = new HikariDataSource();
+    dataSource.setJdbcUrl(
+        "jdbc:postgresql://google/"
+            + encode(gcp.databaseName())
+            + "?cloudSqlInstance="
+            + encode(gcp.instanceConnectionName())
+            + "&socketFactory=com.google.cloud.sql.postgres.SocketFactory&enableIamAuth=true");
+    dataSource.setUsername(username);
+    dataSource.setDriverClassName("org.postgresql.Driver");
+    return dataSource;
+  }
+
+  private String encode(String value) {
+    return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("%3A", ":");
+  }
+
+  @Bean("userConfigurationJpaCredentials")
+  @ConditionalOnMissingBean(name = "userConfigurationJpaCredentials")
+  @ConditionalOnProperty(prefix = DATA_SOURCE_PREFIX + ".gcp", name = "instance-connection-name")
+  CredentialsProvider credentialsProvider() {
+    return GoogleCredentials::getApplicationDefault;
   }
 }

@@ -4,7 +4,6 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.cloud.NoCredentials;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
-import com.google.cloud.spring.autoconfigure.datastore.DatastoreProvider;
 import com.google.cloud.spring.core.Credentials;
 import com.google.cloud.spring.core.DefaultCredentialsProvider;
 import com.google.cloud.spring.core.DefaultGcpProjectIdProvider;
@@ -28,6 +27,7 @@ import com.guslarz.invoicewatcher.dao.userconfiguration.firestore.service.Regist
 import com.guslarz.invoicewatcher.dao.userconfiguration.firestore.service.UserDaoServiceFirestoreImpl;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.function.Supplier;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -91,7 +91,7 @@ public class UserConfigurationDaoFirestoreAutoConfiguration {
   }
 
   @Bean(Beans.DATASTORE_PROVIDER)
-  DatastoreProvider datastoreProvider(@Qualifier(Beans.DATASTORE) Datastore datastore) {
+  Supplier<Datastore> datastoreProvider(@Qualifier(Beans.DATASTORE) Datastore datastore) {
     return () -> datastore;
   }
 
@@ -107,7 +107,7 @@ public class UserConfigurationDaoFirestoreAutoConfiguration {
 
   @Bean(Beans.OBJECT_TO_KEY_FACTORY)
   ObjectToKeyFactory objectToKeyFactory(
-      @Qualifier(Beans.DATASTORE_PROVIDER) DatastoreProvider datastoreProvider) {
+      @Qualifier(Beans.DATASTORE_PROVIDER) Supplier<Datastore> datastoreProvider) {
     return new DatastoreServiceObjectToKeyFactory(datastoreProvider);
   }
 
@@ -128,7 +128,7 @@ public class UserConfigurationDaoFirestoreAutoConfiguration {
 
   @Bean(Beans.DATASTORE_TEMPLATE)
   DatastoreTemplate datastoreTemplate(
-      @Qualifier(Beans.DATASTORE_PROVIDER) DatastoreProvider datastoreProvider,
+      @Qualifier(Beans.DATASTORE_PROVIDER) Supplier<Datastore> datastoreProvider,
       @Qualifier(Beans.DATASTORE_MAPPING_CONTEXT) DatastoreMappingContext datastoreMappingContext,
       @Qualifier(Beans.DATASTORE_ENTITY_CONVERTER)
           DatastoreEntityConverter datastoreEntityConverter,
@@ -139,7 +139,7 @@ public class UserConfigurationDaoFirestoreAutoConfiguration {
 
   @Bean(Beans.DATASTORE_TRANSACTION_MANAGER)
   DatastoreTransactionManager transactionManager(
-      @Qualifier(Beans.DATASTORE_PROVIDER) DatastoreProvider datastoreProvider) {
+      @Qualifier(Beans.DATASTORE_PROVIDER) Supplier<Datastore> datastoreProvider) {
     return new DatastoreTransactionManager(datastoreProvider);
   }
 

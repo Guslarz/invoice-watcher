@@ -7,5 +7,4 @@ import org.springframework.context.annotation.Import;
 @AutoConfiguration
 @EnableConfigurationProperties(MailProducerTaskProperties.class)
 @Import({MailProducerTaskImpl.class, MailProcessorService.class})
-public class MailProducerTaskAutoConfiguration {
-}
+public class MailProducerTaskAutoConfiguration {}

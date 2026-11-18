@@ -83,11 +83,12 @@ or care who consumes the events.
   under EVENT-012. Failure diagnostics do not expose credentials or the canonical identity
   encoding.
 
-- **EVENT-010** The event backend is selected with `invoice-watcher.event-producer.mode`. The only
-  supported value is `kafka`; with it, events are sent to the brokers in
+- **EVENT-010** For an active publishing capability, the event backend is selected with
+  `invoice-watcher.event-producer.mode`. The only supported value is `kafka`; with it, events are sent to the brokers in
   `invoice-watcher.event-producer.kafka.bootstrap-servers`, keys as strings, values as JSON.
   `invoice-watcher.event-producer.kafka.bootstrap-servers` is required in `kafka` mode. A missing
-  or unknown value fails the startup with an error naming the property.
+  or unknown backend selection fails startup identifying the required event producer interface.
+  Ambiguous event producer implementations also fail startup.
 - **EVENT-011** A message is considered handed over once the event backend confirms it has stored
   the event. The folder's scan position is saved once, after all messages of the folder are handed
   over.

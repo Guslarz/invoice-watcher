@@ -16,6 +16,7 @@ nav = [
   { "System" = [
     "system/index.md",
     "system/architecture.md",
+    "system/event-processing.md",
   ] },
   { "Setup" = [
     "setup/index.md",
@@ -24,6 +25,7 @@ nav = [
     "setup/keys-and-users.md",
     "setup/registration.md",
     "setup/local.md",
+    "setup/event-processing.md",
   ] },
   { "In action" = [
     "results/index.md",

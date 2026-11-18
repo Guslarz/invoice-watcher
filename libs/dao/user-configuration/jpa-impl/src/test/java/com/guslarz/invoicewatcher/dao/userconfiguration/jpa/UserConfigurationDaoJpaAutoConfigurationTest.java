@@ -27,9 +27,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 class UserConfigurationDaoJpaAutoConfigurationTest {
@@ -39,11 +37,7 @@ class UserConfigurationDaoJpaAutoConfigurationTest {
 
   private final ApplicationContextRunner uut =
       new ApplicationContextRunner()
-          .withConfiguration(
-              AutoConfigurations.of(
-                  HibernateJpaAutoConfiguration.class,
-                  TransactionAutoConfiguration.class,
-                  UserConfigurationDaoJpaAutoConfiguration.class))
+          .withConfiguration(AutoConfigurations.of(UserConfigurationDaoJpaAutoConfiguration.class))
           .withBean(
               SecretFactory.class, UserConfigurationDaoJpaAutoConfigurationTest::secretFactory)
           .withPropertyValues(

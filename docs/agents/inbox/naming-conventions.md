@@ -8,7 +8,8 @@ size: L
 blocked-by: []
 ---
 
-Naming follows several rules at once. Pick one rule per item, write them into
+Naming follows several rules at once. Apply the accepted role-package convention below and
+settle the remaining naming choices. Write the rules into
 `docs/agents/guidelines/modules.md` (modules, packages, classes) and `docs/agents/guidelines/code.md`
 (constants), enforce what Checkstyle can, then rename. Split into several pull requests: class and
 package renames are refactors (Protocol lightweight); renaming a module also renames its project
@@ -23,6 +24,17 @@ path and the generated reference; moving a configuration property needs Protocol
   leaf name `aes`.
 - `MailProducerTask` lives alone in `libs/mail-producer/scheduler/api`, while its implementation is
   in `libs/mail-producer/task`, which has no api/impl split.
+
+**Role packages in existing modules**
+- Apply [ADR-0025](../adr/0025-organize-java-library-packages-by-role.md) to existing Java APIs and
+  implementations in scoped follow-up refactors. The processor and processing DAO modules already
+  use this layout; the remaining modules need an audit and migration.
+- Separate service interfaces/implementations, operational models, persisted entities, exceptions,
+  properties and Spring configuration using the role vocabulary in the module guideline. Review
+  existing `entity` packages against the distinction between persisted state and operation models.
+- Move corresponding tests and update imports, auto-configuration discovery, reflection, repository
+  scanning and entity scanning references. Preserve configuration keys, wire formats, persisted
+  schemas and behavior; verify each affected module and its actual application compositions.
 
 **Classes**
 - Implementation classes: `KafkaEventProducer` (prefix, no `Impl`), `SecretAesImpl` /
