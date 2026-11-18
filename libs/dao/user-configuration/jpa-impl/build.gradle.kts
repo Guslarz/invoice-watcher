@@ -8,9 +8,15 @@ description = "Storage of users in a relational database via JPA (H2 or Cloud SQ
 dependencies {
   api(projects.libs.daoUserConfigurationApi)
 
-  implementation(libs.spring.boot.starter.data.jpa)
+  implementation(libs.spring.data.jpa)
+  implementation(libs.spring.orm)
+  implementation(libs.hibernate.core)
+  implementation(libs.hikari)
+  implementation(libs.gax)
+  implementation(libs.google.auth.oauth2.http)
+  implementation(libs.postgresql.socket.factory)
   implementation(libs.spring.boot.starter.validation)
-  implementation(libs.spring.cloud.gcp.starter.sql.postgresql)
+  runtimeOnly(libs.postgresql)
 
   implementation(libs.jakarta.annotations)
 

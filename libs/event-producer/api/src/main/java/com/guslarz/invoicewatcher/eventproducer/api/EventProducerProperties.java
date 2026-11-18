@@ -1,6 +1,6 @@
 package com.guslarz.invoicewatcher.eventproducer.api;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -8,18 +8,12 @@ import org.springframework.validation.annotation.Validated;
 /**
  * Event producer selection.
  *
- * @param mode Required. Event backend; the only supported value is `kafka`.
+ * @param mode Required. Implementation selector for an active capability; available implementations
+ *     contribute values.
  */
 @Validated
 @ConfigurationProperties(prefix = EventProducerProperties.Constants.PREFIX)
-public record EventProducerProperties(
-    @NotNull Mode mode
-) {
-
-  /** Supported values of {@code mode}. */
-  public enum Mode {
-    KAFKA
-  }
+public record EventProducerProperties(@NotBlank String mode) {
 
   @UtilityClass
   public class Constants {

@@ -20,7 +20,7 @@ spring-boot-starter-security-oauth2-client = { group = "org.springframework.boot
 spring-security-test = { group = "org.springframework.security", name = "spring-security-test" }
 
 angus-mail = { group = "org.eclipse.angus", name = "angus-mail" }
-assertj-core = { group = "org.assertj", name = "assertj-core", version = "3.27.7" }
+assertj-core = { group = "org.assertj", name = "assertj-core" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3" }
 gradle-docker-plugin = { group = "com.bmuschko", name = "gradle-docker-plugin", version.ref = "gradle-docker-plugin" }
 h2 = { group = "com.h2database", name = "h2" }
@@ -31,6 +31,7 @@ junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform
 lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version.ref = "lombok-plugin" }
 picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
 spotbugs-gradle-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-gradle-plugin", version.ref = "spotbugs-gradle-plugin" }
+spring-boot-dependencies = { group = "org.springframework.boot", name = "spring-boot-dependencies", version.ref = "spring-boot" }
 spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version.ref = "spring-boot" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
 spring-boot = { group = "org.springframework.boot", name = "spring-boot" }
@@ -49,3 +50,18 @@ spring-kafka = { group = "org.springframework.kafka", name = "spring-kafka" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api" }
 testcontainers-gcloud = { group = "org.testcontainers", name = "testcontainers-gcloud" }
 testcontainers-junit-jupiter = { group = "org.testcontainers", name = "testcontainers-junit-jupiter" }
+testcontainers-kafka = { group = "org.testcontainers", name = "testcontainers-kafka" }
+
+google-cloud-datastore = { group = "com.google.cloud", name = "google-cloud-datastore" }
+spring-cloud-gcp-data-datastore = { group = "com.google.cloud", name = "spring-cloud-gcp-data-datastore" }
+spring-cloud-gcp-core = { group = "com.google.cloud", name = "spring-cloud-gcp-core" }
+micrometer-core = { group = "io.micrometer", name = "micrometer-core" }
+spring-data-jpa = { group = "org.springframework.data", name = "spring-data-jpa" }
+spring-orm = { group = "org.springframework", name = "spring-orm" }
+hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core" }
+hikari = { group = "com.zaxxer", name = "HikariCP" }
+postgresql = { group = "org.postgresql", name = "postgresql" }
+postgresql-socket-factory = { group = "com.google.cloud.sql", name = "postgres-socket-factory" }
+gax = { group = "com.google.api", name = "gax" }
+google-auth-oauth2-http = { group = "com.google.auth", name = "google-auth-library-oauth2-http" }
+jakarta-validation-api = { group = "jakarta.validation", name = "jakarta.validation-api" }

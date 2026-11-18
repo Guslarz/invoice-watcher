@@ -8,5 +8,5 @@ dependencies {
   api(projects.libs.oauthGoogleApi)
 
   implementation(libs.spring.boot)
-  implementation(libs.spring.boot.starter.validation)
+  implementation(libs.jakarta.validation.api)
 }

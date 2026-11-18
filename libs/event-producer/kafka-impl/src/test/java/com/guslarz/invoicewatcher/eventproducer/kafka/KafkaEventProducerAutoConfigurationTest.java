@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.validation.FieldError;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,7 +43,7 @@ class KafkaEventProducerAutoConfigurationTest {
 
         // then
         assertThat(headers.toArray()).isEmpty();
-        assertThat(new String(bytes, java.nio.charset.StandardCharsets.UTF_8))
+        assertThat(new String(bytes, StandardCharsets.UTF_8))
             .contains("\"eventType\":\"example.created\"", "\"payload\":\"value\"");
       }
     });

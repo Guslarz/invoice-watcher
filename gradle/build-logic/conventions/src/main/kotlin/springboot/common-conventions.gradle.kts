@@ -22,6 +22,7 @@ dependencyManagement {
 tasks.named<JavaCompile>("compileJava") {
   options.isIncremental = false
   doLast(SecretMetadata())
+  doLast(ImplementationMetadata())
 }
 
 dependencies {

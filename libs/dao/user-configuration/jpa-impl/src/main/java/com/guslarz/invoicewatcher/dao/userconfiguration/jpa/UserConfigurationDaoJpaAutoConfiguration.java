@@ -18,16 +18,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Slf4j
 @AutoConfiguration
+@EnableTransactionManagement
 @Import({
   UserConfigurationDaoJpaDataSourceConfiguration.class,
   UserDaoServiceJpaImpl.class,
@@ -55,16 +57,22 @@ public class UserConfigurationDaoJpaAutoConfiguration {
   @Bean(Beans.ENTITY_MANAGER_FACTORY)
   LocalContainerEntityManagerFactoryBean entityManager(
       @Qualifier(Beans.DATA_SOURCE) DataSource dataSource,
-      EntityManagerFactoryBuilder builder,
       UserConfigurationDaoJpaProperties properties) {
-    return builder
-        .dataSource(dataSource)
-        .packages(getClass().getPackageName())
-        .properties(
-            Map.of(
-                "hibernate.hbm2ddl.auto", properties.ddlAuto(),
-                "hibernate.dialect", properties.dialect()))
-        .build();
+    var factory = new LocalContainerEntityManagerFactoryBean();
+    factory.setDataSource(dataSource);
+    factory.setPackagesToScan(getClass().getPackageName());
+    factory.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+    factory.setJpaPropertyMap(
+        Map.of(
+            "hibernate.hbm2ddl.auto",
+            properties.ddlAuto(),
+            "hibernate.dialect",
+            properties.dialect(),
+            "hibernate.physical_naming_strategy",
+            "org.hibernate.boot.model.naming.PhysicalNamingStrategySnakeCaseImpl",
+            "hibernate.implicit_naming_strategy",
+            JpaNamingStrategy.class.getName()));
+    return factory;
   }
 
   @Bean(Beans.TRANSACTION_MANAGER)

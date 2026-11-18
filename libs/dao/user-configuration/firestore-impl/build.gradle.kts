@@ -9,7 +9,8 @@ dependencies {
 
   implementation(libs.spring.boot.autoconfigure)
   implementation(libs.spring.boot.starter.validation)
-  implementation(libs.spring.cloud.gcp.starter.datastore)
+  implementation(libs.spring.cloud.gcp.data.datastore)
+  implementation(libs.spring.cloud.gcp.core)
 
   implementation(libs.commons.lang3)
   implementation(libs.jakarta.annotations)

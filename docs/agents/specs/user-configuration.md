@@ -41,8 +41,10 @@ restart.
 - **USER-010** User configuration storage is selected for both registration and the
   mail producer with invoice-watcher.user-configuration.dao.mode: firestore or jpa. Both
   applications in an environment use the same database. A missing or unknown value fails startup
-  naming the property. Registration changes are visible to scans begun after the commit without
-  copying or synchronizing user records between databases.
+  identifying the required storage interface. Ambiguous required storage implementations also fail
+  startup. Registration changes are visible to scans begun after the commit without
+  copying or synchronizing user records between databases. API metadata alone creates no selector
+  or backend bean; the active registration/scanning capability requires the selected implementation.
 
 - **USER-011** In `firestore` mode, users are stored in Firestore in Datastore mode, kind
   `mail-producer-users` (one entity per user, keyed by name, with the mailbox configurations

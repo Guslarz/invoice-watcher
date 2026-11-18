@@ -120,3 +120,20 @@ namespace `invoice-watcher-dev`: the `kafka` stateful set with its volume claim,
 deployment, the Kafka service, the generated config maps, the `app-sa` service account and the image pull secret. It is
 *Synced* when the cluster matches `deployments/k8s-apps/environments/dev` at the committed
 ArgoCD target revision: master for development, or the selected release tag for a release.
+
+## Processor diagnostics
+
+The shared foundation has synthetic integration fixtures, rather than a deployed recognition
+application. Its [processing and recovery behavior](../system/event-processing.md) emits safe
+structured fields such as stage, processing identity, attempt and reason:
+
+```text
+INFO  Processor stage=fixture processingId=processing-v1:<digest> attempt=1 reason=HANDLER_FAILURE
+WARN  Processor stage=fixture failureId=failure-v1:<digest> reason=RETRY_EXHAUSTED
+```
+
+These lines illustrate the field layout. Raw tenant keys, message content and exception causes
+are excluded. Quarantine retains original bytes in a sensitive recovery destination whose deployment must
+enforce access control; these logs contain no original bytes. Review-required results are completed processing outcomes, separately measured
+from technical failures. See the [recovery test workflow](../setup/event-processing.md) to exercise
+those paths without deploying a processor or using private mail.

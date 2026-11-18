@@ -6,10 +6,14 @@ picked up and processed automatically — no more digging through folders at the
 ```mermaid
 flowchart LR
   mail[(IMAP mailbox)] -->|scan on schedule| producer[mail-producer]
-  config[(User & folder config<br/>Firestore / SQL)] --> producer
+  registration[Mailbox registration] --> config[(User & folder config<br/>Firestore / SQL)]
+  config --> producer
   producer -->|one event per message| kafka[[Kafka topic]]
-  kafka --> processors[Invoice processors]
+  kafka -. future applications .-> processors[Invoice/payment recognition<br/>and matching]
 ```
+
+Registration, scanning and Kafka publishing are available. The [shared processor foundation](system/event-processing.md)
+provides retry and recovery services; recognition and matching applications are still future work.
 
 ## Where to start
 

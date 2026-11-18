@@ -108,3 +108,10 @@ commits and tag are pushed together before publishing artifacts from the tag.
 
 Environment can run from master or a release tag. Its infrastructure and bootstrap come from
 that checkout; ArgoCD uses the revision committed there. No extra deployment package is published.
+
+## Processor foundation
+
+The [shared processor foundation](event-processing.md) supplies durable processing state,
+retry/quarantine handling, recoverable result publication and a replay service. It starts no
+consumer without a declared application stage. Recognition and matching applications remain
+future work; they are not additional deployed services in the diagram above.

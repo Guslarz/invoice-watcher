@@ -22,3 +22,12 @@ configurations.consumable("dockerImageResource") {
   }
   outgoing.artifact(tasks.named("bootJar"))
 }
+
+// Applications carry one deterministic view of the mode hints contributed by their libraries.
+val metadataClasspath = objects.newInstance(MetadataClasspath::class.java)
+metadataClasspath.files.from(configurations.named("runtimeClasspath"))
+tasks.named<JavaCompile>("compileJava") {
+  options.compilerArgumentProviders.add(metadataClasspath)
+  doFirst(ClearApplicationMetadata())
+  doLast(ApplicationMetadata())
+}

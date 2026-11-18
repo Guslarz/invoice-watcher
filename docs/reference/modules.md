@@ -15,9 +15,14 @@ and `libs/` that contains a `build.gradle.kts`.
 | `:images:mail-producer-docker` | `images/mail-producer-docker` | Docker image of the mail producer application. |
 | `:images:user-registration-backend-docker` | `images/user-registration-backend-docker` | Docker image of the registration backend application. |
 | `:images:user-registration-frontend-docker` | `images/user-registration-frontend-docker` | Docker image of the registration frontend application. |
+| `:libs:dao-event-processing-api` | `libs/dao/event-processing/api` | Processing state and recovery contracts. |
+| `:libs:dao-event-processing-firestore-impl` | `libs/dao/event-processing/firestore-impl` | Durable processing state in Firestore in Datastore mode. |
 | `:libs:dao-user-configuration-api` | `libs/dao/user-configuration/api` | Storage interfaces for users, mailbox configurations and folders. |
 | `:libs:dao-user-configuration-firestore-impl` | `libs/dao/user-configuration/firestore-impl` | Storage of users in Firestore in Datastore mode. |
 | `:libs:dao-user-configuration-jpa-impl` | `libs/dao/user-configuration/jpa-impl` | Storage of users in a relational database via JPA (H2 or Cloud SQL). |
+| `:libs:event-processor-api` | `libs/event-processor/api` | Contracts for idempotent event processing and controlled replay. |
+| `:libs:event-processor-impl` | `libs/event-processor/impl` | Shared processing lifecycle, outbox and replay services. |
+| `:libs:event-processor-kafka-impl` | `libs/event-processor/kafka-impl` | Kafka transport and managed consumers for event processors. |
 | `:libs:event-producer-api` | `libs/event-producer/api` | Event producer interface and backend selection. |
 | `:libs:event-producer-kafka-impl` | `libs/event-producer/kafka-impl` | Event producer that sends events to Kafka. |
 | `:libs:mail-connector-api` | `libs/mail-connector/api` | Mailbox connection interfaces: connections, queries, messages, credentials. |
@@ -56,8 +61,11 @@ flowchart TB
     apps_user_registration_frontend_app["user-registration-frontend-app"]
   end
   subgraph impl
+    libs_dao_event_processing_firestore_impl["dao-event-processing-firestore-impl"]
     libs_dao_user_configuration_firestore_impl["dao-user-configuration-firestore-impl"]
     libs_dao_user_configuration_jpa_impl["dao-user-configuration-jpa-impl"]
+    libs_event_processor_impl["event-processor-impl"]
+    libs_event_processor_kafka_impl["event-processor-kafka-impl"]
     libs_event_producer_kafka_impl["event-producer-kafka-impl"]
     libs_mail_connector_impl["mail-connector-impl"]
     libs_mail_producer_mock_user["mail-producer-mock-user"]
@@ -69,7 +77,9 @@ flowchart TB
     libs_util_aes["util-aes"]
   end
   subgraph api
+    libs_dao_event_processing_api["dao-event-processing-api"]
     libs_dao_user_configuration_api["dao-user-configuration-api"]
+    libs_event_processor_api["event-processor-api"]
     libs_event_producer_api["event-producer-api"]
     libs_mail_connector_api["mail-connector-api"]
     libs_mail_producer_scheduler_api["mail-producer-scheduler-api"]
@@ -95,9 +105,14 @@ flowchart TB
   images_mail_producer_docker --> apps_mail_producer_app
   images_user_registration_backend_docker --> apps_user_registration_backend_app
   images_user_registration_frontend_docker --> apps_user_registration_frontend_app
+  libs_dao_event_processing_firestore_impl --> libs_dao_event_processing_api
   libs_dao_user_configuration_api --> libs_mail_connector_api
   libs_dao_user_configuration_firestore_impl --> libs_dao_user_configuration_api
   libs_dao_user_configuration_jpa_impl --> libs_dao_user_configuration_api
+  libs_event_processor_api --> libs_event_producer_api
+  libs_event_processor_impl --> libs_dao_event_processing_api
+  libs_event_processor_impl --> libs_event_processor_api
+  libs_event_processor_kafka_impl --> libs_event_processor_api
   libs_event_producer_kafka_impl --> libs_event_producer_api
   libs_mail_connector_api --> libs_secret_api
   libs_mail_connector_impl --> libs_mail_connector_api

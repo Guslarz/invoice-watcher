@@ -6,18 +6,20 @@ import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.entity.UserEntity;
 import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.entity.mailcredentials.BasicAuthMailCredentialsEntity;
 import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.entity.mailcredentials.GmailOauthCredentialsEntity;
 import com.guslarz.invoicewatcher.dao.userconfiguration.jpa.entity.mailcredentials.MailCredentialsEntity;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.sql.DriverManager;
 import java.util.Map;
+import lombok.experimental.UtilityClass;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
 /** Explicit initialization of disposable local H2; this is not a schema migration tool. */
-public final class LocalH2SchemaInitializer {
-  private LocalH2SchemaInitializer() {}
+@UtilityClass
+public class LocalH2SchemaInitializer {
 
   // This initializer accepts only the loopback disposable H2 server, whose initial sa password is
   // empty.
-  @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(
+  @SuppressFBWarnings(
       value = "DMI_EMPTY_DB_PASSWORD",
       justification = "Explicit initialization of loopback-only disposable H2")
   public static void main(String[] args) throws Exception {

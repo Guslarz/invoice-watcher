@@ -13,11 +13,12 @@
   - `api` — interfaces, records, `@ConfigurationProperties`, exceptions. No Spring beans and no
     auto-configuration: the configuration processor generates metadata for properties records
     without registering them, and implementations use only their `Constants`. A module with
-    `@ConfigurationProperties` depends on `implementation(libs.spring.boot)` — nothing more.
-    The one exception: an `api` module that defines a `mode` selector registers one
-    auto-configuration that only binds and validates that record (`<Area>ModeAutoConfiguration`),
-    so every implementation — and an application without any — gets the check.
-  - `impl` / `<tech>-impl` — implementation plus an `@AutoConfiguration` class.
+    `@ConfigurationProperties` depends on `implementation(libs.spring.boot)` and, when constraints
+    are used, `jakarta.validation-api`; validator-provider starters belong to active implementations.
+    Mode selectors are strings, not closed API enums. APIs contribute property declarations but
+    register no binding/validation beans. Implementations own their conditional selection values;
+    adding a backend must not require an API change.
+  - `impl` / `<tech>-impl` — implementation and its explicitly guarded `@AutoConfiguration`.
 - Consumers depend on `api` (`api(projects.libs.xApi)`); only applications depend on `impl`.
   An `api` module is always declared with `api(...)`, never `implementation`/`compileOnly`; leave
   it out when another declared `api` module already brings it.
@@ -31,6 +32,18 @@
   independently. Providers may coexist; do not introduce an exclusive provider `mode` or let
   one provider's bean suppress another provider. Name provider beans distinctly where needed.
 
+## Package roles
+
+- Within a module's package root, group types by responsibility: `service` for contracts and
+  implementations, `model` for operational/transport values, `exception` for exceptions and
+  `properties` for settings. Reserve `entity` for persisted state and persistence representations.
+- Put Spring wiring in `configuration`; use `mapper` and `repository` where those roles exist.
+  APIs and implementations use the same vocabulary without requiring identical or empty packages.
+  Keep small internal service helpers alongside their service and tests in corresponding packages.
+- Class moves must update imports, discovery registrations and reflective references while
+  preserving property names, wire contracts and persisted schemas. See
+  [ADR-0025](../adr/0025-organize-java-library-packages-by-role.md).
+
 ## Auto-configuration
 
 - Every `impl` registers its auto-configuration in
@@ -40,6 +53,20 @@
   `invoice-watcher.user-configuration.dao.mode = jpa | firestore`,
   `invoice-watcher.event-producer.mode = kafka`, guarded with `@ConditionalOnProperty` using the
   constants from the properties' nested `Constants` class.
+- Keep every implementation's complete client/provider/helper graph behind its activation
+  condition. Use underlying libraries rather than starters that independently activate provider
+  infrastructure; do not depend on a sibling implementation's unnamed/default beans. Shared
+  helpers must be imported within the active condition, not globally self-activated. See
+  [ADR-0023](../adr/0023-isolate-conditionally-activated-modules-and-their-infrastructure.md).
+- Active features require service interfaces through ordinary dependency injection. Do not hide
+  missing backends with conditions that silently omit the active feature, or add generic runtime
+  selection validators. Test disabled/selected implementations and application compositions,
+  including absent and ambiguous dependencies. API-only imports create no selector beans.
+- Keep backend activation/isolation tests in the owning implementation module. Start a minimal
+  test application with normal Spring Boot auto-configuration discovery and the module's
+  transitive dependencies; do not filter discovery to selected configuration classes. Test
+  consuming capabilities' required dependencies in their own modules, and reserve application
+  tests for actual application composition.
 - When several implementations may live on one classpath, name beans explicitly (nested `Beans`
   utility class with string constants) and wire them with `@Qualifier`, so they never clash with
   Spring Boot's own auto-configured beans.
@@ -47,6 +74,8 @@
 ## Configuration properties
 
 - `@ConfigurationProperties` **records**, prefix `invoice-watcher.<area>[.<sub>]`.
+- Derive child configuration prefixes from the owning group's prefix constant plus a suffix,
+  and reuse selector property constants in activation conditions.
 - Defaults via `@DefaultValue` with constants in a nested `Defaults` class.
 - Bound records are validated at startup: `@Validated` on the record, `jakarta.validation`
   constraints on the components (`@NotBlank`, `@NotNull`, `@DurationMin`, ...), `@Valid` on nested
@@ -54,9 +83,8 @@
   only there.
 - Every module that binds a record (`@EnableConfigurationProperties`) declares
   `implementation(libs.spring.boot.starter.validation)` itself; without a validator on the
-  classpath Spring silently ignores `@Validated`. A `mode` record is an enum component with
-  `@NotNull`, bound by its `api` module, so a missing or unknown value fails the startup even
-  when no implementation matches.
+  classpath Spring silently ignores `@Validated`. Completion hints are build-time metadata; required
+  dependency injection rejects missing or ambiguous backends when a capability is active.
 - The configuration processor (enabled in `springboot.common-conventions`) generates metadata
   that feeds the published configuration reference. Every record (also nested ones) needs Javadoc
   with a `@param` per component — it becomes the property description, and a property without
@@ -68,3 +96,13 @@
   secret properties receive the same IDE assistance and reference representation.
 - In k8s, properties are set as env vars in `overlays/<env>/config/.env` of the app
   (`invoice-watcher.mail-producer.task.topic` → `INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC`).
+
+## Implementation metadata
+
+The Gradle convention generates mode value hints from each implementation's compiled
+`@ConditionalOnProperty` declaration. Keep the condition as the single source of the value;
+do not repeat an implementation list in the API or hand-maintain equivalent JSON hints.
+Application metadata and the generated reference merge these contributions deterministically,
+deduplicate equal values and fail on incompatible duplicate declarations. The application view
+contains only implementations on its classpath; the reference documents the repository's modules.
+See [ADR-0024](../adr/0024-contribute-mode-values-from-implementations-and-merge-metadata-explicitly.md).
