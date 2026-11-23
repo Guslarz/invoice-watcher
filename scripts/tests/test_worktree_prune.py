@@ -1,8 +1,10 @@
 """WORKER integration tests for the worktree shell entry points."""
 
 from pathlib import Path
+import os
 import shutil
 import subprocess
+import time
 import unittest
 
 from test_worker import RepositoryTest, worker
@@ -164,7 +166,8 @@ class LocalConfigurationTest(unittest.TestCase):
 
     def test_WORKTREE_003_preserves_destination_entries(self):
         self.local(self.repo).write_text(self.secret)
-        self.create("preserved")
+        result = self.create("preserved")
+        self.assertEqual(result.returncode, 0, result.stderr)
         checkout = self.root / "preserved"
         destination = self.local(checkout)
         destination.unlink()
@@ -176,13 +179,32 @@ class LocalConfigurationTest(unittest.TestCase):
                     destination.write_text("existing")
                 elif kind == "directory":
                     destination.mkdir()
+                    (destination / "child").write_text("existing child")
                 else:
                     destination.symlink_to(target if kind == "symlink" else self.root / "absent")
+                # Old access times make inspection exercise relatime updates, including readlink.
+                os.utime(destination, ns=(1_000_000_000, 1_000_000_000), follow_symlinks=False)
                 before = destination.lstat()
+                link_target = destination.readlink() if destination.is_symlink() else None
+                # Cross even a whole-second timestamp boundary so rewrites cannot hide in it.
+                time.sleep(1.1)
                 result = self.link(checkout)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(destination.lstat(), before)
+                after = destination.lstat()
+                # Access time can change on inspection; identity and mutation metadata cannot.
+                for field in ("st_dev", "st_ino", "st_mode", "st_nlink", "st_uid", "st_gid",
+                              "st_size", "st_mtime_ns", "st_ctime_ns"):
+                    self.assertEqual(getattr(after, field), getattr(before, field), field)
+                if link_target is not None:
+                    self.assertEqual(destination.readlink(), link_target)
+                    self.assertEqual(target.read_text(), "existing")
+                    self.assertEqual(destination.exists(), kind == "symlink")
+                elif kind == "file":
+                    self.assertEqual(destination.read_text(), "existing")
                 if kind == "directory":
+                    self.assertEqual(sorted(child.name for child in destination.iterdir()), ["child"])
+                    self.assertEqual((destination / "child").read_text(), "existing child")
+                    (destination / "child").unlink()
                     destination.rmdir()
                 else:
                     destination.unlink()
