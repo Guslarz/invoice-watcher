@@ -11,8 +11,6 @@ dependencies {
   implementation(libs.spring.boot.starter.validation)
   implementation(libs.spring.kafka)
 
-  // JacksonJsonSerializer needs it; spring-kafka declares it only as optional
-  runtimeOnly(libs.jackson.databind)
-
-  testImplementation(libs.jackson.databind)
+  // JacksonJsonSerializer needs Jackson on the compile classpath; spring-kafka makes it optional.
+  implementation(libs.jackson.databind)
 }
