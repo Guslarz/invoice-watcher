@@ -24,6 +24,8 @@ testing {
       dependencies {
         implementation(platform(libs.spring.boot.dependencies))
         implementation(libs.assertj.core)
+        implementation(libs.spring.boot)
+        implementation(libs.spring.boot.configuration.processor)
       }
     }
   }

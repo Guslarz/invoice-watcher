@@ -141,7 +141,8 @@ an ADR only when relevant), and the guideline for the area you touch (`docs/agen
 
 Full rules: `docs/agents/guidelines/`. The non-negotiables:
 - Google Java style (Checkstyle) and SpotBugs must pass — `./gradlew analyze`.
-- New library = `api` module (interfaces, records, properties) + `impl` module with an
-  `@AutoConfiguration` registered in `META-INF/spring/...AutoConfiguration.imports`.
+- New library = `api` module (consumer-facing interfaces, domain records, exceptions) + `impl`
+  module with Spring configuration binding and an `@AutoConfiguration` registered in
+  `META-INF/spring/...AutoConfiguration.imports`. See the module guideline for API boundaries.
 - Configuration via `@ConfigurationProperties` records under the `invoice-watcher.` prefix.
 - Tests: JUnit 5 + AssertJ, `// given // when // then`, class under test named `uut`.

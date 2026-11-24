@@ -1,6 +1,6 @@
 ---
 id: ADR-0003
-status: accepted
+status: amended by ADR-0027
 date: 2026-10-13
 ---
 
@@ -14,8 +14,10 @@ Applications should be assembled from parts without code changes.
 
 ## Decision
 
-- Each concern is an `api` module (interfaces, records, properties) plus one or more
-  implementation modules.
+- Each concern is an `api` module (consumer-facing interfaces, domain records, exceptions) plus
+  one or more implementation modules. [ADR-0027](0027-keep-spring-configuration-binding-in-implementations.md)
+  amends the original placement of configuration properties in the API: Spring Boot binding
+  belongs in implementations.
 - Implementations register a Spring Boot `@AutoConfiguration`; applications only list modules in
   `build.gradle.kts`.
 - Alternatives that can share a classpath are switched by a `mode` property

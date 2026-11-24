@@ -1,6 +1,6 @@
 ---
 id: ADR-0024
-status: accepted
+status: amended by ADR-0027
 date: 2026-11-17
 ---
 
@@ -14,8 +14,11 @@ property/value declarations in the same way. Metadata generation does not requir
 
 ## Decision
 
-- Declare each selector once as a string property in its capability API. Keep the API passive:
-  it declares contracts and metadata, not selector auto-configuration or global validation beans.
+- Declare each shared selector key once as a framework-neutral capability API constant; its
+  values remain strings. Keep Spring binding records in implementations under
+  [ADR-0027](0027-keep-spring-configuration-binding-in-implementations.md), which amends their
+  original API placement. Keep the API passive: no selector auto-configuration or global
+  validation beans.
 - Let implementations own their selection conditions. Generate mode value hints from compiled
   `@ConditionalOnProperty` declarations, without initializing their classes. Do not repeat the
   same value in hand-maintained JSON or in a central supported-backend list.
