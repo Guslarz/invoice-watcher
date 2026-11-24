@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import shlex
 import socket
 import struct
 import subprocess
@@ -399,8 +400,13 @@ def read_status(path, record=None):
     if data.get("host") == "orca":
         info = data.get("orca")
         if (not isinstance(info, dict) or not {"cli", "workspace", "instance", "agent"}.issubset(info)
-                or any(not isinstance(v, str) or not v for v in info.values())):
+                or any(not isinstance(v, str) or not v for v in info.values())
+                or info.get("transport", "supervised") not in ("developer", "supervised")):
             raise ValueError("invalid Orca worker identity")
+    if data.get("owner") is not None and not re.fullmatch(r"[0-9a-f]{32}", str(data["owner"])):
+        raise ValueError("invalid worker owner generation")
+    if data.get("handoff") is not None:
+        transfer_metadata(data["handoff"])
     for field in ("transport", "native_socket", "parent_session", "server"):
         if field in data and not isinstance(data[field], str):
             raise ValueError("invalid worker transport field: " + field)
@@ -417,7 +423,7 @@ def read_status(path, record=None):
     if data.get("backend_session") is not None:
         native_id(data["backend_session"])
     if record:
-        for field in ("host", "orca"):
+        for field in ("host", "orca", "owner", "handoff"):
             if record.get(field) != data.get(field):
                 raise ValueError("registry/status host identity conflict: " + field)
         sandbox_mode(record)
@@ -441,7 +447,7 @@ def write_status(directory, record, phase, **changes):
     data = previous or {key: record.get(key) for key in IDENTITY}
     data.update(backend=backend(record), schema_version=1, branch=branch_at(path),
                 agent_policy=record.get("agent_policy", "legacy-unspecified"))
-    for field in ("host", "orca"):
+    for field in ("host", "orca", "owner", "handoff"):
         if field in record:
             data[field] = record[field]
     if backend(record) == "codex" and "sandbox" in record:
@@ -462,6 +468,9 @@ def write_status(directory, record, phase, **changes):
 
 
 def update_identity(directory, record, **changes):
+    current = load(directory / (record["name"] + ".json"))
+    if current.get("owner") != record.get("owner"):
+        raise ValueError("stale worker ownership during identity update")
     # Session allocation is script-owned; lifecycle commands cannot mutate identity.
     status = read_status(record["worktree"], record)
     record.update(changes)
@@ -495,7 +504,9 @@ def command_prompt(command, name):
     return (template.replace("$ARGUMENTS", text) + "\n\nAssigned worker: " + name
             + ". Reuse this worktree; do not prune or create another. Follow Protocol parallel's "
             "file-based lifecycle updates and worker-local approval gates. Dispatch is not approval. "
-            "Do not commit or push until the developer explicitly approves the commit in this worker.")
+            "Do not commit or push until the developer explicitly approves the commit in this worker. "
+            "Address requirements, scope and approvals directly to the developer in this visible conversation "
+            "and pause here; only assignment problems and cross-worker/shared-resource conflicts go to the dispatcher.")
 
 
 def native_id(value):
@@ -643,6 +654,388 @@ def finish_orca_start(directory, record, envelope):
     print(f"{record['name']}: {record['backend']} in Orca {surface}; dispatch={info['dispatch']} worktree={record['worktree']}")
 
 
+def transfer_metadata(value):
+    if (not isinstance(value, dict) or set(value) != {"id", "stage", "digest"}
+            or not re.fullmatch(r"[0-9a-f]{32}", str(value.get("id")))
+            or not re.fullmatch(r"[0-9a-f]{64}", str(value.get("digest")))
+            or value.get("stage") not in ("prepared", "stopping", "stopped", "releasing", "retired",
+                                           "allocating", "awaiting-accept", "accepted")):
+        raise ValueError("invalid handoff metadata")
+
+
+def transfer_path(directory, record, transfer):
+    if not re.fullmatch(r"[0-9a-f]{32}", transfer):
+        raise ValueError("invalid transfer ID")
+    return directory / "handoffs" / record["name"] / transfer
+
+
+def file_digest(path):
+    if path.is_symlink():
+        return "link:" + os.readlink(path)
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else "absent"
+
+
+def transfer_snapshot(record, inputs):
+    root = Path(record["worktree"])
+    # Every tracked file and every nonignored untracked file binds local code and dirty state.
+    paths = call(["git", "-C", str(root), "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).stdout
+    selected = set(paths.rstrip("\0").split("\0")) | set(inputs)
+    state = {}
+    for name in sorted(selected - {""}):
+        path = root / name
+        if Path(name).is_absolute() or ".." in Path(name).parts or not path.resolve().is_relative_to(root):
+            raise ValueError("handoff inputs must stay inside the worktree: " + name)
+        state[name] = {"digest": file_digest(path), "mode": oct(path.lstat().st_mode & 0o777)
+                       if path.exists() or path.is_symlink() else None}
+    return {"head": call(["git", "-C", str(root), "rev-parse", "HEAD"]).stdout.strip(),
+            "branch": branch_at(root), "files": state}
+
+
+def handoff_packet(directory, record, transfer, *, check_inputs=True):
+    meta = record.get("handoff", {})
+    transfer_metadata(meta)
+    if transfer != meta["id"]:
+        raise ValueError("transfer is not the current handoff")
+    path = transfer_path(directory, record, transfer)
+    packet = load(path / "packet.json")
+    if hashlib.sha256((path / "packet.json").read_bytes()).hexdigest() != meta["digest"]:
+        raise ValueError("handoff packet changed; obtain renewed developer review")
+    plan = path / "PLAN.md"
+    if file_digest(plan) != packet["approval"]["plan_sha256"]:
+        raise ValueError("approved plan snapshot changed")
+    if check_inputs and transfer_snapshot(record, packet["context"]["inputs"]) != packet["snapshot"]:
+        raise ValueError("handoff plan/code/revision changed; reconcile with developer before implementation")
+    return packet, path
+
+
+def handoff_prepare(args, directory, record):
+    owner_check(record, args.owner)
+    status = read_status(record["worktree"], record)
+    if (not status or status["phase"] != "awaiting-plan-approval"
+            or (record.get("handoff") and record["handoff"]["stage"] not in ("prepared", "accepted"))):
+        raise ValueError("prepare requires the plan approval gate and no in-flight replacement")
+    if record.get("orca_pending") or record.get("cleanup_pending") or record.get("session_deleted"):
+        raise ValueError("resolve pending host/cleanup operations before transfer")
+    if record.get("host") != "orca" or (developer_orca(record) and record["orca"].get("surface") != "terminal"):
+        raise ValueError("source retirement unsupported; continue the current conversation")
+    if Path(args.context).resolve().is_relative_to(Path(record["worktree"])):
+        raise ValueError("store approval/context outside the worktree so it does not change the reviewed inputs")
+    context = load(Path(args.context))
+    required = {"decisions", "constraints", "specs", "adrs", "evidence", "verification", "uncertainty", "escalation", "inputs"}
+    if not required.issubset(context) or any(not isinstance(context[k], list) or any(
+            not isinstance(v, str) or not v.strip() for v in context[k]) for k in required):
+        raise ValueError("context needs decisions/constraints/specs/adrs/evidence/verification/uncertainty/escalation/inputs lists")
+    if not context["evidence"] or not context["verification"] or not context["inputs"]:
+        raise ValueError("investigation evidence, verification and relevant code inputs are required")
+    approval = context.get("approval", {})
+    conversation = record["orca"].get("conversation")
+    if (not conversation or approval.get("source_conversation") != conversation
+            or approval.get("plan_approved") is not True or approval.get("transfer_approved") is not True
+            or not all(isinstance(approval.get(k), str) and approval[k].strip()
+                       for k in ("quote", "reference", "transfer_quote", "transfer_reference", "plan_sha256"))):
+        raise ValueError("explicit developer plan and transfer approval evidence in the source conversation required")
+    target = context.get("target", {})
+    if set(target) != {"backend", "model", "agent_policy"} or target["backend"] not in BACKENDS or target["agent_policy"] != "default":
+        raise ValueError("target requires backend, model and default agent_policy; named Orca agents are unsupported")
+    if not isinstance(target["model"], str) or not target["model"].strip():
+        raise ValueError("explicit developer-selected target model required")
+    if target["backend"] == "opencode":
+        opencode_model(target["model"])
+        if "#" in target["model"]:
+            raise ValueError("Orca OpenCode variants are unsupported")
+    plan = Path(record["worktree"]) / status["plan"]
+    if file_digest(plan) != approval["plan_sha256"]:
+        raise ValueError("approval does not bind the exact current plan")
+    for name in context["specs"] + context["adrs"] + context["inputs"]:
+        candidate = Path(record["worktree"]) / name
+        if (not candidate.is_file() or candidate.is_symlink()
+                or not candidate.resolve().is_relative_to(Path(record["worktree"]))):
+            raise ValueError("missing or unsafe context input: " + name)
+    transfer = uuid.uuid4().hex
+    path = transfer_path(directory, record, transfer)
+    path.mkdir(parents=True, mode=0o700)
+    (path / "PLAN.md").write_bytes(plan.read_bytes())
+    packet = {"source": record.copy(), "context": context, "approval": approval, "target": target,
+              "snapshot": transfer_snapshot(record, context["inputs"])}
+    save(path / "packet.json", packet)
+    update_identity(directory, record, handoff={"id": transfer, "stage": "prepared", "digest": file_digest(path / "packet.json")})
+    write_status(directory, record, "awaiting-plan-approval", detail="approval transfer prepared; external controller must retire source")
+    print("Prepared " + transfer + "; developer approval evidence is an attestation, not generated permission")
+
+
+def handoff_stage(directory, record, stage):
+    update_identity(directory, record, handoff=record["handoff"] | {"stage": stage})
+    write_status(directory, record, "awaiting-plan-approval", detail="handoff " + stage + "; no commit approval")
+
+
+def handoff_actor(record):
+    # Self-retirement would kill the operation before its durable proof/receipt is recorded.
+    caller = (os.environ.get("ORCA_AGENT_SESSION_ID") or os.environ.get("ORCA_SESSION_ID", "")).removeprefix("orca_session_id:")
+    source = record.get("orca", {}).get("conversation", "").removeprefix("structured:")
+    if ((caller and caller == source) or (os.environ.get("ORCA_TERMINAL_HANDLE")
+            and os.environ["ORCA_TERMINAL_HANDLE"] == record.get("orca", {}).get("handle"))):
+        raise ValueError("handoff must be run by an external controller after this planner pauses")
+    if not caller and os.environ.get("CODEX_THREAD_ID") == record.get("session") and record.get("session"):
+        raise ValueError("source session cannot replace itself")
+
+
+def execute_handoff(directory, name, transfer, *, recovering=False):
+    # Hold a per-worker control lock during host waits, never the global registry lock.
+    control = directory / (name + ".handoff-lock")
+    with control.open("a") as lease:
+        try:
+            fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise ValueError("handoff already controlled by another process") from exc
+        with locked(directory):
+            record = load(directory / (name + ".json"))
+            read_status(record["worktree"], record)
+            handoff_actor(record)
+            packet, path = handoff_packet(directory, record, transfer)
+            stage = record["handoff"]["stage"]
+            if stage == "prepared":
+                handoff_stage(directory, record, "stopping")
+            elif not recovering:
+                raise ValueError("handoff already started; use recover, never launch twice")
+        try:
+            if record["handoff"]["stage"] == "stopping":
+                if developer_orca(record):
+                    # No replay API exists for close: an unknown close must be inspected manually.
+                    receipt = path / "retirement.json"
+                    if recovering and not receipt.exists():
+                        raise ValueError("terminal close outcome unknown; inspect exact resource, do not close or launch again")
+                    result = load(receipt) if receipt.exists() else retire_developer(record)
+                    save(receipt, result)
+                else:
+                    if (path / "retirement.json").exists():
+                        result = load(path / "retirement.json")
+                    else:
+                        envelope = orca_mutation(directory, record, ["orchestration", "worker-stop", "--dispatch",
+                                                record["orca"]["dispatch"], "--full"], operation="handoff-stop")
+                        result = orca_result(envelope)
+                    if (result.get("dispatchId") != record["orca"]["dispatch"] or result.get("state") != "stopped"
+                            or result.get("processAction") not in ("closed_agent_terminal", "closed_exited_terminal")
+                            or result.get("helperStopError") or any(h.get("outcome") not in ("stopped", "already_finished")
+                                                                   for h in result.get("helpers", []))):
+                        raise ValueError("predecessor exit unconfirmed; fencing/assignment completion is insufficient")
+                    save(path / "retirement.json", result)
+                    orca_confirm(directory, record)
+                with locked(directory):
+                    handoff_stage(directory, record, "stopped")
+            if record["handoff"]["stage"] == "stopped":
+                with locked(directory):
+                    handoff_stage(directory, record, "releasing")
+            if record["handoff"]["stage"] == "releasing":
+                if not developer_orca(record):
+                    if (path / "release.json").exists():
+                        result = load(path / "release.json")
+                    else:
+                        envelope = orca_mutation(directory, record, ["orchestration", "worker-release", "--dispatch",
+                                                record["orca"]["dispatch"], "--full"], operation="handoff-release")
+                        result = orca_result(envelope)
+                    if result.get("dispatchId") != record["orca"]["dispatch"] or result.get("state") not in ("released", "already_released"):
+                        raise ValueError("predecessor resources retained or release unknown")
+                    save(path / "release.json", result)
+                    orca_confirm(directory, record)
+                with locked(directory):
+                    handoff_stage(directory, record, "retired")
+            if record["handoff"]["stage"] == "retired":
+                with locked(directory):
+                    handoff_packet(directory, record, transfer)
+                    info = {k: record["orca"][k] for k in ("cli", "workspace", "workspace_id", "instance", "coordinator") if k in record["orca"]}
+                    info.update(transport="developer", agent={"codex": "codex", "claude": "claude", "opencode": "opencode2"}[packet["target"]["backend"]])
+                    update_identity(directory, record, backend=packet["target"]["backend"], model=packet["target"]["model"],
+                                    selected_agent=None, agent_policy="default", session=None, backend_session=None,
+                                    owner=uuid.uuid4().hex, orca=info,
+                                    command="/implement " + read_status(record["worktree"], record)["plan"])
+                    handoff_stage(directory, record, "allocating")
+            if record["handoff"]["stage"] == "allocating":
+                # Binding can have completed before the final lifecycle checkpoint was written.
+                if record["orca"].get("conversation") and not record.get("orca_pending"):
+                    verify_developer(record)
+                else:
+                    launch_developer(directory, record)
+                with locked(directory):
+                    handoff_stage(directory, record, "awaiting-accept")
+            print("Open target " + record["orca"].get("conversation", "(unbound)") + "; read packet/code and acknowledge transfer " + transfer)
+        except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as exc:
+            with locked(directory):
+                write_status(directory, record, "awaiting-plan-approval", detail="handoff incomplete: " + str(exc))
+            raise
+
+
+def handoff_accept(args, directory, record):
+    if record.get("handoff", {}).get("stage") != "awaiting-accept":
+        raise ValueError("replacement must be bound and awaiting acknowledgment")
+    packet, path = handoff_packet(directory, record, args.transfer)
+    if args.session != record["orca"].get("conversation"):
+        raise ValueError("acknowledgment must identify the bound replacement session")
+    if not args.understanding.strip():
+        raise ValueError("state understanding after reading the approved packet and relevant code")
+    verify_developer(record)
+    save(path / "acknowledgment.json", {"session": args.session, "owner": record["owner"],
+                                      "understanding": args.understanding,
+                                      "at": datetime.now(timezone.utc).isoformat()})
+    handoff_stage(directory, record, "accepted")
+    write_status(directory, record, "implementing", detail="explicit plan approval transferred; commit approval remains separate")
+
+
+def enter_worker(args, directory, record):
+    if record.get("owner") != args.owner or not developer_orca(record):
+        raise ValueError("stale/missing owner or unsupported enter transport")
+    if record.get("orca_pending") or not record["orca"].get("conversation"):
+        raise ValueError("identity binding pending; pause and reopen this same conversation after launch completes")
+    read_status(record["worktree"], record)
+    if record.get("handoff"):
+        packet, path = handoff_packet(directory, record, record["handoff"]["id"],
+                                      check_inputs=record["handoff"]["stage"] != "accepted")
+        if record["handoff"]["stage"] not in ("awaiting-accept", "accepted"):
+            raise ValueError("handoff identity binding pending; pause without editing")
+        print("Read exact approved plan: " + str(path / "PLAN.md") + "\nRead context and actual relevant code: " + str(path / "packet.json"))
+        if record["handoff"]["stage"] == "awaiting-accept":
+            print("Before editing, state understanding and run worker.py handoff-accept with --transfer "
+                  + record["handoff"]["id"] + " --session " + record["orca"]["conversation"] + " --understanding <your statement>.")
+        else:
+            print("Plan approval transfer already accepted; continue the recorded lifecycle without repeating acceptance.")
+    print("For all worker commands use this launcher, including from an older checkout: python3 "
+          + shlex.quote(str(Path(__file__).resolve())))
+    print(command_prompt(record["command"], record["name"]))
+    if record["orca"].get("coordinator"):
+        print("Coordinator for assignment/resource conflicts or completion summaries only: orca_session_id:"
+              + record["orca"]["coordinator"] + "; never relay developer requirements/approvals.")
+    print("Current phase: " + read_status(record["worktree"], record)["phase"]
+          + "; preserve pending gates and do not restart completed workflow steps.")
+    print("Use --owner " + record["owner"] + " on lifecycle updates. Ask the developer directly here and pause for requirements/approvals.")
+
+
+def developer_orca(record):
+    return record.get("host") == "orca" and record.get("orca", {}).get("transport") == "developer"
+
+
+def owner_check(record, owner):
+    if record.get("owner") and owner != record["owner"]:
+        raise ValueError("stale or missing worker owner; open the recorded conversation")
+    transfer = record.get("handoff")
+    if transfer and transfer["stage"] not in ("accepted", "prepared"):
+        raise ValueError("handoff pending; use recover or handoff-accept, not ordinary editing/resume")
+
+
+def developer_mutation(directory, record, arguments, operation):
+    pending = record.get("orca_pending")
+    if pending:
+        if pending["operation"] != operation or not pending.get("request"):
+            raise ValueError("Orca operation pending without a usable replay ID; inspect before continuing")
+        arguments = pending["arguments"] + [pending["replay_flag"], pending["request"]]
+    else:
+        record["orca_pending"] = {"operation": operation, "arguments": arguments,
+                                  "replay_flag": "--retry-launch" if operation == "developer-start" else "--retry-request"}
+        save(directory / (record["name"] + ".json"), record)
+    envelope = orca_call(record["orca"]["cli"], arguments, cwd=record["worktree"])
+    result = envelope.get("result", {})
+    request = (result.get("operationId") or envelope.get("error", {}).get("data", {}).get("operationId")
+               if operation == "developer-start" else result.get("send", {}).get("prompt", {}).get("requestId")
+               or envelope.get("error", {}).get("data", {}).get("requestId"))
+    if request:
+        record["orca_pending"]["request"] = request
+    receipts = directory / "orca-receipts"
+    receipts.mkdir(exist_ok=True)
+    save(receipts / (record["name"] + "-developer.json"), envelope)
+    save(directory / (record["name"] + ".json"), record)
+    return envelope
+
+
+def verify_developer(record):
+    info = record["orca"]
+    orca_workspace(record)
+    page = orca_result(orca_call(info["cli"], ["worktree", "ps", "--limit", "10000"]))
+    if page.get("truncated") is not False:
+        raise ValueError("Orca conversation inventory incomplete; inspect exact workspace")
+    rows = [w for w in page["worktrees"] if w.get("identity", {}).get("key") == info["instance"]]
+    if len(rows) != 1 or not isinstance(rows[0].get("agents"), list):
+        raise ValueError("Orca exact workspace agent inventory missing or ambiguous")
+    agents = rows[0]["agents"]
+    if info["surface"] == "structured":
+        expected = "structured-agent-session-" + info["conversation"] + ":"
+        matches = [a for a in agents if a.get("paneKey", "").startswith(expected)]
+    else:
+        terminal = orca_result(orca_call(info["cli"], ["terminal", "show", "--terminal", info["handle"]]))["terminal"]
+        if terminal.get("handle") != info["handle"] or terminal.get("worktreePath") != record["worktree"]:
+            raise ValueError("Orca terminal identity/workspace mismatch")
+        if not terminal.get("tabId") or not terminal.get("leafId"):
+            raise ValueError("Orca terminal pane identity incomplete")
+        matches = [a for a in agents if a.get("paneKey") == terminal["tabId"] + ":" + terminal["leafId"]]
+    if len(matches) != 1 or matches[0].get("agentType") != info["agent"]:
+        raise ValueError("Orca conversation/backend absent or changed in exact workspace; inspect existing conversation")
+
+
+def finish_developer_start(directory, record, envelope):
+    result = orca_result(envelope)
+    outcome = result.get("outcome", {})
+    info = record["orca"].copy()
+    for field, value in (("surface", outcome.get("kind")), ("handle", outcome.get("handle")),
+                         ("conversation", outcome.get("sessionId") or outcome.get("handle"))):
+        if isinstance(value, str) and value:
+            info[field] = value
+    update_identity(directory, record, orca=info)
+    if (result.get("worktreeId") != info["workspace_id"] or info.get("surface") not in ("structured", "terminal")
+            or not info.get("handle") or not info.get("conversation")):
+        raise ValueError("Orca launch receipt has incomplete/mismatched workspace or surface identity")
+    if result.get("prompt", {}).get("outcome") not in ("journaled", "handed-to-terminal"):
+        raise ValueError("Orca bootstrap prompt acceptance unconfirmed; inspect/recover recorded operation")
+    verify_developer(record)
+    orca_confirm(directory, record)
+    print(f"{record['name']}: developer-owned Orca {info['surface']} {info['conversation']} in {record['worktree']}")
+
+
+def launch_developer(directory, record):
+    info = record["orca"]
+    prompt = ("Repository worker " + record["name"] + ". Before reading workflow instructions or editing, run "
+              "python3 " + shlex.quote(str(Path(__file__).resolve())) + " enter " + record["name"] + " --owner " + record["owner"]
+              + ". If identity binding is pending, pause and ask the developer to resume this existing conversation; "
+              "do not retry a launch or edit. Follow the printed workflow. Address requirements, scope and "
+              "approvals directly to the developer here; coordination mail is only for assignment/resource conflicts.")
+    args = ["agent", "launch", "--agent", info["agent"], "--worktree", info["workspace"], "--prompt", prompt]
+    if record.get("model"):
+        args += ["--model", record["model"]]
+    result = developer_mutation(directory, record, args, "developer-start")
+    finish_developer_start(directory, record, result)
+
+
+def resume_developer(directory, record):
+    if record.get("orca_pending") or record.get("session_deleted"):
+        raise ValueError("Orca operation unresolved or resource retired; inspect/recover first")
+    status = read_status(record["worktree"], record)
+    phase = status["phase"] if status else "discussing"
+    if phase in ("done", "awaiting-merge"):
+        phase = "discussing"
+    write_status(directory, record, phase, detail="developer resumed; approval gates remain")
+    verify_developer(record)
+    if record["orca"]["surface"] == "structured":
+        print("Open existing Orca chat " + record["orca"]["conversation"] + " in " + record["worktree"]
+              + "; manual continuation required; no input was delivered and no approval granted")
+        return
+    args = ["terminal", "send", "--terminal", record["orca"]["handle"], "--text",
+            "Continue this repository worker using python3 " + shlex.quote(str(Path(__file__).resolve())) + " enter " + record["name"]
+            + " --owner " + record["owner"] + "; resume grants no approval.", "--enter"]
+    result = orca_result(developer_mutation(directory, record, args, "developer-resume"))
+    if result.get("send", {}).get("accepted") is not True:
+        raise ValueError("Orca continuation acceptance unconfirmed; inspect recorded receipt")
+    orca_confirm(directory, record)
+
+
+def retire_developer(record):
+    info = record["orca"]
+    if info.get("surface") != "terminal":
+        raise ValueError("automatic chat retirement unsupported; continue the current chat manually")
+    verify_developer(record)
+    result = orca_result(orca_call(info["cli"], ["terminal", "close", "--terminal", info["handle"]]))
+    close = result.get("close", {})
+    if (close.get("handle") != info["handle"] or close.get("ptyKilled") is not True
+            or close.get("ptyStopVerdict") in ("live", "unverifiable")):
+        raise ValueError("exact terminal retirement unconfirmed; do not start another editor")
+    return result
+
+
 def start_orca(args, directory, kind):
     unsupported = ("agent", "sandbox", "codex_socket", "parent_session", "server")
     for option in unsupported:
@@ -659,8 +1052,12 @@ def start_orca(args, directory, kind):
         raise ValueError("Orca worker adapter supports local dispatch only")
     cli = orca_executable()
     runtime = orca_result(orca_call(cli, ["status"]))["runtime"]
-    required = {"orchestration.contract.v1", "orchestration.worker-keep-open.v1",
-                "orchestration.worker-launch-preferences.v1", "worktree.remove-branch-policy.v1"}
+    legacy = getattr(args, "legacy_supervised", False)
+    required = ({"orchestration.contract.v1", "orchestration.worker-keep-open.v1",
+                 "orchestration.worker-launch-preferences.v1", "worktree.remove-branch-policy.v1"}
+                if legacy else {"agent.launch.v2", "agent.launch.replay-required.v1",
+                                "agent.launch.prompt-carry.v1", "agent.launch.local-presentation.v1",
+                                "worktree.remove-branch-policy.v1"})
     if not runtime.get("reachable") or not required.issubset(runtime.get("capabilities", [])):
         raise ValueError("Orca runtime lacks required worker identity/release/branch guarantees")
     selector = getattr(args, "orca_workspace", None)
@@ -685,8 +1082,21 @@ def start_orca(args, directory, kind):
     record = {"name": args.name, "backend": args.backend, "host": "orca", "orca": info,
               "model": args.model, "selected_agent": None, "agent_policy": "default",
               "worktree": path, "session": None, "backend_session": None, "command": args.command}
+    if not legacy:
+        record["orca"]["transport"] = "developer"
+        coordinator = os.environ.get("ORCA_AGENT_SESSION_ID") or os.environ.get("ORCA_SESSION_ID")
+        if coordinator:
+            record["orca"]["coordinator"] = coordinator.removeprefix("orca_session_id:")
+        record["owner"] = uuid.uuid4().hex
     save(directory / (args.name + ".json"), record)
     write_status(directory, record, "discussing" if kind == "plan" else "implementing")
+    if not legacy:
+        try:
+            launch_developer(directory, record)
+        except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as exc:
+            write_status(directory, record, "blocked", detail="developer-owned launch incomplete: " + str(exc))
+            raise
+        return
     prompt = command_prompt(args.command, args.name) + (
         "\nYou are an Orca assignment. Preserve .worker-status.json approval gates when you pause. "
         "Report this assignment with Orca worker_done (using its preamble Task/Dispatch IDs) "
@@ -710,6 +1120,8 @@ def start_orca(args, directory, kind):
 
 def resume_orca(directory, record, sandbox=None):
     sandbox_mode(record, sandbox)
+    if developer_orca(record):
+        return resume_developer(directory, record)
     if record.get("orca_pending") or record.get("session_deleted"):
         raise ValueError("Orca operation incomplete or released; inspect/recover recorded assignment")
     status = read_status(record["worktree"], record)
@@ -753,6 +1165,18 @@ def finish_orca_resume(directory, record, envelope):
 
 
 def recover_orca(directory, record):
+    if developer_orca(record):
+        pending = record.get("orca_pending")
+        if not pending:
+            raise ValueError("no pending developer-owned Orca operation")
+        envelope = developer_mutation(directory, record, [], pending["operation"])
+        if pending["operation"] == "developer-start":
+            finish_developer_start(directory, record, envelope)
+        else:
+            if orca_result(envelope).get("send", {}).get("accepted") is not True:
+                raise ValueError("continuation still unconfirmed")
+            orca_confirm(directory, record)
+        return
     pending = record.get("orca_pending")
     if record.get("host") != "orca" or not pending:
         raise ValueError("no pending Orca operation to recover")
@@ -771,6 +1195,8 @@ def recover_orca(directory, record):
 def release_orca(record):
     if record.get("orca_pending"):
         raise ValueError("Orca operation outcome unresolved; cleanup blocked")
+    if developer_orca(record):
+        return retire_developer(record)
     info = record["orca"]
     if not info.get("dispatch"):
         raise ValueError("Orca dispatch identity missing; cleanup blocked")
@@ -1153,16 +1579,20 @@ def show(path, record=None):
         print(f"{name}\t{backend(identity) or '-'}\t{identity.get('selected_agent') or identity.get('agent_policy', 'legacy-unspecified')}"
               f"\t{identity.get('model') or '-'}\t{phase}\t{path}\t{git}"
               f"\tsandbox={sandbox_mode(identity) or '-'}\thost={identity.get('host', 'backend')}"
-              f"\ttransport={identity.get('transport', 'orchestration' if identity.get('host') == 'orca' else 'legacy')}"
+              f"\ttransport={identity.get('transport', identity.get('orca', {}).get('transport', 'orchestration') if identity.get('host') == 'orca' else 'legacy')}"
               f"\tsession={identity.get('session') or identity.get('orca', {}).get('conversation', '-')}"
               f"\tdispatch={identity.get('orca', {}).get('dispatch', '-')}"
               f"\tplan={(status or {}).get('plan', '-')}\tpr={(status or {}).get('pr', {}).get('url', '-')}"
+              f"\towner={identity.get('owner', '-')} handoff={identity.get('handoff', {})}"
               f"\t{detail}\tresume: python3 scripts/worker.py resume {name}")
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(f"{path}\tinvalid status: {exc}; inspect before cleanup")
 
 
 def update(args, directory, record):
+    owner_check(record, getattr(args, "owner", None))
+    if record.get("handoff") and record["handoff"]["stage"] != "accepted" and args.phase != "blocked":
+        raise ValueError("handoff acceptance required before lifecycle changes")
     changes = {}
     if args.plan:
         path = Path(record["worktree"]) / args.plan
@@ -1183,6 +1613,8 @@ def update(args, directory, record):
 
 
 def resume(directory, record, sandbox=None):
+    if record.get("handoff") and record["handoff"]["stage"] not in ("accepted", "prepared"):
+        raise ValueError("handoff pending; use recover or open target conversation for acknowledgment")
     if record.get("host") == "orca":
         return resume_orca(directory, record, sandbox)
     selected_sandbox = sandbox_mode(record, sandbox)
@@ -1254,12 +1686,28 @@ def main():
     updating = sub.add_parser("update")
     updating.add_argument("name")
     updating.add_argument("--phase", choices=PHASES, required=True)
+    updating.add_argument("--owner", help="required ownership generation for developer-owned/transferred workers")
     updating.add_argument("--plan")
     updating.add_argument("--pr")
     updating.add_argument("--detail")
     binding = sub.add_parser("record-session", help="supply a known legacy Claude background job ID; does not discover activity")
     binding.add_argument("name")
     binding.add_argument("--backend-session", required=True)
+    entering = sub.add_parser("enter", help="read bound developer-owned worker instructions before work")
+    entering.add_argument("name")
+    entering.add_argument("--owner", required=True)
+    preparing = sub.add_parser("handoff-prepare", help="record actual developer plan/transfer approval and context")
+    preparing.add_argument("name")
+    preparing.add_argument("--context", required=True)
+    preparing.add_argument("--owner")
+    handing = sub.add_parser("handoff", help="external controller retires source and binds replacement")
+    handing.add_argument("name")
+    handing.add_argument("--transfer", required=True)
+    accepting = sub.add_parser("handoff-accept", help="replacement acknowledges approved context before editing")
+    accepting.add_argument("name")
+    accepting.add_argument("--transfer", required=True)
+    accepting.add_argument("--session", required=True)
+    accepting.add_argument("--understanding", required=True)
     args = parser.parse_args()
     name = getattr(args, "name", "")
     if name and not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name):
@@ -1268,6 +1716,16 @@ def main():
     if args.action in ("_codex-run", "_opencode-run"):
         run_backend(name, directory, args.action == "_codex-run")
         return
+    if args.action == "handoff":
+        execute_handoff(directory, name, args.transfer)
+        return
+    if args.action == "recover":
+        with locked(directory):
+            record = load(directory / (name + ".json"))
+            transfer = record.get("handoff")
+        if transfer and transfer["stage"] not in ("prepared", "accepted", "awaiting-accept"):
+            execute_handoff(directory, name, transfer["id"], recovering=True)
+            return
     resume_command = None
     with locked(directory):
         if args.action == "start":
@@ -1303,6 +1761,12 @@ def main():
             worktree_path(record["worktree"])
             if args.action == "update":
                 update(args, directory, record)
+            elif args.action == "enter":
+                enter_worker(args, directory, record)
+            elif args.action == "handoff-prepare":
+                handoff_prepare(args, directory, record)
+            elif args.action == "handoff-accept":
+                handoff_accept(args, directory, record)
             elif args.action == "resume":
                 resume_command = resume(directory, record, args.sandbox)
             elif args.action == "recover":

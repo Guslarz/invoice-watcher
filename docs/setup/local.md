@@ -102,10 +102,16 @@ python3 scripts/worker.py status my-worker
 python3 scripts/worker.py resume my-worker
 ```
 
-The worktree is protected before launch. The worker remains open for discussion and approval;
-resume continues its conversation without granting approval. Orca can create a new assignment
-within that conversation, so the launcher records updated assignment identities. The worker
-reports its current Orca assignment when pausing and retains its repository approval phase.
+The worktree is protected before launch. New Orca workers open a developer-owned conversation,
+so requirements, scope decisions and approvals are discussed directly with you in that worker's
+chat or terminal. The dispatcher reports which worker needs attention and where to open it;
+it does not relay questions or approvals. The initial prompt binds the returned identity before
+work begins. If the bootstrap pauses while binding is pending, continue that same conversation.
+
+Resume grants no approval. For a terminal worker it continues the recorded terminal; for a chat
+worker it prints the identity and worktree of the existing conversation to open manually. The
+current Orca CLI cannot send continuation to a developer-owned chat. Existing supervised workers
+retain their recorded conversations and assignment continuation; they are not silently migrated.
 
 Launch resolves the assigned checkout within the caller's Orca project registration, so a
 duplicate registration for the same path cannot capture the worker. Hidden projects and archived
@@ -118,18 +124,39 @@ or parent-task forks, explicit OpenCode servers and OpenCode model variants are 
 than dropped. Orca uses its configured backend permissions. Supported model selection uses
 `--model`; no separate Orca command definitions or worker execution backend are introduced.
 
-Repository status remains the authority for pruning. A completed Orca assignment or closed tab
-does not mark repository work complete. After merge, `scripts/worktree.sh rm my-worker` or the
-normal prune command checks repository lifecycle, PR and Git safety, requests release of the
-exact recorded worker, then removes its Orca workspace and branch. Unrelated tabs, retained or
-unconfirmed resources block removal with a diagnostic; cleanup does not force removal or run
-archive hooks. Partial cleanup retains checkpoints for a safe retry. Saved Orca history remains.
+At plan review the planner recommends continuing the current session, or explains a specific
+implementation backend/model choice, remaining uncertainty and when to escalate. Continuing is
+the default. A new implementation session needs your explicit selection, retirement authorization
+and transfer of plan approval; dispatch and resume do not supply these decisions. Commit approval
+remains separate in the implementation conversation.
 
-Failed or ambiguous launch/continuation receipts are retained under `agent-workers/orca-receipts`
-in the common Git directory. `python3 scripts/worker.py recover my-worker` replays an unresolved
-operation only if Orca returned its mutation request ID. Without it, inspect the host and recorded
-assignment before any recovery; do not start another worker. Existing backend-native workers
-continue to use their recorded native sessions and are not migrated automatically.
+For supported source sessions, the planner records your actual approval wording and context in
+an external JSON file and runs `python3 scripts/worker.py handoff-prepare <name> --context <file>`.
+It supplies the printed transfer ID after pausing. An external controller runs
+`python3 scripts/worker.py handoff <name> --transfer <id>` to retire the exact previous editor,
+launch in the same checkout and bind the new identity. The new implementer reads the original
+plan, decisions, relevant documents, evidence, code and verification requirements, then records
+understanding with `handoff-accept` before editing. File changes invalidate acceptance and need
+review. The local packet remains in the common Git directory for commit review.
+
+Automatic replacement supports guarded legacy supervised Orca sources and developer-owned
+terminal sources whose exact process exit can be confirmed. Automatic replacement from a
+developer-owned chat or a backend-hosted source is unsupported; continue its current session.
+The current Orca chat CLI has no stop/close endpoint. No model change is smuggled into resume.
+
+Repository status remains the authority for pruning. After merge, normal cleanup checks
+lifecycle, PR and Git safety before retiring the exact recorded surface and removing the
+workspace/branch. Developer-owned chat retirement and automatic workspace cleanup remain
+unsupported until an exact host stop API exists. Retained, unrelated or unconfirmed resources
+block cleanup; nothing is forced and archive hooks are not run.
+
+Failed or ambiguous receipts remain under agent-workers/orca-receipts in the common Git
+directory. `python3 scripts/worker.py recover <name>` uses the recorded operation's replay ID:
+agent launch uses retry-launch, while supervised operations and terminal prompts have their own
+request replay IDs. Without a usable ID, inspect the exact resource; never launch another worker
+because a reply was lost. Status displays ownership and handoff checkpoints. Developer-owned
+workers include their displayed owner generation on lifecycle updates; old owners cannot update
+a replacement. Existing backend-native workers retain their recorded native sessions.
 
 ### Shared services and parallel work
 

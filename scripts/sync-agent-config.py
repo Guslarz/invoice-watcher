@@ -21,7 +21,8 @@ WORKER_OPERATIONS = ("start", "run_backend", "command_prompt", "resume", "remove
                      "native_params", "codex_socket", "sandbox_mode", "orca_executable", "orca_call",
                      "orca_result", "orca_workspace", "orca_mutation", "orca_confirm", "verify_orca",
                      "finish_orca_start", "start_orca", "resume_orca", "finish_orca_resume",
-                     "recover_orca", "release_orca", "orca_empty_workspace")
+                     "recover_orca", "release_orca", "orca_empty_workspace",
+                     "transfer_metadata", "transfer_path", "file_digest", "transfer_snapshot", "handoff_packet", "handoff_prepare", "handoff_stage", "handoff_actor", "execute_handoff", "handoff_accept", "enter_worker", "developer_orca", "owner_check", "developer_mutation", "verify_developer", "finish_developer_start", "launch_developer", "resume_developer", "retire_developer")
 
 
 def digest(data):

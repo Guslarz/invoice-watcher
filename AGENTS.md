@@ -60,6 +60,10 @@ Use **Protocol plan** (`docs/agents/protocols/plan.md`) when a change touches an
 - an event contract (Kafka payload/key/topic) or persistence schema (Firestore/JPA),
 - infrastructure, deployment or security (secrets, credentials, IAM).
 
+At plan review recommend the implementation session/model based on the investigation; continuing
+this session is the default. A replacement needs explicit developer selection and approval transfer
+through Protocol parallel, preserving the same worktree and verified ownership.
+
 Then implement the approved plan with **Protocol implement** (`docs/agents/protocols/implement.md`).
 Everything else (fixes that restore spec'd behavior, refactors, dependency bumps, typos) uses
 **Protocol lightweight** (`docs/agents/protocols/lightweight.md`).
@@ -69,6 +73,8 @@ Several independent topics at once (e.g. a batch of inbox notes) are run with **
 approval and implementation happen in each worker, one worktree per grouped topic. Workers keep
 their gitignored `.worker-status.json` current through `scripts/worker.py update`; it is the sole
 lifecycle authority for cleanup. Protect status before resuming work, even through native tools.
+Requirements, scope decisions and approvals belong directly in the visible worker conversation;
+the dispatcher coordinates assignments/resources and reports which worker needs attention.
 
 When unsure, ask the developer which protocol applies.
 

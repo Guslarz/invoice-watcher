@@ -20,40 +20,59 @@ Developers dispatch visible Orca workers while retaining repository approval and
   host explicitly. An unavailable explicitly selected or detected Orca host fails without
   silently launching a worker outside Orca.
 - **ORCAWORKER-002** Before starting a worker, dispatch protects its assigned repository
-  worktree with lifecycle status. Launch uses that existing worktree, starts exactly one worker,
-  records its Orca Run, Task, Dispatch, workspace and session identities when available, and
-  verifies the returned worker belongs to the intended workspace and execution backend.
-  A visible external checkout alone is not successful worker launch.
+  worktree with lifecycle status. Launch uses that existing worktree, starts exactly one
+  worker, records its host transport, workspace, actual surface and returned conversation or
+  terminal identity, and verifies the intended workspace and backend. Supervised transports
+  additionally retain their Run, Task and Dispatch identities. A visible external checkout
+  alone is not successful worker launch.
 - **ORCAWORKER-003** Orca-hosted launch follows the developer's Orca Chat/CLI preference and
   records the actual surface. It preserves requested model and agent choices when supported.
   Unsupported named agents, sandbox overrides, backend server selectors or model/effort
   combinations fail explicitly before launching; no requested option is silently dropped.
   Backend sandbox settings inherited through Orca are not reported as a confirmed repository
   sandbox override. Legacy backend-hosted workers retain their existing selection behavior.
-- **ORCAWORKER-004** Repository lifecycle phase, not Orca Task completion or process exit,
-  determines cleanup eligibility. Workers report each Orca assignment's outcome when pausing
-  for approval while retaining their repository approval phase. Settling an Orca assignment
-  grants no implementation or commit approval and does not mark repository work done.
+- **ORCAWORKER-004** Repository lifecycle phase, not host assignment completion or process exit,
+  determines cleanup eligibility. Developer-owned conversations pause for requirements and
+  approvals directly with the developer and retain the protected repository phase. Legacy
+  supervised workers also report their assignment outcome at a pause without granting approval
+  or marking repository work done. Completion reports never relay requirements or approval
+  decisions through the dispatcher.
 - **ORCAWORKER-005** Resume protects repository status before attaching or delivering input.
   It targets the recorded Orca worker and preserves its backend conversation, worktree and
-  pending approval gates. Closed but resumable workers reopen through Orca's supported
-  continuation API. It never substitutes a new independent worker for an unavailable session.
-- **ORCAWORKER-006** Launch and continuation retain replay identities supplied by Orca.
-  Ambiguous or failed operations preserve protected status and all known identities for
-  inspection/recovery. Silence, a timeout or an unknown outcome never authorizes a fresh
-  launch, automatic reassignment or deletion of an unproven resource.
+  pending approval gates. Developer-owned terminal conversations use the recorded terminal's
+  supported continuation route; developer-owned chats use their existing visible chat through
+  the user interface when no CLI continuation API exists. Legacy supervised conversations use
+  the recorded continuation API. A manual route is reported as manual, not as delivered input
+  or an attached session. Resume never substitutes a new worker for an unavailable session.
+  A separately authorized implementation handoff uses the explicit transfer operation rather
+  than resume, proves predecessor retirement, preserves the assigned worktree and binds the
+  replacement identity before enabling implementation.
+- **ORCAWORKER-006** Launch and continuation retain replay identities supplied by Orca for the
+  selected transport. Ambiguous or failed operations preserve protected status and all known
+  identities for inspection and recovery. Replay uses only that operation's supported identity
+  and endpoint. Silence, a timeout or an unknown outcome never authorizes a fresh launch,
+  automatic reassignment or deletion of an unproven resource.
 - **ORCAWORKER-007** Prune applies existing lifecycle, PR reconciliation and Git safety checks
-  before contacting Orca for cleanup. It releases only the exact recorded worker resources,
-  confirms release, and removes the workspace through Orca without force, archive hooks or
-  branch deletion. The repository rechecks safety and retires the branch and registry only
-  after workspace removal succeeds. User-owned, unrelated, retained, unsettled or unverifiable
-  resources block cleanup with a reason; they are not forcibly closed.
-- **ORCAWORKER-008** Cleanup checkpoints make retries safe after partial release, workspace
-  removal or branch retirement. Explicit absence of the exact recorded resource is idempotent;
-  generic errors and lost replies are not absence. Successful cleanup leaves neither the
-  worker's active Orca surface nor its workspace entry. Historical Orca coordination records
-  may remain; pruning never resets a Run or erases unrelated history.
+  before contacting Orca for cleanup. It releases only the exact recorded resources through
+  their supported transport, confirms retirement, and removes the workspace without force,
+  archive hooks or branch deletion. Developer-owned resources never use a fabricated
+  supervised assignment. When the host lacks an exact retirement API for a chat, automatic
+  retirement and workspace removal are unsupported and preserve protection with an actionable
+  manual diagnostic. User-owned, unrelated, retained or unverifiable resources are not forcibly
+  closed. Branch and registry retirement follow confirmed safe workspace removal only.
+- **ORCAWORKER-008** Cleanup checkpoints make retries safe after resource release, workspace
+  removal or branch retirement. Explicit absence of an exact recorded resource is idempotent;
+  generic errors and lost replies are not absence or proof of predecessor exit. Successful
+  cleanup leaves neither the worker's active surface nor its workspace entry. Historical
+  coordination records may remain; cleanup never resets a Run or erases unrelated history.
 
+- **ORCAWORKER-009** New repository workers use a developer-owned Orca conversation adapter
+  that launches into the assigned workspace without a supervised coordinator-only question
+  preamble. Launch preserves the developer's Chat/CLI preference, records the actual surface,
+  and verifies prompt acceptance and returned identity. Requirements and approvals remain in
+  that conversation. Existing supervised workers remain identifiable and resumable through
+  their original transport; they are not silently migrated. Unsupported surface operations
+  report their manual alternative or limitation rather than launching another conversation.
 
 ## Acceptance
 
@@ -81,6 +100,18 @@ Developers dispatch visible Orca workers while retaining repository approval and
 - **ORCAWORKER-008** Given injected failures after each cleanup checkpoint, When cleanup is
   retried, Then it completes safely or reports the remaining blocker without losing identity,
   deleting another session or treating an arbitrary failure as resource absence.
+
+- **ORCAWORKER-002/004/009** Given each backend and Chat/CLI preference, When new repository
+  workers launch, Then the adapter uses agent launch without orchestration preamble injection,
+  binds the returned workspace/surface/identity, and accepts the workflow prompt exactly once;
+  developer questions stay local, and legacy supervised identities are preserved unchanged.
+- **ORCAWORKER-005/006** Given developer-owned chat and terminal conversations or a lost launch
+  reply, When resuming or recovering, Then terminal input uses its recorded handle, chat resume
+  reports the existing UI conversation, and replay uses the recorded launch operation ID with
+  retry-launch rather than the supervised mutation API or a fresh launch.
+- **ORCAWORKER-007/008** Given supervised, terminal and chat resources, When cleanup runs, Then
+  only the correct transport operates, exact retirement proof precedes workspace removal, and
+  unsupported chat retirement leaves the workspace protected with a manual diagnostic.
 
 
 ## Configuration
