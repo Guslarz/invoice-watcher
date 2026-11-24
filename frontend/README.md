@@ -72,4 +72,4 @@ reads it to provision the exact runtime. Keep it aligned with package.json engin
 Each Angular target owns its entry HTML and global stylesheet beside its sources; shared document
 and page styling lives in libs/ui/styles. The workspace root holds tooling and workspace metadata.
 Prettier uses Google's gts formatting settings. Broader Angular/Google TypeScript style enforcement
-is tracked separately in the agent inbox.
+is tracked separately in the agent backlog.

@@ -17,7 +17,7 @@ Follow the [Angular style guide](https://angular.dev/style-guide) and
 explicit repository conventions below. Formatting uses the settings published by
 [Google gts](https://github.com/google/gts/blob/main/.prettierrc.json); formatting alone does not
 establish full style-guide compliance. Broader linting/alignment is tracked in
-[the inbox](../inbox/enforce-angular-google-typescript-style.md).
+[the backlog](../backlog/enforce-angular-google-typescript-style.md).
 
 - Put each Angular target's entry HTML and global stylesheet alongside that target's sources.
   Keep genuinely shared design styles in the UI library; the workspace root owns tooling only.

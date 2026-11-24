@@ -36,7 +36,7 @@ Java 25 / Spring Boot 4 project, deployed to GKE (Terraform + helmfile + ArgoCD 
 | `docs/agents/adr/` | Decisions whose reasoning must survive. Title is the instruction. | no |
 | `docs/agents/protocols/` | How to plan / implement / do lightweight changes. | no |
 | `docs/agents/guidelines/` | Coding, module, build and k8s conventions. | no |
-| `docs/agents/inbox/` | Pending work: standalone notes or initiative directories with a temporary roadmap (`docs/agents/inbox/README.md`). | no |
+| `docs/agents/backlog/` | Pending work: standalone notes or initiative directories with a temporary roadmap (`docs/agents/backlog/README.md`). | no |
 | `docs/agents/templates/` | Templates for specs, ADRs and plans. | no |
 
 Rules:
@@ -48,7 +48,7 @@ Rules:
   Specs preserve lasting behavior; ADRs preserve lasting decisions. Git history does not
   retain an uncommitted plan.
 - Specs describe *what* the system does, not *how* the code is structured.
-- A spec clause the code does not meet yet is marked `*(gap: docs/agents/inbox/<note>.md)*`;
+- A spec clause the code does not meet yet is marked `*(gap: docs/agents/backlog/<note>.md)*`;
   the change that fixes it removes the marker and the note.
 - Do not write counts or inventories of modules/files into docs by hand — they go stale; generate them.
 
@@ -68,7 +68,7 @@ Then implement the approved plan with **Protocol implement** (`docs/agents/proto
 Everything else (fixes that restore spec'd behavior, refactors, dependency bumps, typos) uses
 **Protocol lightweight** (`docs/agents/protocols/lightweight.md`).
 
-Several independent topics at once (e.g. a batch of inbox notes) are run with **Protocol parallel**
+Several independent topics at once (e.g. a batch of backlog notes) are run with **Protocol parallel**
 (`docs/agents/protocols/parallel.md`): the dispatcher triages and launches; requirements, planning,
 approval and implementation happen in each worker, one worktree per grouped topic. Workers keep
 their gitignored `.worker-status.json` current through `scripts/worker.py update`; it is the sole
@@ -78,8 +78,8 @@ the dispatcher coordinates assignments/resources and reports which worker needs 
 
 When unsure, ask the developer which protocol applies.
 
-Out-of-scope problems or ideas noticed during work go to `docs/agents/inbox/` as a new note
-(template `docs/agents/templates/inbox.md`) and are mentioned in the report — do not fix them in
+Out-of-scope problems or ideas noticed during work go to `docs/agents/backlog/` as a new note
+(template `docs/agents/templates/backlog.md`) and are mentioned in the report — do not fix them in
 the current change.
 
 ## Context loading
@@ -99,7 +99,7 @@ an ADR only when relevant), and the guideline for the area you touch (`docs/agen
   update `config/agent-integrations.json` and run `python3 scripts/sync-agent-config.py`. This generates
   `opencode.json`, Codex `.agents/skills/iw-*` skills, and the compatibility matrix; never edit
   generated files by hand. Codex invocation: `$iw-plan`, `$iw-implement`, `$iw-lightweight`,
-  `$iw-inbox`, `$iw-dispatch` with workflow inputs. Native Claude/OpenCode commands use `/`.
+  `$iw-backlog`, `$iw-dispatch` with workflow inputs. Native Claude/OpenCode commands use `/`.
   Codex permission translation is unsupported; native sandbox/approvals remain in effect.
   In Orca reuse the hosted backend's commands/skills. `orca.yaml` configures checkout setup;
   Orca is a session host, not a worker execution backend. Repository workers use

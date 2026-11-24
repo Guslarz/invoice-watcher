@@ -31,5 +31,5 @@ Zensical. Options considered:
 - Markdown sources and the published layout stay unchanged.
 - Zensical is pre-1.0: upgrades are deliberate version bumps, checked against the rendered site.
 - Zensical validates fewer things than MkDocs did (pages missing from the navigation, links to
-  directories or `.html` files); the gaps are tracked as inbox notes.
+  directories or `.html` files); the gaps are tracked as backlog notes.
 - Local verification needs `python3` with `venv` (or `virtualenv`).

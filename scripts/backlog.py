@@ -1,16 +1,16 @@
-"""Prints an overview of docs/agents/inbox/ grouped by status, as Markdown tables.
+"""Prints an overview of docs/agents/backlog/ grouped by status, as Markdown tables.
 
 Generated on demand instead of committed, so pull requests that add or delete notes do not
 conflict on it. The fields are validated by scripts/check-docs.sh. Usage:
-  python3 scripts/inbox.py              all notes
-  python3 scripts/inbox.py ready        only the given statuses
+  python3 scripts/backlog.py              all notes
+  python3 scripts/backlog.py ready        only the given statuses
 """
 
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-INBOX = ROOT / "docs" / "agents" / "inbox"
+BACKLOG = ROOT / "docs" / "agents" / "backlog"
 STATUSES = ("ready", "waiting", "later")
 SIZES = ("S", "M", "L")
 
@@ -30,11 +30,11 @@ def frontmatter(path):
 
 def load_notes():
     notes = []
-    for path in sorted(INBOX.rglob("*.md")):
+    for path in sorted(BACKLOG.rglob("*.md")):
         if path.name == "README.md":
             continue
         note = frontmatter(path)
-        note["slug"] = path.relative_to(INBOX).with_suffix("").as_posix()
+        note["slug"] = path.relative_to(BACKLOG).with_suffix("").as_posix()
         note["blocked-by"] = [slug.strip() for slug in note.get("blocked-by", "").strip("[]").split(",")
                               if slug.strip()]
         notes.append(note)
@@ -64,5 +64,5 @@ if __name__ == "__main__":
     selected = sys.argv[1:] or list(STATUSES)
     unknown = [status for status in selected if status not in STATUSES]
     if unknown:
-        raise SystemExit(f"scripts/inbox.py: unknown status {', '.join(unknown)}; use {'|'.join(STATUSES)}")
+        raise SystemExit(f"scripts/backlog.py: unknown status {', '.join(unknown)}; use {'|'.join(STATUSES)}")
     main(selected)

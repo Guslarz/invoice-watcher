@@ -69,7 +69,7 @@ for plan in PLAN.md docs/agents/plans/*.md docs/agents/projects/*.md; do
   [[ "$source" == none || -f "$source" ]] || fail "$plan: source '$source' does not exist"
 done
 
-# Inbox notes: frontmatter, triage fields, blocked-by points to existing notes.
+# Backlog notes: frontmatter, triage fields, blocked-by points to existing notes.
 while IFS= read -r note; do
   require_keys "$note" title kind area added status size blocked-by
   status=$(frontmatter "$note" status)
@@ -80,12 +80,12 @@ while IFS= read -r note; do
   blocked_by=${blocked_by#[}
   blocked_by=${blocked_by%]}
   for slug in ${blocked_by//,/ }; do
-    [[ -f "docs/agents/inbox/$slug.md" ]] || fail "$note: blocked-by '$slug' is not an inbox note"
+    [[ -f "docs/agents/backlog/$slug.md" ]] || fail "$note: blocked-by '$slug' is not a backlog note"
   done
   [[ "$status" != ready || -z "${blocked_by// /}" ]] || fail "$note: a ready note cannot be blocked by other notes"
   [[ "$status" != waiting || -n "$(frontmatter "$note" waiting-for)" ]] \
     || fail "$note: a waiting note needs waiting-for"
-done < <(find docs/agents/inbox -type f -name '*.md' ! -name README.md | sort)
+done < <(find docs/agents/backlog -type f -name '*.md' ! -name README.md | sort)
 
 # Repository paths mentioned in agent docs must exist.
 while IFS=: read -r file path; do

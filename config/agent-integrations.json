@@ -203,13 +203,13 @@
       }
     },
     {
-      "id": "command-inbox",
-      "name": "Workflow: inbox",
+      "id": "command-backlog",
+      "name": "Workflow: backlog",
       "covers": [
-        "command:inbox",
-        "file:.claude/commands/inbox.md"
+        "command:backlog",
+        "file:.claude/commands/backlog.md"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-24",
       "evidence": [
         "claude-commands",
         "codex-skills",
@@ -219,33 +219,33 @@
       "support": {
         "claude": {
           "status": "native",
-          "detail": "Invoke /inbox with workflow inputs.",
+          "detail": "Invoke /backlog with workflow inputs.",
           "references": [
-            ".claude/commands/inbox.md"
+            ".claude/commands/backlog.md"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Invoke $iw-inbox with workflow inputs; generated explicit-only skill.",
+          "detail": "Invoke $iw-backlog with workflow inputs; generated explicit-only skill.",
           "references": [
-            ".agents/skills/iw-inbox/SKILL.md",
-            ".agents/skills/iw-inbox/agents/openai.yaml"
+            ".agents/skills/iw-backlog/SKILL.md",
+            ".agents/skills/iw-backlog/agents/openai.yaml"
           ]
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Invoke /inbox; generated V2 command.",
+          "detail": "Invoke /backlog; generated V2 command.",
           "references": [
             "opencode.json"
           ]
         },
         "orca": {
           "status": "alternative",
-          "detail": "Reuse the hosted backend workflow: /inbox in Claude Code/OpenCode, or $iw-inbox in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "detail": "Reuse the hosted backend workflow: /backlog in Claude Code/OpenCode, or $iw-backlog in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
           "references": [
             "docs/setup/local.md",
-            ".claude/commands/inbox.md",
-            ".agents/skills/iw-inbox/SKILL.md"
+            ".claude/commands/backlog.md",
+            ".agents/skills/iw-backlog/SKILL.md"
           ]
         }
       }

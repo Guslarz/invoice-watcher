@@ -7,7 +7,7 @@ description: "Small change without a plan, following docs/agents/protocols/light
 
 Resolve repository paths from the worktree root. Read `AGENTS.md` before following the workflow.
 
-Inputs: `<change description | docs/agents/inbox/<note>.md>`. Use the inputs supplied with `$iw-lightweight`; ask for missing required inputs before dependent work.
+Inputs: `<change description | docs/agents/backlog/<note>.md>`. Use the inputs supplied with `$iw-lightweight`; ask for missing required inputs before dependent work.
 
 Follow `docs/agents/protocols/lightweight.md` exactly for this change:
 

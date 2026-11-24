@@ -1,4 +1,4 @@
-"""Inbox initiatives: recursive discovery and dependency validation."""
+"""Backlog initiatives: recursive discovery and dependency validation."""
 
 import importlib.util
 from pathlib import Path
@@ -9,19 +9,19 @@ from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location("inbox", ROOT / "scripts/inbox.py")
-INBOX = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(INBOX)
+SPEC = importlib.util.spec_from_file_location("backlog", ROOT / "scripts/backlog.py")
+BACKLOG = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(BACKLOG)
 
 
-class InboxInitiativeTest(unittest.TestCase):
+class BacklogInitiativeTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.inbox = self.root / "docs/agents/inbox"
+        self.backlog = self.root / "docs/agents/backlog"
         for directory in ("scripts", "docs/agents/specs", "docs/agents/adr",
-                          "docs/agents/plans", "docs/agents/inbox/initiative"):
+                          "docs/agents/plans", "docs/agents/backlog/initiative"):
             (self.root / directory).mkdir(parents=True, exist_ok=True)
         for name in ("AGENTS.md", "zensical.toml", "scripts/sync-agent-config.py",
                      "docs/agents/specs/index.md", "docs/agents/plans/README.md"):
@@ -31,11 +31,11 @@ class InboxInitiativeTest(unittest.TestCase):
             (ROOT / "scripts/check-no-plans.sh").read_text())
         (self.root / "scripts/check-docs.sh").write_text(
             (ROOT / "scripts/check-docs.sh").read_text())
-        (self.inbox / "README.md").write_text("# Inbox\n")
-        (self.inbox / "initiative/README.md").write_text("# Temporary roadmap\n")
+        (self.backlog / "README.md").write_text("# Backlog\n")
+        (self.backlog / "initiative/README.md").write_text("# Temporary roadmap\n")
 
     def note(self, name, blockers="[]"):
-        (self.inbox / f"{name}.md").write_text(
+        (self.backlog / f"{name}.md").write_text(
             "---\ntitle: Work\nkind: idea\narea: events\nadded: 2026-11-11\n"
             f"status: later\nsize: M\nblocked-by: {blockers}\n---\n")
 
@@ -72,11 +72,25 @@ class InboxInitiativeTest(unittest.TestCase):
                 result = self.check()
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_discovers_flat_and_nested_notes_with_inbox_relative_identifiers(self):
+    def test_accepts_migrated_plan_source_for_same_nested_note(self):
+        self.note("initiative/task")
+        plan = self.root / "PLAN.md"
+        content = ("---\nslug: test\nbranch: docs/test\nimpact: INTERNAL\n"
+                   "specs: []\nsource: docs/agents/inbox/initiative/task.md\n---\n")
+        plan.write_text(content)
+        result = self.check()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("source 'docs/agents/inbox/initiative/task.md' does not exist", result.stderr)
+
+        plan.write_text(content.replace("docs/agents/inbox/", "docs/agents/backlog/"))
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_discovers_flat_and_nested_notes_with_backlog_relative_identifiers(self):
         self.note("prerequisite")
         self.note("initiative/task", "[prerequisite]")
-        with patch.object(INBOX, "INBOX", self.inbox):
-            notes = INBOX.load_notes()
+        with patch.object(BACKLOG, "BACKLOG", self.backlog):
+            notes = BACKLOG.load_notes()
         self.assertEqual([note["slug"] for note in notes],
                          ["initiative/task", "prerequisite"])
         self.assertEqual(notes[0]["blocked-by"], ["prerequisite"])
@@ -95,7 +109,7 @@ class InboxInitiativeTest(unittest.TestCase):
         self.assertIn("blocked-by 'initiative/missing'", result.stderr)
 
     def test_rejects_missing_frontmatter_in_nested_note(self):
-        (self.inbox / "initiative/task.md").write_text("# Missing triage\n")
+        (self.backlog / "initiative/task.md").write_text("# Missing triage\n")
         result = self.check()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("missing frontmatter 'title'", result.stderr)

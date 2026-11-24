@@ -1,7 +1,7 @@
 # Protocol plan
 
 Use for changes that hit a planning trigger (see `AGENTS.md` → Workflow selection).
-Input: a request from the developer or a note from `docs/agents/inbox/`.
+Input: a request from the developer or a note from `docs/agents/backlog/`.
 Output: one temporary, uncommitted `PLAN.md` at the worktree root.
 **No production code.**
 
@@ -40,7 +40,7 @@ Git history does not preserve a plan that was never committed.
      rationale and escalation conditions; respect explicit developer preferences. Use no fixed
      model ranking or automatic downgrade. Include this recommendation in developer review;
      dispatch selects only the initial planning model.
-   - **Source** — the inbox note it comes from, if any.
+   - **Source** — the backlog note it comes from, if any.
 4. Run `scripts/check-docs.sh`.
 5. Stop. Present the plan path and the open questions to the developer and wait for approval.
    A registered worker sets `awaiting-plan-approval` with `--plan <path>`. Approval must occur in
