@@ -14,7 +14,11 @@ elsewhere. `--host orca` and `--host backend` choose explicitly. Orca transport 
 specified in [Orca-hosted repository workers](../specs/orca-workers.md).
 
 Create the worktree with the shared script first. Orca launches into that existing workspace,
-following the user's Chat/CLI preference, and keeps the worker open across approval pauses.
+following the user's Chat/CLI preference. New launches use developer-owned conversations via
+`agent launch`, without the supervised preamble routing questions to a coordinator. Their
+bootstrap calls `worker.py enter <name> --owner <generation>` before work, after actual identity
+binding. Requirements/scope/approval questions are addressed directly to the developer there.
+A bootstrap that races binding pauses without editing; resume that same conversation.
 The launcher resolves the checkout within the caller's project registration and rejects hidden
 projects and archived workspaces. If the caller's project cannot be resolved, pass `--orca-workspace`
 with the intended visible workspace's exact selector from `orca worktree show` or `orca worktree ps`;
@@ -24,19 +28,27 @@ explicit sandbox overrides, Codex source sockets/forks and explicit OpenCode ser
 before launch. Orca inherits its configured backend permissions; the adapter does not claim an
 applied sandbox override. OpenCode V2 maps to Orca's `opencode2` agent ID.
 
-Orca Run/Task/Dispatch state describes assignment delivery and resources. It never replaces the
+Legacy supervised Orca workers keep their recorded transport; they are never silently migrated.
+Their Run/Task/Dispatch state describes assignment delivery and resources. It never replaces the
 repository lifecycle authority. At an approval pause, report the actual Orca assignment outcome
-with `worker_done`, retaining the approval phase in .worker-status.json. `worker.py resume`
-continues the same conversation through Orca and updates assignment IDs when ownership transfers.
-A pending receipt can be replayed with `worker.py recover <name>` only using Orca's recorded
-mutation request ID. If no such ID was returned, inspect the exact assignment; never start again
+with `worker_done`, retaining the approval phase in .worker-status.json. `worker.py resume` continues that same supervised conversation through Orca and updates its
+assignment IDs. For developer-owned terminals it sends continuation to the exact recorded
+handle; for developer-owned chats it prints how to open the existing conversation manually,
+because this host CLI has no chat continuation endpoint. It never launches a replacement.
+A pending receipt can be replayed with `worker.py recover <name>` only using its recorded
+transport-specific replay ID: agent launch uses `--retry-launch`, supervised operations and
+terminal prompt submission use their supported `--retry-request`. If no such ID was returned, inspect the exact assignment; never start again
 or fabricate a replay ID. Raw receipts are retained in the common Git directory's
 `agent-workers/orca-receipts/` directory.
 
 Prune still derives eligibility solely from repository status, PR reconciliation and Git checks.
-For an eligible Orca worker it requests exact guarded worker release, preserves unrelated tabs,
+For an eligible Orca worker it uses the recorded transport's exact retirement operation,
+preserves unrelated tabs,
 and removes the exact workspace through Orca without force, archive hooks or branch deletion.
-Unknown, retained, unsettled or user-owned resources block cleanup. The repository retires the
+Unknown, retained, unsettled or user-owned resources block cleanup. Developer-owned chat
+retirement and automatic cleanup are unsupported until the host exposes an exact stop API;
+continue the chat manually. Never pass a chat handle to terminal close or invent a Dispatch.
+Developer-owned terminals require an exact confirmed PTY-kill receipt; disappearance is not proof. The repository retires the
 branch and registry after confirmed removal. Historical Orca coordination records remain.
 
 ## Dispatch and approval
@@ -54,14 +66,16 @@ branch and registry after confirmed removal. Historical Orca coordination record
   not identify agents. Backend-specific configuration profiles are not implicitly agent names.
 - **WORKER-005** The launcher accepts `/plan`, `/implement`, and `/lightweight`. A plan is
   written from the repository template and checked before its approval gate. Only explicit
-  developer plan approval in the worker permits implementation. Workers write `.gitmessage`
+  developer plan approval in the worker, or its explicitly authorized and validated transfer
+  under the handoff procedure below, permits implementation. Workers write `.gitmessage`
   and stop uncommitted at commit review. Only explicit commit approval in that worker permits
   commit, push, and PR creation. PR creation sets `awaiting-merge` and records PR identity.
 - **WORKER-006** Starting and resuming a worker protects its worktree before backend execution
   or interactive attachment. Resume preserves pending approval gates, or moves an otherwise
   cleanup-eligible worker to `discussing` before opening its session. Worker instructions require
   phase updates before further work, including when resumed through native backend tools.
-  Resume reuses the same session and worktree; it grants no approval by itself.
+  Resume reuses the same session and worktree; it grants no approval by itself. A separately
+  authorized handoff is the only managed replacement path; ordinary resume cannot switch models.
 - **WORKER-012** Backend-hosted Codex workers use `danger-full-access` by default. `start --sandbox <mode>`
   selects `read-only`, `workspace-write`, or `danger-full-access` explicitly. The launcher
   records the effective mode in the registry and lifecycle status, displays it in status
@@ -76,7 +90,8 @@ branch and registry after confirmed removal. Historical Orca coordination record
   sessions on the same shared service as its UI. Dispatch does not silently substitute a
   headless session when native dispatch is unavailable. Visibility verification is part of
   launch validation and is independent of lifecycle completion. Orca-hosted workers instead
-  verify their assignment and conversation in the exact Orca workspace.
+  verify their actual surface and conversation in the exact Orca workspace; legacy supervised
+  records additionally verify their assignment.
 - **WORKER-014** Native dispatch protects the assigned worktree before starting a turn and
   records the returned session identity before further execution. Resume and follow-up reuse
   that session and worktree, preserve pending approval gates, and provide a backend-native
@@ -140,7 +155,10 @@ available and sandboxed execution is desired.
 4. For Orca-hosted workers, use the visible Orca conversation and the repository resume command;
    the backend-native UI directions below apply to backend-hosted workers.
    Give the developer the worker name and `python3 scripts/worker.py resume <name>` command.
-   Requirements questions and approvals belong in that worker, not the dispatcher. A failed
+   Requirements questions and approvals are addressed directly to the developer in that
+   worker conversation, not relayed through the dispatcher. Report which worker needs attention
+   and its exact conversation/worktree location; use coordination mail only for assignment
+   problems, overlapping edits and shared resources. A failed
    launch remains protected; inspect its diagnostics rather than starting another worker.
    Open Codex workers in `codex agents`, Claude workers in `claude agents`, and OpenCode workers
    in its session picker on the same service/project. A directory-filtered OpenCode view may
@@ -160,6 +178,8 @@ available and sandboxed execution is desired.
   worker lifecycle. It contains a schema version, worker/worktree/branch identity, backend,
   session identity when known, selected agent/default policy, optional model, lifecycle phase,
   timestamp, optional plan path, optional PR identity, and optional explanatory detail.
+  Developer-owned workers also bind an ownership generation. Handoffs add validated transfer
+  identity/checkpoint/digest metadata, with approval/context packets outside tracked files.
   Script-managed identity fields cannot be overwritten through a lifecycle update.
   Updates are validated, serialized, and atomic. Missing files mean legacy lifecycle `done`;
   malformed, unsupported-version, or identity-mismatched files block cleanup with a reason.
@@ -175,6 +195,7 @@ available and sandboxed execution is desired.
   than silently assigned to a different session.
 
 Workers use `python3 scripts/worker.py update <name> --phase <phase>` before changing activities;
+include `--owner <generation>` for developer-owned/transferred workers (shown by enter/status).
 add `--plan <relative-path>` at plan approval, `--detail <text>` for a blocker, and
 `--pr <https://github.com/owner/repo/pull/number>` at `awaiting-merge`. Do not hand-edit JSON.
 New plans use one root `PLAN.md` per worktree. Existing plans under
@@ -232,3 +253,61 @@ for attach/delete. Supply an independently known ID with
 the original launch log). Do not infer it from the UUID or query session activity for cleanup.
 Claude's `rm` removes the background job; its saved conversation transcript remains resumable,
 as documented by Claude Code. No broad transcript purge is performed.
+
+## Implementation-session decision and handoff
+
+Dispatch selects the initial planning backend/model, honoring explicit developer preferences.
+The completed plan recommends continuing that session by default, or a specific available
+backend/model based on remaining uncertainty, rationale and escalation conditions. Review it
+with the developer; use no hardcoded model ranking or automatic downgrade. Plan approval,
+replacement selection/retirement authorization and commit approval are separate decisions.
+
+An ordinary unregistered workflow continues its current session. Registering a second worker,
+changing a registry JSON by hand or using resume to swap a model is not a handoff alternative.
+Backend-hosted source replacement is initially unsupported: continue the existing session.
+Orca targets support Claude, Codex and OpenCode using supported model selections and default
+agents. Automatic replacement accepts only legacy supervised sources with guarded exit/release
+proof or developer-owned terminal sources with exact confirmed kill receipts. Developer-owned
+chat sources continue manually; the installed CLI has no exact chat retirement API.
+
+After actual developer plan approval and explicit selection/authorization of the replacement
+and retirement in the planning conversation:
+
+1. Prepare a JSON context file **outside the worktree**. It contains `target` (backend, model,
+   agent_policy=default), `approval` (source_conversation, plan_sha256, plan_approved=true,
+   transfer_approved=true, quote/reference and transfer_quote/transfer_reference with the actual
+   developer wording/message locations), and lists `decisions`, `constraints`, `specs`, `adrs`,
+   `evidence`, `verification`, `uncertainty`, `escalation`, `inputs`. Evidence, verification and
+   relevant code inputs must be nonempty; specs/ADRs/inputs name actual worktree files. The
+   approval records an attestation of an observed developer decision; scripts never manufacture
+   wording or treat booleans, phase or dispatch as human consent. Plan digest is SHA-256 of its
+   exact bytes. The target model must be explicitly selected. Do not include secrets.
+2. Run `python3 scripts/worker.py handoff-prepare <name> --context <absolute-file>` with the
+   current `--owner` when present. This snapshots the exact plan, context, approval evidence,
+   revision, branch and tracked/nonignored file digests under the common Git directory's
+   agent-workers/handoffs. It preserves the approval phase, not done. The planner pauses;
+   legacy supervised workers settle their assignment without claiming repository completion.
+3. An external controller, never the source being retired, runs
+   `python3 scripts/worker.py handoff <name> --transfer <printed-id>`. It validates unchanged
+   inputs and target before retiring only the exact source, then binds a new owner/session in
+   the same worktree. Durable checkpoints and a per-worker control lock prevent duplicate
+   replacement while global registry locks are released during host waits. Unknown retirement
+   or launch outcomes block further work; do not start again. Use recover only with the stored
+   operation's replay identity. No replay ID means inspect the exact resource manually.
+   Before retirement begins, revised explicit approval/context can replace a prepared packet
+   by running handoff-prepare again; old packet evidence remains. Once retirement has begun,
+   reconcile mismatches before recovery rather than resetting ownership or discarding receipts.
+4. The target runs the bootstrap enter command. It reads the packet's original PLAN.md,
+   decisions/constraints, relevant specs/ADRs, investigation evidence and verification needs,
+   then reads the relevant implementation code. It states understanding in its own conversation
+   and raises discrepancies with the developer before editing. Accept unchanged approved work:
+   `python3 scripts/worker.py handoff-accept <name> --transfer <id> --session <bound-conversation> --understanding '<statement>'`.
+   This verifies the plan/input digests and actual target identity, records acknowledgment and
+   enables implementing. It transfers only the explicitly authorized plan approval. Commit
+   approval must be obtained separately in this implementation conversation.
+
+Status reports the owner and transfer checkpoint. Stale owner updates/resumes, mismatched
+identities, changed packets/plans/inputs and incomplete replacement block execution and cleanup.
+After acknowledgment, implementation may change code and delete the temporary plan normally;
+the immutable approval packet survives through commit review. These are managed workflow
+checks, not a sandbox against arbitrary manual filesystem edits.

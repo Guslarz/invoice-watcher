@@ -39,13 +39,15 @@
     "worktree-local-configuration": "Repository fixture tests cover explicit and Claude-hook creation, sibling-master source selection, current/future backend resource paths, preserved destinations, shared edits, ignore checks, private output, failure retention and source preservation on removal. No backend API or CLI contract changes.",
     "orca-api": "Orca 1.4.261: bundled CLI and orchestration guides, recovery reference and installed command schemas. Worker launch, mutation replay IDs, same-chat follow-up assignment transfer, guarded release and non-forced workspace removal validated locally. orca.yaml parsed with the installed setup resolver.",
     "development-setup-tests": "scripts/tests/test_dev_setup.py and test_worktree_prune.py: setup preflight/failure propagation and WORKTREE-007 existing-checkout linking. Runtime setup starts no services; Gradle frontend development-server arguments checked separately.",
-    "orca-worker-tests": "scripts/tests/test_orca_worker.py: ORCAWORKER-001 through ORCAWORKER-008 contract fixtures. Disposable live Codex structured-chat smoke verified workspace identity, same-conversation continuation, approval-phase cleanup refusal and release/workspace/branch removal. Terminal and other backend combinations use contract tests, not a claim of live parity. Project-selection regression fixtures cover duplicate checkout registrations, hidden projects, archived workspaces, explicit selection and continuation after a project is hidden."
+    "orca-worker-tests": "scripts/tests/test_orca_worker.py: ORCAWORKER-001 through ORCAWORKER-008 contract fixtures. Disposable live Codex structured-chat smoke verified workspace identity, same-conversation continuation, approval-phase cleanup refusal and release/workspace/branch removal. Terminal and other backend combinations use contract tests, not a claim of live parity. Project-selection regression fixtures cover duplicate checkout registrations, hidden projects, archived workspaces, explicit selection and continuation after a project is hidden.",
+    "handoff-tests": "scripts/tests/test_handoff.py: approval/context integrity, ownership, direct developer question routing, transport-specific replay, retirement and acceptance fixtures; no live workers launched or stopped.",
+    "orca-developer-launch": "Installed Orca CLI agent launch, terminal show/send/close and chat command schemas and bundled guides reviewed 2026-11-23; installed adapter implementation confirms launch operationId/retry-launch, journaled or handed-to-terminal prompt receipts, worktree inventory identity and ptyKilled close proof. Chat CLI offers rename only; continuation manual and automatic chat retirement unsupported. Contract fixtures are not live session evidence."
   },
   "reviewed_inputs": {
     ".claude/settings.json": "8dbfba4d85ecdb6ded94679ec80fbd5a7bdcd6bd9ae357e7aa43e4365cc6a047",
     "CLAUDE.md": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
     "scripts/worktree.sh": "f5cd6bf89aae6554ad79ae4f6889560bd813d3116102891ed2ecf8da1bde567e",
-    "scripts/worker.py": "0501b1a0309656fc5aad711c3d3ddc553d054e979a7f9d3323c4c0786babdc22",
+    "scripts/worker.py": "3899da770dd7ffe2bf91f36f7ecbf072af37378cccbfe3b28239e84067b53b0b",
     "scripts/dev-setup.sh": "a4b41e448a12697e03049b104384a58f47ce849631d6edf463a98ff2b6ea93f9",
     "orca.yaml": "4496d1355d2a10853a3160a320dc6c925b72e248e96d5bee406a322698189d45"
   },
@@ -58,12 +60,14 @@
         "file:AGENTS.md",
         "file:CLAUDE.md"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "claude-instructions",
         "codex-instructions",
         "opencode-instructions",
-        "orca-api"
+        "orca-api",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
@@ -105,24 +109,26 @@
         "command:dispatch",
         "file:.claude/commands/dispatch.md"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "claude-commands",
         "codex-skills",
         "opencode-commands",
-        "orca-api"
+        "orca-api",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
           "status": "native",
-          "detail": "Invoke /dispatch with workflow inputs. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches.",
+          "detail": "Invoke /dispatch with workflow inputs. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             ".claude/commands/dispatch.md"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Invoke $iw-dispatch with workflow inputs; generated explicit-only skill. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches.",
+          "detail": "Invoke $iw-dispatch with workflow inputs; generated explicit-only skill. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             ".agents/skills/iw-dispatch/SKILL.md",
             ".agents/skills/iw-dispatch/agents/openai.yaml"
@@ -130,14 +136,14 @@
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Invoke /dispatch; generated V2 command. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches.",
+          "detail": "Invoke /dispatch; generated V2 command. Requires successful fetch and triage from the fetched origin/master revision before recommendations or new launches. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             "opencode.json"
           ]
         },
         "orca": {
           "status": "alternative",
-          "detail": "Reuse the hosted backend workflow: /dispatch in Claude Code/OpenCode, or $iw-dispatch in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions.",
+          "detail": "Reuse the hosted backend workflow: /dispatch in Claude Code/OpenCode, or $iw-dispatch in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             "docs/setup/local.md",
             ".claude/commands/dispatch.md",
@@ -153,24 +159,26 @@
         "command:implement",
         "file:.claude/commands/implement.md"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "claude-commands",
         "codex-skills",
         "opencode-commands",
-        "orca-api"
+        "orca-api",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
           "status": "native",
-          "detail": "Invoke /implement with workflow inputs. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
+          "detail": "Invoke /implement with workflow inputs. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             ".claude/commands/implement.md"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Invoke $iw-implement with workflow inputs; generated explicit-only skill. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
+          "detail": "Invoke $iw-implement with workflow inputs; generated explicit-only skill. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             ".agents/skills/iw-implement/SKILL.md",
             ".agents/skills/iw-implement/agents/openai.yaml"
@@ -178,14 +186,14 @@
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Invoke /implement; generated V2 command. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
+          "detail": "Invoke /implement; generated V2 command. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             "opencode.json"
           ]
         },
         "orca": {
           "status": "alternative",
-          "detail": "Reuse the hosted backend workflow: /implement in Claude Code/OpenCode, or $iw-implement in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates.",
+          "detail": "Reuse the hosted backend workflow: /implement in Claude Code/OpenCode, or $iw-implement in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions. Accept an approved root PLAN.md and existing directory-based plans without changing worker approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             "docs/setup/local.md",
             ".claude/commands/implement.md",
@@ -297,24 +305,26 @@
         "command:plan",
         "file:.claude/commands/plan.md"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "claude-commands",
         "codex-skills",
         "opencode-commands",
-        "orca-api"
+        "orca-api",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
           "status": "native",
-          "detail": "Invoke /plan with workflow inputs. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
+          "detail": "Invoke /plan with workflow inputs. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             ".claude/commands/plan.md"
           ]
         },
         "codex": {
           "status": "alternative",
-          "detail": "Invoke $iw-plan with workflow inputs; generated explicit-only skill. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
+          "detail": "Invoke $iw-plan with workflow inputs; generated explicit-only skill. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             ".agents/skills/iw-plan/SKILL.md",
             ".agents/skills/iw-plan/agents/openai.yaml"
@@ -322,14 +332,14 @@
         },
         "opencode": {
           "status": "alternative",
-          "detail": "Invoke /plan; generated V2 command. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
+          "detail": "Invoke /plan; generated V2 command. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             "opencode.json"
           ]
         },
         "orca": {
           "status": "alternative",
-          "detail": "Reuse the hosted backend workflow: /plan in Claude Code/OpenCode, or $iw-plan in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates.",
+          "detail": "Reuse the hosted backend workflow: /plan in Claude Code/OpenCode, or $iw-plan in Codex. Orca chat discovery depends on the backend session catalogue; no separate Orca command definitions. New plans use an unignored root PLAN.md; existing directory-based plans retain their recorded paths and approval gates. Requirements and approval questions stay in the visible worker conversation. Plan review recommends the implementation session/model; continuing is default. Replacement requires explicit approval transfer, never dispatch approval.",
           "references": [
             "docs/setup/local.md",
             ".claude/commands/plan.md",
@@ -685,7 +695,7 @@
         "worker:finish_orca_start",
         "worker:start_orca"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "repository-tests",
         "codex-app-server",
@@ -693,7 +703,9 @@
         "opencode-sdk",
         "worker-live-visibility",
         "orca-api",
-        "orca-worker-tests"
+        "orca-worker-tests",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
@@ -719,7 +731,7 @@
         },
         "orca": {
           "status": "alternative",
-          "detail": "worker.py --host auto|orca launches one supervised Orca worker in an existing shared-script workspace and verifies assignment, backend and conversation identity. Follows Chat/CLI preference; protects status before launch and retains replay receipts. Resolves the checkout in the caller's project registration and rejects hidden projects and archived workspaces; explicit workspace selection remains available.",
+          "detail": "New launches use agent launch into the exact visible existing workspace, preserving Chat/CLI preference and model options. Bootstrap enter waits for actual identity binding before work; no supervised coordinator-question preamble. Old supervised records retain their transport. Launch receipts and operation IDs are persisted.",
           "references": [
             "docs/setup/local.md",
             "scripts/worker.py",
@@ -734,11 +746,13 @@
       "covers": [
         "worker:command_prompt"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "repository-tests",
         "orca-api",
-        "orca-worker-tests"
+        "orca-worker-tests",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
@@ -765,7 +779,7 @@
         },
         "orca": {
           "status": "alternative",
-          "detail": "Expand canonical workflow prompts in worker.py and deliver through Orca spec-file stdin. Workers report assignment outcomes at pauses without marking repository work complete or granting approval.",
+          "detail": "Canonical workflow is printed by owner-checked enter after launch identity binding. Developer requirements and approvals stay in the existing visible conversation; only assignment/resource conflicts and completion summaries go to the coordinator. Legacy supervised prompts remain identifiable.",
           "references": [
             "docs/setup/local.md",
             "scripts/worker.py",
@@ -781,11 +795,13 @@
         "worker:opencode_model",
         "worker:sandbox_mode"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "repository-tests",
         "orca-api",
-        "orca-worker-tests"
+        "orca-worker-tests",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
@@ -812,7 +828,7 @@
         },
         "orca": {
           "status": "alternative",
-          "detail": "Orca transport maps Codex, Claude and OpenCode V2 to codex, claude and opencode2. It preserves supported model selection and uses Orca backend permissions; named-agent, sandbox, socket/fork and explicit server overrides are rejected before launch.",
+          "detail": "Orca transport maps Codex, Claude and OpenCode V2 to codex, claude and opencode2. It preserves supported model selection and uses Orca backend permissions; named-agent, sandbox, socket/fork and explicit server overrides are rejected before launch. Initial selection is for planning; the completed plan reviews implementation selection with the developer. No model change is implicit in resume.",
           "references": [
             "docs/setup/local.md",
             "scripts/worker.py",
@@ -830,13 +846,15 @@
         "worker:finish_orca_resume",
         "worker:recover_orca"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "repository-tests",
         "codex-app-server",
         "opencode-sdk",
         "orca-api",
-        "orca-worker-tests"
+        "orca-worker-tests",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
@@ -862,7 +880,7 @@
         },
         "orca": {
           "status": "alternative",
-          "detail": "worker.py resume preserves repository approval gates and continues the recorded Orca conversation. Follow-up Task/Dispatch identities replace prior assignment IDs while conversation identity is verified; unresolved operations use recorded mutation IDs through recover.",
+          "detail": "Developer-owned terminal continuation uses its recorded handle and durable prompt replay; chat continuation is manual in the existing chat because CLI has no continuation endpoint. Launch replay uses retry-launch with the recorded operationId. Legacy supervised continuation/replay retain recorded assignment IDs. Resume never switches models or grants approval.",
           "references": [
             "docs/setup/local.md",
             "scripts/worker.py",
@@ -879,11 +897,13 @@
         "worker:release_orca",
         "worker:orca_empty_workspace"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "repository-tests",
         "orca-api",
-        "orca-worker-tests"
+        "orca-worker-tests",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
@@ -909,7 +929,7 @@
         },
         "orca": {
           "status": "alternative",
-          "detail": "After repository lifecycle/PR/Git checks, cleanup releases only the recorded Orca assignment and removes its exact empty workspace without force or archive hooks. Retained, unknown and unrelated resources block cleanup; checkpoints preserve retry identity.",
+          "detail": "After lifecycle/PR/Git safety, legacy supervised resources use guarded release and developer-owned terminals require exact confirmed PTY-kill receipts. Automatic developer-owned chat retirement/cleanup is unsupported because CLI lacks an exact stop endpoint; continue manually. Preserve unrelated resources and remove workspace only after confirmed safe retirement.",
           "references": [
             "docs/setup/local.md",
             "scripts/worker.py",
@@ -924,11 +944,13 @@
       "covers": [
         "worker-lifecycle"
       ],
-      "reviewed": "2026-11-16",
+      "reviewed": "2026-11-23",
       "evidence": [
         "repository-tests",
         "orca-api",
-        "orca-worker-tests"
+        "orca-worker-tests",
+        "handoff-tests",
+        "orca-developer-launch"
       ],
       "support": {
         "claude": {
@@ -1061,6 +1083,74 @@
             "scripts/dev-setup.sh",
             "docs/setup/local.md",
             "orca.yaml"
+          ]
+        }
+      }
+    },
+    {
+      "id": "worker-implementation-handoff",
+      "name": "Implementation recommendation and explicit approval transfer",
+      "covers": [
+        "worker:transfer_metadata",
+        "worker:transfer_path",
+        "worker:file_digest",
+        "worker:transfer_snapshot",
+        "worker:handoff_packet",
+        "worker:handoff_prepare",
+        "worker:handoff_stage",
+        "worker:handoff_actor",
+        "worker:execute_handoff",
+        "worker:handoff_accept",
+        "worker:enter_worker",
+        "worker:developer_orca",
+        "worker:owner_check",
+        "worker:developer_mutation",
+        "worker:verify_developer",
+        "worker:finish_developer_start",
+        "worker:launch_developer",
+        "worker:resume_developer",
+        "worker:retire_developer"
+      ],
+      "reviewed": "2026-11-23",
+      "evidence": [
+        "handoff-tests",
+        "orca-developer-launch"
+      ],
+      "support": {
+        "claude": {
+          "status": "alternative",
+          "detail": "Canonical planning/implementation workflow and owner-checked packet acceptance work with this execution backend. Native-hosted source replacement is unsupported; continue its existing session. Supported Orca-hosted targets preserve explicit model choice and require plan/context/code review before separate commit approval.",
+          "references": [
+            "scripts/worker.py",
+            "docs/agents/specs/planning-handoffs.md",
+            "docs/agents/protocols/parallel.md"
+          ]
+        },
+        "codex": {
+          "status": "alternative",
+          "detail": "Canonical planning/implementation workflow and owner-checked packet acceptance work with this execution backend. Native-hosted source replacement is unsupported; continue its existing session. Supported Orca-hosted targets preserve explicit model choice and require plan/context/code review before separate commit approval.",
+          "references": [
+            "scripts/worker.py",
+            "docs/agents/specs/planning-handoffs.md",
+            "docs/agents/protocols/parallel.md"
+          ]
+        },
+        "opencode": {
+          "status": "alternative",
+          "detail": "Canonical planning/implementation workflow and owner-checked packet acceptance work with this execution backend. Native-hosted source replacement is unsupported; continue its existing session. Supported Orca-hosted targets preserve explicit model choice and require plan/context/code review before separate commit approval.",
+          "references": [
+            "scripts/worker.py",
+            "docs/agents/specs/planning-handoffs.md",
+            "docs/agents/protocols/parallel.md"
+          ]
+        },
+        "orca": {
+          "status": "alternative",
+          "detail": "Developer-owned agent launch avoids coordinator-only question preambles. Handoff retires proven legacy supervised or developer-owned terminal sources, preserves exact approved plan/context/evidence, binds target identity and requires understanding acknowledgment. Native/chat source replacement is unsupported; continue current session, with manual chat continuation. Separate commit approval remains local.",
+          "references": [
+            "scripts/worker.py",
+            "docs/agents/specs/planning-handoffs.md",
+            "docs/agents/protocols/parallel.md"
           ]
         }
       }

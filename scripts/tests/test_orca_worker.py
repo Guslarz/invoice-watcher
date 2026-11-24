@@ -9,7 +9,7 @@ from unittest.mock import patch
 from test_worker import RepositoryTest, worker
 
 
-class OrcaWorkerTest(RepositoryTest):
+class OrcaFixture(RepositoryTest):
     def setUp(self):
         super().setUp()
         self.path, _ = self.tree(registered=False)
@@ -81,11 +81,14 @@ class OrcaWorkerTest(RepositoryTest):
     def start(self, **changes):
         args = self.launch_args(self.path)
         args.host = "orca"
+        args.legacy_supervised = True  # Existing registered supervised transport compatibility.
         for k, v in changes.items():
             setattr(args, k, v)
         worker.start(args, self.directory)
         return worker.load(self.directory / "example.json")
 
+
+class OrcaWorkerTest(OrcaFixture):
     def test_ORCAWORKER_001_auto_and_explicit_host_selection(self):
         with patch.dict(os.environ, {"ORCA_CLI_COMMAND": "/bin/orca-test"}):
             record = self.start(host="auto")
@@ -96,6 +99,7 @@ class OrcaWorkerTest(RepositoryTest):
             other, _ = self.tree("other", registered=False)
             args = self.launch_args(other)
             args.host = "orca"
+            args.legacy_supervised = True  # Existing registered supervised transport compatibility.
             with self.assertRaisesRegex(ValueError, "selector_ambiguous"):
                 worker.start(args, self.directory)
             self.assertFalse((other / worker.STATUS).exists())
@@ -290,6 +294,7 @@ class OrcaWorkerTest(RepositoryTest):
                 return result
             args = self.launch_args(path, backend=kind)
             args.host = "orca"
+            args.legacy_supervised = True  # Existing registered supervised transport compatibility.
             with patch.object(worker, "orca_call", side_effect=respond):
                 worker.start(args, self.directory)
             record = worker.load(self.directory / (kind + ".json"))

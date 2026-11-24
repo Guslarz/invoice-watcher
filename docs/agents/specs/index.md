@@ -20,3 +20,5 @@ checked against them, and user pages explain the same behavior in their own word
 
 A clause marked *(gap: …)* describes intended behavior that the code does not meet yet; the
 referenced note tracks the fix.
+
+| [SPEC-HANDOFF](planning-handoffs.md) | Planning and implementation handoffs | implemented |

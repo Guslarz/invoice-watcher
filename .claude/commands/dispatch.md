@@ -23,3 +23,8 @@ Codex workers are independent interactive tasks on the shared app-server daemon 
 `codex agents`; do not launch them with `codex exec` or describe them as parent-owned subagents.
 Claude workers appear in `claude agents`; OpenCode workers use the UI's shared session service.
 Report the worker names and how to open their existing conversations for requirements and review.
+Select only the initial planning backend/model and respect explicit developer preferences. The
+planner revisits implementation selection with the completed plan; continuing its session is
+the default. Requirements, scope decisions and approvals go directly to the developer in that
+worker conversation, never through a dispatcher relay. Report which worker needs attention and
+how to open it; handle assignment problems, overlapping edits and shared resources here.

@@ -10,6 +10,13 @@ Output: a pull request to `master` containing spec, code, tests and docs — and
    up-to-date `master`.
    A registered worker reuses its assigned worktree and sets `implementing` using
    `python3 scripts/worker.py update <name> --phase implementing` only after plan approval here.
+   For a developer-owned worker include its recorded `--owner` on lifecycle updates.
+   A replacement instead reads the exact approved packet, resolved decisions/constraints,
+   relevant specs/ADRs, investigation evidence, verification requirements and relevant code.
+   It states understanding and reconciles discrepancies before running handoff-accept for its
+   bound session; only that explicit developer-authorized transfer is an exception to local
+   plan approval. Read Protocol parallel's handoff procedure. Dispatch/resume never transfers
+   approval. Commit approval must occur separately in this implementation conversation.
 2. **Spec first.** Apply the plan's spec changes to `docs/agents/specs/`. Set
    `status: implemented` only at the end, when tests pass.
 3. **Code and tests.** Every changed clause gets at least one test that names it, e.g.

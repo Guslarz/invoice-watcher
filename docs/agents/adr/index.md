@@ -30,3 +30,5 @@ this list is usually enough; open a record to see why.
 | [0023](0023-isolate-conditionally-activated-modules-and-their-infrastructure.md) | Isolate conditionally activated modules and their infrastructure | accepted |
 | [0024](0024-contribute-mode-values-from-implementations-and-merge-metadata-explicitly.md) | Contribute mode values from implementations and merge metadata explicitly | accepted |
 | [0025](0025-organize-java-library-packages-by-role.md) | Organize Java library packages by role | accepted |
+
+| [0026](0026-transfer-plan-approval-only-with-explicit-authorization-and-verified-ownership.md) | Transfer plan approval only with explicit authorization and verified ownership | accepted |

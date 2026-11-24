@@ -28,6 +28,13 @@ source: none             # or docs/agents/inbox/<slug>.md
 
 ## Design
 
+## Implementation recommendation
+
+Continue the current session by default. Record a specific backend/model only when justified by
+investigation and available support. Explain remaining uncertainty, rationale and escalation
+conditions, and respect developer preferences. Review this choice with the plan; it is neither
+plan approval nor authorization to launch a replacement.
+
 ## ADR
 
 None.
