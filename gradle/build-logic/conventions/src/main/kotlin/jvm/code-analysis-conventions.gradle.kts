@@ -7,9 +7,22 @@ plugins {
   id("com.github.spotbugs")
 }
 
+val libs = versionCatalogs.named("libs")
+
 checkstyle {
-  toolVersion = versionCatalogs.named("libs").findVersion("checkstyle").get().requiredVersion
+  toolVersion = libs.findVersion("checkstyle").get().requiredVersion
   maxWarnings = 0
+}
+
+dependencies {
+  constraints {
+    add("checkstyle", libs.findLibrary("guava").get()) {
+      because("Checkstyle selects a vulnerable Guava version")
+    }
+    add("checkstyle", libs.findLibrary("plexus-utils").get()) {
+      because("Checkstyle's Doxia dependencies select a vulnerable Plexus Utils version")
+    }
+  }
 }
 
 spotbugs {
