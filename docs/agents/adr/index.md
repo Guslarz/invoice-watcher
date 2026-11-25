@@ -33,3 +33,4 @@ this list is usually enough; open a record to see why.
 | [0026](0026-transfer-plan-approval-only-with-explicit-authorization-and-verified-ownership.md) | Transfer plan approval only with explicit authorization and verified ownership | accepted |
 | [0027](0027-keep-spring-configuration-binding-in-implementations.md) | Keep Spring configuration binding in implementations | accepted |
 | [0028](0028-describe-secret-scalars-in-source-and-packaged-metadata.md) | Describe Secret scalars in source and packaged metadata | accepted |
+| [0029](0029-review-sbom-coverage-when-adding-third-party-tools-and-dependencies.md) | Review SBOM coverage when adding third-party tools and dependencies | accepted |

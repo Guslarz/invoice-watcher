@@ -125,6 +125,13 @@ In the repository open **Settings → Secrets and variables → Actions** and ad
 The `Snapshot` and `Release` workflows need nothing else — they publish images with the
 workflow's own `GITHUB_TOKEN`.
 
+In **Settings → Advanced Security**, enable **Dependency graph** if it is disabled. After a
+push to `master`, check the Gradle and supplemental submission jobs in the **Dependency
+Submission** workflow. In **Insights → Dependency graph**, inspect or export the inventory and
+check that the Gradle, frontend and supplemental entries are present. For a pull request that
+changes an inventoried source, download the workflow's `supplemental-dependencies` artifact to
+inspect the proposed snapshot. The review job generates the artifact with read-only permissions.
+
 In **Settings → Advanced Security** enable **Dependabot security updates**, so that Dependabot
 opens pull requests fixing reported vulnerable dependencies. Weekly version updates need no
 setting; they are configured in `.github/dependabot.yml`.
