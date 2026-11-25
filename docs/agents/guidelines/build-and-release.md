@@ -1,5 +1,8 @@
 # Build and release
 
+- When adding third-party tooling or dependencies, review SBOM coverage under
+  [ADR-0029](../adr/0029-review-sbom-coverage-when-adding-third-party-tools-and-dependencies.md).
+
 - Use the wrapper: `./gradlew build analyze`. `analyze` = Checkstyle + SpotBugs only, without
   tests; `build` runs them too (through `check`). Any Checkstyle violation fails the build
   (`maxWarnings = 0`).

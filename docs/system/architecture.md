@@ -96,6 +96,11 @@ flowchart LR
   `ghcr.io/<owner>/<repository>/mail-producer:snapshot`, replacing the previous one.
 - **The `Release` workflow**, run by hand with `major`, `minor` or `patch`, tags the commit
   `v<version>`, publishes the image tagged `<version>` and creates the GitHub release.
+- **The `Dependency Submission` workflow** sends GitHub the resolved Gradle dependencies and a
+  separate snapshot of declared external container images, action pins from local composite
+  actions, and resolved Python documentation packages. GitHub also discovers dependencies such as
+  the frontend workspace packages and workflow-level actions from repository manifests. The
+  container entries identify declared image references. The snapshot does not inspect image layers.
 - **Dependabot** opens pull requests every week for newer GitHub Actions and Gradle
   dependencies, grouped so that Spring Boot, Spring Cloud GCP and all other bumps each arrive in
   one pull request, and opens a pull request with security fixes when a vulnerable dependency is

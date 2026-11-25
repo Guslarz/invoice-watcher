@@ -52,6 +52,13 @@ the dev environment can run, and a release produces a versioned image and a GitH
   `master` are rejected for ordinary users, administrators and workflows. The dedicated release
   GitHub App is the sole configured bypass and is used only for the release workflow's atomic
   fast-forward push of the release commit, development restoration commit and release tag.
+- **RELEASE-008** Every push to `master` runs Gradle dependency submission and independently
+  submits a supplemental dependency snapshot to GitHub. The supplemental snapshot records
+  external container image references declared in build, test and application deployment sources,
+  external actions referenced by repository-local composite actions, and the direct and transitive
+  Python packages resolved for the documentation build. Each dependency identifies its declaring
+  file. The review path generates and validates the supplemental payload with read-only
+  permissions. Only the `master` push path submits it.
 
 - **RELEASE-040** The registration backend and Angular frontend are built and packaged as
   separate applications with separate container images. The frontend consumes the repository's
@@ -62,6 +69,18 @@ the dev environment can run, and a release produces a versioned image and a GitH
 Confirm clause identifier availability when applying these changes.
 
 ## Acceptance
+
+- **RELEASE-008** Given a checkout containing the application and Playwright Dockerfiles, Kafka
+  manifests and Datastore test image references, when the supplemental payload is generated, then
+  it contains the external image tags and source paths, including both Playwright base images with
+  the workspace versions substituted. Repository image outputs and stage aliases are excluded.
+- **RELEASE-008** Given the composite actions and documentation requirements, when the payload is
+  generated, then it records the external action pins and labels the resolved PyPI packages as
+  direct or indirect.
+- **RELEASE-008** Given a pull request changing an inventoried source or the generator, when the
+  review job runs, then it saves the JSON for inspection without submitting it. Given a
+  `master` push, when both submissions succeed, then their detector and correlator identities
+  are distinct. Each submission can run even if the other fails.
 
 - **RELEASE-003** Given release version 1.3.0, when preparation finishes, then v1.3.0 points to
   the release commit with targetRevision v1.3.0, image tag 1.3.0 and pod label 1.3.0; master
