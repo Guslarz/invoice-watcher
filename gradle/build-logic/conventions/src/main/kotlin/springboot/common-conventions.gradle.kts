@@ -15,6 +15,12 @@ dependencyManagement {
     // Last, so its versions win over the ones the GCP BOM manages too.
     mavenBom(SpringBootPlugin.BOM_COORDINATES)
   }
+  dependencies {
+    // Use patched versions for Google Cloud and Kafka transitive dependencies.
+    dependency(libs.findLibrary("guava").get().get().toString())
+    dependency(libs.findLibrary("lz4-java").get().get().toString())
+    dependency(libs.findLibrary("snappy-java").get().get().toString())
+  }
 }
 
 // The configuration processor reads property descriptions from Javadoc, which a type that was not

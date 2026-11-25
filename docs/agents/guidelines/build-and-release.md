@@ -27,6 +27,14 @@
   BOM, which wins where both manage a version; libraries do not apply the Spring Boot plugin.
   Included build-logic test suites also import the catalog's Spring Boot BOM instead of pinning
   separately managed test libraries such as AssertJ.
+- Before updating dependencies, review the temporary security overrides in the
+  [version catalog](../../../gradle/libs.versions.toml). Prefer an upstream update that brings in
+  a patched version. When updating an affected plugin, BOM or library, try resolving the affected
+  classpaths with the corresponding override removed. Remove each override whose upstream
+  versions are outside the vulnerable ranges, then confirm the result in a locally generated
+  Gradle dependency submission snapshot. Check each classpath separately when it has its own
+  constraint or managed override. Remove the catalog entry when its last override goes away.
+  Record any new override in the same section with its upstream dependency path and advisory IDs.
 - Version comes from git tags via axion-release (`scmVersion`). Never hard-code versions.
 - Docker images are separate modules in `images/` that consume an app's `bootJar` through the
   `dockerImageResource` configuration. An image module is named `<image>-docker`; the published

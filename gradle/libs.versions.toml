@@ -10,6 +10,20 @@ spring-boot = "4.2.0"
 spring-cloud-gcp = "8.3.1"
 spring-dependency-management-plugin = "1.1.7"
 
+# Temporary security overrides. Review on dependency updates per docs/agents/guidelines/build-and-release.md.
+# Spring Boot Gradle plugin buildpack tooling (GHSA-j288-q9x7-2f5v).
+commons-lang3 = "3.21.0"
+# Spring Cloud GCP application dependencies and Checkstyle (GHSA-xxph-c9ww-hj94).
+guava = "33.7.2-jre"
+# Node Gradle plugin's Jackson 2 core and databind (including GHSA-7hhh-6rmp-j9qf and GHSA-cxp5-3px4-pw24).
+jackson2 = "2.21.8"
+# Kafka clients on application and test runtimes (GHSA-mcr4-qmvw-px4g, GHSA-343h-94h5-c4wr, GHSA-gm45-99xc-r7wv).
+lz4-java = "1.11.4"
+# Checkstyle's Doxia dependency chain (GHSA-6fmv-xxpf-w3cw).
+plexus-utils = "3.6.1"
+# Kafka clients on application and test runtimes (GHSA-gwq9-9ffj-mvrv, GHSA-xqrx-qh46-34m7, GHSA-q233-g92q-qxp6).
+snappy-java = "1.1.10.9"
+
 [plugins]
 axion-release = { id = "pl.allegro.tech.build.axion-release", version.ref = "axion-release" }
 
@@ -21,15 +35,21 @@ spring-security-test = { group = "org.springframework.security", name = "spring-
 
 angus-mail = { group = "org.eclipse.angus", name = "angus-mail" }
 assertj-core = { group = "org.assertj", name = "assertj-core" }
+build-commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3" }
 gradle-docker-plugin = { group = "com.bmuschko", name = "gradle-docker-plugin", version.ref = "gradle-docker-plugin" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 h2 = { group = "com.h2database", name = "h2" }
 jackson-databind = { group = "tools.jackson.core", name = "jackson-databind" }
+jackson2-bom = { group = "com.fasterxml.jackson", name = "jackson-bom", version.ref = "jackson2" }
 jakarta-annotations = { group = "jakarta.annotation", name = "jakarta.annotation-api" }
 jspecify = { group = "org.jspecify", name = "jspecify" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
 lombok-plugin = { group = "io.freefair.gradle", name = "lombok-plugin", version.ref = "lombok-plugin" }
+lz4-java = { group = "at.yawk.lz4", name = "lz4-java", version.ref = "lz4-java" }
 picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
+plexus-utils = { group = "org.codehaus.plexus", name = "plexus-utils", version.ref = "plexus-utils" }
+snappy-java = { group = "org.xerial.snappy", name = "snappy-java", version.ref = "snappy-java" }
 spotbugs-gradle-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-gradle-plugin", version.ref = "spotbugs-gradle-plugin" }
 spring-boot-dependencies = { group = "org.springframework.boot", name = "spring-boot-dependencies", version.ref = "spring-boot" }
 spring-boot-plugin = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version.ref = "spring-boot" }
