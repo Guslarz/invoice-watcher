@@ -30,14 +30,21 @@ value:
     "title": "Invoice 10/2026",
     "date": "2026-10-13T08:15:00Z",
     "content": "<p>Invoice for October 2026</p>",
-    "contentType": "text/html"
+    "contentType": "text/html",
+    "attachmentManifest": {
+      "version": 1,
+      "complete": true,
+      "limitReason": null,
+      "attachments": []
+    }
   }
 }
 ```
 
 HTML bodies are preferred in multipart alternatives and preserved without conversion or
 sanitization (HTML is untrusted). Related resources, attachments and attached messages are
-excluded. When no supported body exists, `content` and `contentType` are both `null`; an empty
+excluded from the body. PDF attachments are represented separately in attachmentManifest; the
+example has no candidates. When no supported body exists, `content` and `contentType` are both `null`; an empty
 supported body is published as an empty string with its media type.
 
 The example source ID uses user `jan@example.com`, host `imap.example.com`, port 993,
@@ -49,6 +56,9 @@ updated before rollout; newly published records omit Java class-name headers and
 by `eventType` and `schemaVersion`. Historical flat records remain unchanged, lack a guaranteed
 source ID, and may lack `contentType`. See [event format migration](../system/index.md#event-format-migration)
 for replay and consumer handling.
+
+The all-mails topic has explicit seven-day retention. See [attachment evidence](../setup/mail-attachments.md)
+for private object references and the separate evidence deadline.
 
 ### Watch the topic
 

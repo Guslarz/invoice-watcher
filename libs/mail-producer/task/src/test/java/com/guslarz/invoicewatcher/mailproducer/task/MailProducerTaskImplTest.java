@@ -1,8 +1,28 @@
 package com.guslarz.invoicewatcher.mailproducer.task;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.FolderConfig;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailScanConfig;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailServer;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.User;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.FolderConfigDaoService;
+import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.UserDaoService;
 import com.guslarz.invoicewatcher.eventproducer.api.Event;
 import com.guslarz.invoicewatcher.eventproducer.api.EventDeliveryException;
 import com.guslarz.invoicewatcher.eventproducer.api.EventProducer;
+import com.guslarz.invoicewatcher.mailattachment.api.model.AttachmentManifest;
+import com.guslarz.invoicewatcher.mailattachment.api.service.MailAttachmentService;
 import com.guslarz.invoicewatcher.mailconnector.api.FolderMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnection;
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionException;
@@ -12,13 +32,11 @@ import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
 import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.BasicAuthMailCredentials;
-import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.FolderConfig;
-import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailScanConfig;
-import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailServer;
-import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.User;
-import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.FolderConfigDaoService;
-import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.UserDaoService;
 import com.guslarz.invoicewatcher.secret.api.Secret;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.stream.LongStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,22 +45,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
-
-import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.stream.LongStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(OutputCaptureExtension.class)
 class MailProducerTaskImplTest {
@@ -53,22 +55,32 @@ class MailProducerTaskImplTest {
   private final UserDaoService userDaoService = mock(UserDaoService.class);
   private final FolderConfigDaoService folderConfigDaoService = mock(FolderConfigDaoService.class);
   private final MailConnectionFactory mailConnectionFactory = mock(MailConnectionFactory.class);
-  private final MailConnection mailConnection = mock(MailConnection.class);
+  private final MailConnection mailConnection = mock(MailConnection.class, CALLS_REAL_METHODS);
   private final EventProducer eventProducer = mock(EventProducer.class);
-  private final MailProducerTaskImpl uut = new MailProducerTaskImpl(
-      userDaoService,
-      folderConfigDaoService,
-      mailConnectionFactory,
-      new MailProcessorService(new MailProducerTaskProperties("all-mails"), eventProducer)
-  );
+  private final MailProducerTaskImpl uut =
+      new MailProducerTaskImpl(
+          userDaoService,
+          folderConfigDaoService,
+          mailConnectionFactory,
+          new MailProcessorService(
+              new MailProducerTaskProperties("all-mails"), eventProducer, emptyAttachments()));
+
+  private static MailAttachmentService emptyAttachments() {
+    var service = mock(MailAttachmentService.class);
+    when(service.capture(any(), any(), any()))
+        .thenReturn(new AttachmentManifest(1, true, null, List.of()));
+    return service;
+  }
 
   @Test
-  @DisplayName("EVENT-011: saves the position once, at the last message, after all events are confirmed")
+  @DisplayName(
+      "EVENT-011: saves the position once, at the last message, after all events are confirmed")
   void savesPositionOnceWhenAllEventsConfirmed() {
     // given
     FolderConfig inbox = folder("INBOX", null);
     givenUserWithFolders(inbox);
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(messages(UID_VALIDITY, 13, 14));
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(messages(UID_VALIDITY, 13, 14));
 
     // when
     uut.execute();
@@ -131,7 +143,8 @@ class MailProducerTaskImplTest {
     // given
     FolderConfig inbox = folder("INBOX", new ScanPosition(UID_VALIDITY, 15));
     givenUserWithFolders(inbox);
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(messages(UID_VALIDITY + 1, 1, 2));
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(messages(UID_VALIDITY + 1, 1, 2));
 
     // when
     uut.execute();
@@ -141,16 +154,19 @@ class MailProducerTaskImplTest {
   }
 
   @Test
-  @DisplayName("EVENT-012: saves the position at the last confirmed event and skips remaining folders when an "
-      + "event is not confirmed")
+  @DisplayName(
+      "EVENT-012: saves the position at the last confirmed event and skips remaining folders when"
+          + " an event is not confirmed")
   void savesPositionAtLastConfirmedEventWhenEventNotConfirmed(CapturedOutput output) {
     // given
     FolderConfig inbox = folder("INBOX", null);
     givenUserWithFolders(inbox, folder("Invoices", null));
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(messages(UID_VALIDITY, 13, 14, 15));
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(messages(UID_VALIDITY, 13, 14, 15));
     doNothing()
         .doThrow(new EventDeliveryException("Event not delivered", new RuntimeException()))
-        .when(eventProducer).send(any(), any());
+        .when(eventProducer)
+        .send(any(), any());
 
     // when
     uut.execute();
@@ -167,9 +183,11 @@ class MailProducerTaskImplTest {
   void keepsPositionWhenFirstEventNotConfirmed() {
     // given
     givenUserWithFolders(folder("INBOX", new ScanPosition(UID_VALIDITY, 12)));
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(messages(UID_VALIDITY, 13, 14));
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(messages(UID_VALIDITY, 13, 14));
     doThrow(new EventDeliveryException("Event not delivered", new RuntimeException()))
-        .when(eventProducer).send(any(), any());
+        .when(eventProducer)
+        .send(any(), any());
 
     // when
     uut.execute();
@@ -179,19 +197,27 @@ class MailProducerTaskImplTest {
   }
 
   @Test
-  @DisplayName("MAIL-030: a message without sender and date is published as read and the position moves past it")
+  @DisplayName(
+      "MAIL-030: a message without sender and date is published as read and the position moves past"
+          + " it")
   void publishesMessageWithoutSenderAndDate() {
     // given
     FolderConfig inbox = folder("INBOX", null);
     givenUserWithFolders(inbox);
     MailFolderMessages folderMessages = messages(UID_VALIDITY, 1, 3);
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(MailFolderMessages.builder()
-        .uidValidity(UID_VALIDITY)
-        .messages(List.of(
-            folderMessages.messages().get(0),
-            FolderMessage.builder().uid(2).message(MailMessage.builder().title("Invoice 2").build()).build(),
-            folderMessages.messages().get(1)))
-        .build());
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(
+            MailFolderMessages.builder()
+                .uidValidity(UID_VALIDITY)
+                .messages(
+                    List.of(
+                        folderMessages.messages().get(0),
+                        FolderMessage.builder()
+                            .uid(2)
+                            .message(MailMessage.builder().title("Invoice 2").build())
+                            .build(),
+                        folderMessages.messages().get(1)))
+                .build());
 
     // when
     uut.execute();
@@ -206,26 +232,34 @@ class MailProducerTaskImplTest {
   }
 
   @Test
-  @DisplayName("MAIL-040: a mailbox that cannot be connected to is logged and the next mailbox is scanned")
+  @DisplayName(
+      "MAIL-040: a mailbox that cannot be connected to is logged and the next mailbox is scanned")
   void continuesWithNextMailboxWhenConnectingFails(CapturedOutput output) {
     // given
-    MailConnection secondConnection = mock(MailConnection.class);
-    when(userDaoService.findAll()).thenReturn(List.of(User.builder()
-        .name("jan@example.com")
-        .scanConfigs(List.of(scanConfig("imap.broken.example", folder("INBOX", null)),
-            scanConfig("imap.example.com", folder("INBOX", null))))
-        .build()));
+    MailConnection secondConnection = mock(MailConnection.class, CALLS_REAL_METHODS);
+    when(userDaoService.findAll())
+        .thenReturn(
+            List.of(
+                User.builder()
+                    .name("jan@example.com")
+                    .scanConfigs(
+                        List.of(
+                            scanConfig("imap.broken.example", folder("INBOX", null)),
+                            scanConfig("imap.example.com", folder("INBOX", null))))
+                    .build()));
     when(mailConnectionFactory.createConnection(any()))
         .thenThrow(new MailConnectionException(new RuntimeException("Wrong password")))
         .thenReturn(secondConnection);
-    when(secondConnection.getEmailMessages(any(MailQuery.class))).thenReturn(messages(UID_VALIDITY, 1));
+    when(secondConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(messages(UID_VALIDITY, 1));
 
     // when
     uut.execute();
 
     // then
     verify(eventProducer).send(any(), any());
-    assertThat(output).contains("Error scanning mailbox imap.broken.example of user jan@example.com");
+    assertThat(output)
+        .contains("Error scanning mailbox imap.broken.example of user jan@example.com");
   }
 
   @Test
@@ -234,35 +268,51 @@ class MailProducerTaskImplTest {
     // given
     User broken = mock(User.class);
     when(broken.name()).thenReturn("broken@example.com");
-    when(broken.scanConfigs()).thenThrow(new IllegalArgumentException("Unknown credentials type: oauth"));
-    when(userDaoService.findAll()).thenReturn(List.of(broken, user("jan@example.com", folder("INBOX", null))));
+    when(broken.scanConfigs())
+        .thenThrow(new IllegalArgumentException("Unknown credentials type: oauth"));
+    when(userDaoService.findAll())
+        .thenReturn(List.of(broken, user("jan@example.com", folder("INBOX", null))));
     when(mailConnectionFactory.createConnection(any())).thenReturn(mailConnection);
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(messages(UID_VALIDITY, 1));
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(messages(UID_VALIDITY, 1));
 
     // when
     uut.execute();
 
     // then
     verify(eventProducer).send(any(), any());
-    assertThat(output).contains("Error processing user broken@example.com", "Unknown credentials type: oauth");
+    assertThat(output)
+        .contains("Error processing user broken@example.com", "Unknown credentials type: oauth");
   }
 
   @Test
-  @DisplayName("MAIL-043: a failed folder is logged once, with user, host and folder and without credentials")
+  @DisplayName(
+      "MAIL-043: a failed folder is logged once, with user, host and folder and without"
+          + " credentials")
   void logsFolderFailureOnceWithoutCredentials(CapturedOutput output) {
     // given
     Secret password = mock(Secret.class);
     when(password.getEncrypted()).thenReturn("encrypted-s3cret");
     when(password.getDecrypted()).thenReturn("plain-s3cret");
     when(password.toString()).thenReturn("plain-s3cret");
-    when(userDaoService.findAll()).thenReturn(List.of(User.builder()
-        .name("jan@example.com")
-        .scanConfigs(List.of(MailScanConfig.builder()
-            .server(MailServer.builder().host("imap.example.com").port(993).build())
-            .credentials(BasicAuthMailCredentials.builder().username("jan.login").password(password).build())
-            .folders(List.of(folder("Invoices", null)))
-            .build()))
-        .build()));
+    when(userDaoService.findAll())
+        .thenReturn(
+            List.of(
+                User.builder()
+                    .name("jan@example.com")
+                    .scanConfigs(
+                        List.of(
+                            MailScanConfig.builder()
+                                .server(
+                                    MailServer.builder().host("imap.example.com").port(993).build())
+                                .credentials(
+                                    BasicAuthMailCredentials.builder()
+                                        .username("jan.login")
+                                        .password(password)
+                                        .build())
+                                .folders(List.of(folder("Invoices", null)))
+                                .build()))
+                    .build()));
     when(mailConnectionFactory.createConnection(any())).thenReturn(mailConnection);
     when(mailConnection.getEmailMessages(any(MailQuery.class)))
         .thenThrow(new MailConnectionException(new RuntimeException("Folder not found")));
@@ -271,27 +321,36 @@ class MailProducerTaskImplTest {
     uut.execute();
 
     // then
-    List<String> errorLines = output.getAll().lines().filter(line -> line.contains("ERROR")).toList();
-    assertThat(errorLines).singleElement().asString()
+    List<String> errorLines =
+        output.getAll().lines().filter(line -> line.contains("ERROR")).toList();
+    assertThat(errorLines)
+        .singleElement()
+        .asString()
         .contains("jan@example.com", "imap.example.com", "Invoices");
     assertThat(output).doesNotContain("jan.login", "plain-s3cret", "encrypted-s3cret");
   }
 
   @Test
-  @DisplayName("MAIL-043: a failure closing the connection after a scan is logged as a warning only")
+  @DisplayName(
+      "MAIL-043: a failure closing the connection after a scan is logged as a warning only")
   void logsCloseFailureAsWarning(CapturedOutput output) throws Exception {
     // given
     FolderConfig inbox = folder("INBOX", null);
     givenUserWithFolders(inbox);
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(messages(UID_VALIDITY, 1));
-    doThrow(new MailConnectionException(new RuntimeException("Connection reset"))).when(mailConnection).close();
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(messages(UID_VALIDITY, 1));
+    doThrow(new MailConnectionException(new RuntimeException("Connection reset")))
+        .when(mailConnection)
+        .close();
 
     // when
     uut.execute();
 
     // then
     verify(folderConfigDaoService).updateScanPosition(inbox, new ScanPosition(UID_VALIDITY, 1));
-    assertThat(output).contains("WARN", "Error closing connection to mailbox imap.example.com of user jan@example.com");
+    assertThat(output)
+        .contains(
+            "WARN", "Error closing connection to mailbox imap.example.com of user jan@example.com");
     assertThat(output).doesNotContain("ERROR");
   }
 
@@ -302,17 +361,25 @@ class MailProducerTaskImplTest {
   }
 
   @Test
-  @DisplayName("EVENT-004: publishes selected bodies and media types unchanged, including absent bodies")
+  @DisplayName(
+      "EVENT-004: publishes selected bodies and media types unchanged, including absent bodies")
   void publishesSelectedBodyAndMediaType() {
     // given
     givenUserWithFolders(folder("INBOX", null));
-    MailMessage html = MailMessage.builder().content("<p>Invoice</p>").contentType("text/html").build();
+    MailMessage html =
+        MailMessage.builder().content("<p>Invoice</p>").contentType("text/html").build();
     MailMessage plain = MailMessage.builder().content("Invoice").contentType("text/plain").build();
     MailMessage absent = MailMessage.builder().build();
-    when(mailConnection.getEmailMessages(any(MailQuery.class))).thenReturn(MailFolderMessages.builder()
-        .uidValidity(UID_VALIDITY)
-        .messages(List.of(new FolderMessage(1, html), new FolderMessage(2, plain), new FolderMessage(3, absent)))
-        .build());
+    when(mailConnection.getEmailMessages(any(MailQuery.class)))
+        .thenReturn(
+            MailFolderMessages.builder()
+                .uidValidity(UID_VALIDITY)
+                .messages(
+                    List.of(
+                        new FolderMessage(1, html),
+                        new FolderMessage(2, plain),
+                        new FolderMessage(3, absent)))
+                .build());
 
     // when
     uut.execute();
@@ -320,15 +387,23 @@ class MailProducerTaskImplTest {
     // then
     ArgumentCaptor<Event<MailIngestedPayload>> events = ArgumentCaptor.captor();
     verify(eventProducer, times(3)).send(eq("all-mails"), events.capture());
-    assertThat(events.getAllValues()).extracting(event -> event.value().payload())
-        .extracting(payload -> new MailMessage(payload.sender(), payload.title(), payload.date(),
-            payload.content(), payload.contentType()))
+    assertThat(events.getAllValues())
+        .extracting(event -> event.value().payload())
+        .extracting(payload ->
+            new MailMessage(
+                payload.sender(),
+                payload.title(),
+                payload.date(),
+                payload.content(),
+                payload.contentType()))
         .containsExactly(html, plain, absent);
     assertThat(events.getAllValues()).extracting(Event::key).containsOnly("jan@example.com");
   }
 
   @Test
-  @DisplayName("MAIL-032: a body reading failure skips remaining folders and publishes no incomplete messages")
+  @DisplayName(
+      "MAIL-032: a body reading failure skips remaining folders and publishes no incomplete"
+          + " messages")
   void skipsRemainingFoldersWhenBodyReadingFails(CapturedOutput output) {
     // given
     FolderConfig inbox = folder("INBOX", new ScanPosition(UID_VALIDITY, 12));
@@ -343,17 +418,22 @@ class MailProducerTaskImplTest {
     verify(mailConnection).getEmailMessages(any(MailQuery.class));
     verify(eventProducer, never()).send(any(), any());
     verify(folderConfigDaoService, never()).updateScanPosition(any(), any());
-    assertThat(output).contains("Error scanning folder INBOX of mailbox imap.example.com of user jan@example.com");
+    assertThat(output)
+        .contains(
+            "Error scanning folder INBOX of mailbox imap.example.com of user jan@example.com");
   }
 
   @Test
-  @DisplayName("EVENT-005: retry after confirmation but failed position save retains source identity")
+  @DisplayName(
+      "EVENT-005: retry after confirmation but failed position save retains source identity")
   void retainsIdentityWhenProgressSaveFails(CapturedOutput output) {
     // given
     givenUserWithFolders(folder("INBOX", null));
     when(mailConnection.getEmailMessages(any())).thenReturn(messages(UID_VALIDITY, 13));
-    doThrow(new IllegalStateException("Position write failed")).doNothing()
-        .when(folderConfigDaoService).updateScanPosition(any(), any());
+    doThrow(new IllegalStateException("Position write failed"))
+        .doNothing()
+        .when(folderConfigDaoService)
+        .updateScanPosition(any(), any());
 
     // when
     uut.execute();
@@ -369,7 +449,9 @@ class MailProducerTaskImplTest {
 
   @ParameterizedTest
   @ValueSource(longs = {-1, 0, 4294967296L})
-  @DisplayName("EVENT-008: invalid first UID publishes nothing and preserves progress without leaking credentials")
+  @DisplayName(
+      "EVENT-008: invalid first UID publishes nothing and preserves progress without leaking"
+          + " credentials")
   void rejectsInvalidFirstUid(long uid, CapturedOutput output) {
     // given
     givenUserWithFolders(folder("INBOX", null), folder("Bills", null));
@@ -382,7 +464,8 @@ class MailProducerTaskImplTest {
     verify(eventProducer, never()).send(any(), any());
     verify(folderConfigDaoService, never()).updateScanPosition(any(), any());
     verify(mailConnection).getEmailMessages(any());
-    assertThat(output).contains("Missing or invalid mail source identity component")
+    assertThat(output)
+        .contains("Missing or invalid mail source identity component")
         .doesNotContain("jan.login");
   }
 
@@ -406,7 +489,8 @@ class MailProducerTaskImplTest {
 
   @ParameterizedTest
   @ValueSource(longs = {-1, 0, 4294967296L})
-  @DisplayName("EVENT-008: invalid UIDVALIDITY fails the folder before publishing or changing progress")
+  @DisplayName(
+      "EVENT-008: invalid UIDVALIDITY fails the folder before publishing or changing progress")
   void rejectsInvalidUidValidity(long uidValidity) {
     // given
     givenUserWithFolders(folder("INBOX", new ScanPosition(UID_VALIDITY, 12)));
@@ -452,16 +536,19 @@ class MailProducerTaskImplTest {
   private static MailFolderMessages messages(long uidValidity, long... uids) {
     return MailFolderMessages.builder()
         .uidValidity(uidValidity)
-        .messages(LongStream.of(uids)
-            .mapToObj(uid -> FolderMessage.builder()
-                .uid(uid)
-                .message(MailMessage.builder()
-                    .sender("billing@shop.example")
-                    .title("Invoice " + uid)
-                    .date(NOW)
-                    .build())
-                .build())
-            .toList())
+        .messages(
+            LongStream.of(uids)
+                .mapToObj(uid ->
+                    FolderMessage.builder()
+                        .uid(uid)
+                        .message(
+                            MailMessage.builder()
+                                .sender("billing@shop.example")
+                                .title("Invoice " + uid)
+                                .date(NOW)
+                                .build())
+                        .build())
+                .toList())
         .build();
   }
 }

@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.guslarz.invoicewatcher.eventproducer.api.EventEnvelope;
+import com.guslarz.invoicewatcher.mailattachment.api.model.AttachmentManifest;
 import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
 import java.time.ZonedDateTime;
+import java.util.List;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,11 +26,19 @@ class MailEventSerializationTest {
   @DisplayName("EVENT-004: the versioned mail payload retains metadata and absent or empty bodies")
   void serializesMailPayload(String content, String contentType) {
     // given
-    MailMessage message = new MailMessage("billing@shop.example", "Invoice 10/2026",
-        ZonedDateTime.parse("2026-10-13T08:15:00Z"), content, contentType);
-    String sourceId = MailSourceIdentity.create(
-        MailSourceIdentityTest.context("tenant", "host", 993, "private-login", "INBOX"), 7, 13);
-    MailIngestedPayload payload = MailIngestedPayload.from(sourceId, message);
+    MailMessage message =
+        new MailMessage(
+            "billing@shop.example",
+            "Invoice 10/2026",
+            ZonedDateTime.parse("2026-10-13T08:15:00Z"),
+            content,
+            contentType);
+    String sourceId =
+        MailSourceIdentity.create(
+            MailSourceIdentityTest.context("tenant", "host", 993, "private-login", "INBOX"), 7, 13);
+    MailIngestedPayload payload =
+        MailIngestedPayload.from(
+            sourceId, message, new AttachmentManifest(1, true, null, List.of()));
     EventEnvelope<MailIngestedPayload> event = new EventEnvelope<>("mail.ingested", 1, payload);
     try (JacksonJsonSerializer<EventEnvelope<MailIngestedPayload>> uut =
         new JacksonJsonSerializer<>()) {
@@ -41,7 +51,8 @@ class MailEventSerializationTest {
       assertThat(json.get("schemaVersion").isIntegralNumber()).isTrue();
       assertThat(json.get("schemaVersion").asInt()).isEqualTo(1);
       JsonNode body = json.get("payload");
-      assertThat(body.size()).isEqualTo(6);
+      assertThat(body.get("attachmentManifest").get("complete").asBoolean()).isTrue();
+      assertThat(body.get("attachmentManifest").get("attachments").size()).isZero();
       assertThat(body.get("sourceId").asString()).isEqualTo(sourceId);
       assertThat(body.get("sender").asString()).isEqualTo(message.sender());
       assertThat(body.get("title").asString()).isEqualTo(message.title());
@@ -53,10 +64,12 @@ class MailEventSerializationTest {
   }
 
   @Test
-  @DisplayName("EVENT-007: consumers dispatch by type/version and tolerate unknown fields at both levels")
+  @DisplayName(
+      "EVENT-007: consumers dispatch by type/version and tolerate unknown fields at both levels")
   void dispatchesWithoutDependingOnJavaTypes() {
     // given
-    String record = """
+    String record =
+        """
         {"eventType":"mail.ingested","schemaVersion":1,"futureMetadata":true,
          "payload":{"sourceId":"imap-v1:example","title":"Invoice","futureFact":42}}
         """;
@@ -87,7 +100,8 @@ class MailEventSerializationTest {
   @DisplayName("EVENT-007: retained flat records remain legacy with no fabricated source identity")
   void distinguishesLegacyRecords() {
     // given
-    String record = """
+    String record =
+        """
         {"sender":"shop","title":"Invoice","date":null,"content":null,"contentType":null}
         """;
 
@@ -95,7 +109,9 @@ class MailEventSerializationTest {
     Throwable uut = catchThrowable(() -> readSupportedMail(record));
 
     // then
-    assertThat(uut).isInstanceOf(IllegalArgumentException.class).hasMessage("Legacy unversioned mail");
+    assertThat(uut)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Legacy unversioned mail");
     assertThat(mapper.readTree(record).has("sourceId")).isFalse();
   }
 
@@ -103,8 +119,8 @@ class MailEventSerializationTest {
   @DisplayName("EVENT-007: the same envelope serializes other payload types without class headers")
   void serializesAnotherPayloadType() {
     // given
-    EventEnvelope<ExamplePayload> event = new EventEnvelope<>("example.created", 1,
-        new ExamplePayload("example-42"));
+    EventEnvelope<ExamplePayload> event =
+        new EventEnvelope<>("example.created", 1, new ExamplePayload("example-42"));
     RecordHeaders headers = new RecordHeaders();
     try (JacksonJsonSerializer<EventEnvelope<ExamplePayload>> uut = new JacksonJsonSerializer<>()) {
       uut.setAddTypeInfo(false);

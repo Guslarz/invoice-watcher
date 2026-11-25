@@ -60,3 +60,5 @@ After infrastructure or bootstrap values change, apply `persistent` again if its
 and rerun `Environment` with `up` after merging the generated changes.
 
 On the pages that follow, `<project-id>` and `<domain>` stand for your values.
+
+For private PDF evidence, capture limits and expiry recovery, see [mail attachment evidence](mail-attachments.md).

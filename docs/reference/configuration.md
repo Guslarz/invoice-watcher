@@ -8,13 +8,47 @@ is how the deployed environments configure the applications.
 Suggested values are merged from implementation metadata. They support configuration
 assistance; active capabilities validate that a selected implementation is available.
 
+## `invoice-watcher.attachment-storage` { #invoice-watcher-attachment-storage }
+
+Modules: `:apps:mail-producer-app`, `:apps:user-registration-backend-app`, `:libs:attachment-storage-api`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.attachment-storage.filesystem.cleanup-interval`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_FILESYSTEM_CLEANUP_INTERVAL` | `Duration` | `60s` |  | Optional in filesystem mode. Interval between local expiry cleanup runs. |
+| `invoice-watcher.attachment-storage.filesystem.directory`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_FILESYSTEM_DIRECTORY` | `Path` |  |  | Required in filesystem mode. Absolute dedicated private POSIX directory. |
+| `invoice-watcher.attachment-storage.filesystem.store-id`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_FILESYSTEM_STORE_ID` | `String` | `local-attachments` |  | Optional in filesystem mode. Logical store identifier in evidence references. |
+| `invoice-watcher.attachment-storage.gcs.bucket`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_GCS_BUCKET` | `String` |  |  | Required in gcs mode. Dedicated private attachment bucket. |
+| `invoice-watcher.attachment-storage.gcs.operation-timeout`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_GCS_OPERATION_TIMEOUT` | `Duration` | `15s` |  | Optional in gcs mode. Finite deadline for storage operations. |
+| `invoice-watcher.attachment-storage.gcs.store-id`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_GCS_STORE_ID` | `String` | `mail-attachments` |  | Optional in gcs mode. Logical allowlisted store identifier carried in events. |
+| `invoice-watcher.attachment-storage.mode`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_MODE` | `String` |  | `filesystem` / `gcs` | Required. Private attachment storage backend when capture is active. |
+
+## `invoice-watcher.attachment-storage.filesystem` { #invoice-watcher-attachment-storage-filesystem }
+
+Modules: `:libs:attachment-storage-filesystem-impl`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.attachment-storage.filesystem.cleanup-interval`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_FILESYSTEM_CLEANUP_INTERVAL` | `Duration` | `60s` |  | Optional in filesystem mode. Interval between local expiry cleanup runs. |
+| `invoice-watcher.attachment-storage.filesystem.directory`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_FILESYSTEM_DIRECTORY` | `Path` |  |  | Required in filesystem mode. Absolute dedicated private POSIX directory. |
+| `invoice-watcher.attachment-storage.filesystem.store-id`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_FILESYSTEM_STORE_ID` | `String` | `local-attachments` |  | Optional in filesystem mode. Logical store identifier in evidence references. |
+
+## `invoice-watcher.attachment-storage.gcs` { #invoice-watcher-attachment-storage-gcs }
+
+Modules: `:libs:attachment-storage-gcs-impl`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.attachment-storage.gcs.bucket`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_GCS_BUCKET` | `String` |  |  | Required in gcs mode. Dedicated private attachment bucket. |
+| `invoice-watcher.attachment-storage.gcs.operation-timeout`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_GCS_OPERATION_TIMEOUT` | `Duration` | `15s` |  | Optional in gcs mode. Finite deadline for storage operations. |
+| `invoice-watcher.attachment-storage.gcs.store-id`<br>`INVOICE_WATCHER_ATTACHMENT_STORAGE_GCS_STORE_ID` | `String` | `mail-attachments` |  | Optional in gcs mode. Logical allowlisted store identifier carried in events. |
+
 ## `invoice-watcher.event-processing.dao` { #invoice-watcher-event-processing-dao }
 
 Modules: `:libs:dao-event-processing-api`.
 
 | Property | Type | Default | Suggested values | Description |
 |---|---|---|---|---|
-| `invoice-watcher.event-processing.dao.mode`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_MODE` | `String` |  | `firestore` | Required. Implementation selector for an active capability; available implementations contribute values. |
+| `invoice-watcher.event-processing.dao.mode`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_MODE` | `String` |  | `firestore` / `jpa` | Required. Implementation selector for an active capability; available implementations contribute values. |
 
 ## `invoice-watcher.event-processing.dao.firestore` { #invoice-watcher-event-processing-dao-firestore }
 
@@ -26,6 +60,19 @@ Modules: `:libs:dao-event-processing-firestore-impl`.
 | `invoice-watcher.event-processing.dao.firestore.host`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_FIRESTORE_HOST` | `String` |  |  | Optional. Explicit local Datastore emulator endpoint; omitting uses Google credentials. |
 | `invoice-watcher.event-processing.dao.firestore.namespace`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_FIRESTORE_NAMESPACE` | `String` | `event-processing` |  | Optional. Namespace isolating processing state from user configuration. |
 | `invoice-watcher.event-processing.dao.firestore.project-id`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_FIRESTORE_PROJECT_ID` | `String` |  |  | Required. Google Cloud project, or synthetic emulator project. |
+
+## `invoice-watcher.event-processing.dao.jpa` { #invoice-watcher-event-processing-dao-jpa }
+
+Modules: `:libs:dao-event-processing-jpa-impl`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.event-processing.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  |  | Required in jpa mode. JDBC driver class. |
+| `invoice-watcher.event-processing.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  |  | Optional in jpa mode. Encrypted JDBC password; omit for local H2 defaults. |
+| `invoice-watcher.event-processing.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  |  | Required in jpa mode. JDBC URL; use persistent H2 for restart recovery. |
+| `invoice-watcher.event-processing.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  |  | Optional in jpa mode. JDBC user name. |
+| `invoice-watcher.event-processing.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_JPA_DDL_AUTO` | `String` |  |  | Required in jpa mode. Explicit Hibernate schema policy; update is for local development. |
+| `invoice-watcher.event-processing.dao.jpa.dialect`<br>`INVOICE_WATCHER_EVENT_PROCESSING_DAO_JPA_DIALECT` | `String` |  |  | Required in jpa mode. Explicit Hibernate dialect; H2 is validated locally. |
 
 ## `invoice-watcher.event-processor` { #invoice-watcher-event-processor }
 
@@ -53,9 +100,12 @@ Modules: `:libs:event-processor-kafka-impl`.
 | `invoice-watcher.event-processor.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_BOOTSTRAP_SERVERS` | `String` |  |  | Required. Broker endpoints for processor consumers and publication. |
 | `invoice-watcher.event-processor.kafka.concurrency`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_CONCURRENCY` | `Integer` | `1` |  | Optional. Consumer threads per stage; retries pause the affected thread's assignments. |
 | `invoice-watcher.event-processor.kafka.group-prefix`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_GROUP_PREFIX` | `String` | `invoice-processor-` |  | Optional. Prefix for independent stage consumer groups. |
+| `invoice-watcher.event-processor.kafka.input-retention-ms`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_INPUT_RETENTION_MS` | `Long` | `604800000` |  | Optional. Required input-topic time retention in milliseconds. |
 | `invoice-watcher.event-processor.kafka.max-publication-bytes`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_MAX_PUBLICATION_BYTES` | `Integer` | `4194304` |  | Optional. Upper bound including Kafka record overhead for publication. |
 | `invoice-watcher.event-processor.kafka.offset-reset`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_OFFSET_RESET` | `String` |  |  | Required. Explicit new-group behavior: earliest, latest or none. |
 | `invoice-watcher.event-processor.kafka.quarantine-retention-ms`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_QUARANTINE_RETENTION_MS` | `Long` | `604800000` |  | Optional. Required time-based quarantine recovery window in milliseconds. |
+| `invoice-watcher.event-processor.kafka.replay-retention-ms`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_REPLAY_RETENTION_MS` | `Long` | `604800000` |  | Optional. Required replay-topic time retention in milliseconds. |
+| `invoice-watcher.event-processor.kafka.result-retention-ms`<br>`INVOICE_WATCHER_EVENT_PROCESSOR_KAFKA_RESULT_RETENTION_MS` | `Long` | `604800000` |  | Optional. Required result-topic time retention in milliseconds. |
 
 ## `invoice-watcher.event-producer` { #invoice-watcher-event-producer }
 
@@ -73,6 +123,66 @@ Modules: `:libs:event-producer-kafka-impl`.
 | Property | Type | Default | Suggested values | Description |
 |---|---|---|---|---|
 | `invoice-watcher.event-producer.kafka.bootstrap-servers`<br>`INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS` | `String` |  |  | Required in `kafka` mode. Kafka brokers, e.g. `kafka:9092`. |
+
+## `invoice-watcher.mail-attachment` { #invoice-watcher-mail-attachment }
+
+Modules: `:apps:mail-producer-app`, `:apps:user-registration-backend-app`, `:libs:mail-attachment-api`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-attachment.capture-timeout`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_CAPTURE_TIMEOUT` | `Duration` | `60s` |  | Optional. Maximum elapsed time for capture; stream operations are bounded. |
+| `invoice-watcher.mail-attachment.dao.firestore.database-id`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_DATABASE_ID` | `String` | `(default)` |  | Optional in firestore mode. Datastore database identifier. |
+| `invoice-watcher.mail-attachment.dao.firestore.host`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_HOST` | `String` |  |  | Optional in firestore mode. Explicit emulator endpoint without credentials. |
+| `invoice-watcher.mail-attachment.dao.firestore.namespace`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_NAMESPACE` | `String` | `mail-attachments` |  | Optional in firestore mode. Isolated capture namespace. |
+| `invoice-watcher.mail-attachment.dao.firestore.project-id`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_PROJECT_ID` | `String` |  |  | Required in firestore mode. Google Cloud or emulator project. |
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  |  | Required in jpa mode. JDBC driver class. |
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  |  | Optional in jpa mode. Encrypted JDBC password; omit for local H2 defaults. |
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  |  | Required in jpa mode. JDBC URL; use persistent H2 for restart recovery. |
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  |  | Optional in jpa mode. JDBC user name. |
+| `invoice-watcher.mail-attachment.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DDL_AUTO` | `String` |  |  | Required in jpa mode. Explicit Hibernate schema policy; update is for local development. |
+| `invoice-watcher.mail-attachment.dao.jpa.dialect`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DIALECT` | `String` |  |  | Required in jpa mode. Explicit Hibernate dialect; H2 is validated locally. |
+| `invoice-watcher.mail-attachment.dao.mode`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_MODE` | `String` |  | `firestore` / `jpa` | Required. Attachment capture persistence backend when capture is active. |
+| `invoice-watcher.mail-attachment.evidence-lifetime`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_EVIDENCE_LIFETIME` | `Duration` | `9d` |  | Optional. Evidence lifetime measured from first durable reservation. |
+| `invoice-watcher.mail-attachment.max-attachment-bytes`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_MAX_ATTACHMENT_BYTES` | `Integer` | `10485760` |  | Optional. Maximum decoded bytes in one stored attachment. |
+| `invoice-watcher.mail-attachment.max-candidates`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_MAX_CANDIDATES` | `Integer` | `20` |  | Optional. Maximum attachment candidates enumerated in one message. |
+| `invoice-watcher.mail-attachment.max-manifest-bytes`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_MAX_MANIFEST_BYTES` | `Integer` | `65536` |  | Optional. Maximum serialized attachment manifest bytes. |
+| `invoice-watcher.mail-attachment.max-mime-depth`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_MAX_MIME_DEPTH` | `Integer` | `20` |  | Optional. Maximum MIME nesting depth. |
+| `invoice-watcher.mail-attachment.max-total-bytes`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_MAX_TOTAL_BYTES` | `Integer` | `26214400` |  | Optional. Maximum decoded attachment bytes examined in one message. |
+| `invoice-watcher.mail-attachment.recovery-margin`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_RECOVERY_MARGIN` | `Duration` | `1d` |  | Optional. Additional processing and recovery time after the replay window. |
+| `invoice-watcher.mail-attachment.send-timeout`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_SEND_TIMEOUT` | `Duration` | `30s` |  | Optional. Upper bound reserved for each Kafka publication attempt. |
+| `invoice-watcher.mail-attachment.supported-replay-horizon`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_SUPPORTED_REPLAY_HORIZON` | `Duration` | `7d` |  | Optional. Supported input topic replay window; no quarantine extension. |
+
+## `invoice-watcher.mail-attachment.dao` { #invoice-watcher-mail-attachment-dao }
+
+Modules: `:libs:dao-mail-attachment-api`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-attachment.dao.mode`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_MODE` | `String` |  | `firestore` / `jpa` | Required. Attachment capture persistence backend when capture is active. |
+
+## `invoice-watcher.mail-attachment.dao.firestore` { #invoice-watcher-mail-attachment-dao-firestore }
+
+Modules: `:libs:dao-mail-attachment-firestore-impl`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-attachment.dao.firestore.database-id`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_DATABASE_ID` | `String` | `(default)` |  | Optional in firestore mode. Datastore database identifier. |
+| `invoice-watcher.mail-attachment.dao.firestore.host`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_HOST` | `String` |  |  | Optional in firestore mode. Explicit emulator endpoint without credentials. |
+| `invoice-watcher.mail-attachment.dao.firestore.namespace`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_NAMESPACE` | `String` | `mail-attachments` |  | Optional in firestore mode. Isolated capture namespace. |
+| `invoice-watcher.mail-attachment.dao.firestore.project-id`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_FIRESTORE_PROJECT_ID` | `String` |  |  | Required in firestore mode. Google Cloud or emulator project. |
+
+## `invoice-watcher.mail-attachment.dao.jpa` { #invoice-watcher-mail-attachment-dao-jpa }
+
+Modules: `:libs:dao-mail-attachment-jpa-impl`.
+
+| Property | Type | Default | Suggested values | Description |
+|---|---|---|---|---|
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.driver`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_DRIVER` | `String` |  |  | Required in jpa mode. JDBC driver class. |
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.password`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_PASSWORD` | `String` |  |  | Optional in jpa mode. Encrypted JDBC password; omit for local H2 defaults. |
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.url`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_URL` | `String` |  |  | Required in jpa mode. JDBC URL; use persistent H2 for restart recovery. |
+| `invoice-watcher.mail-attachment.dao.jpa.data-source.basic.username`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DATA_SOURCE_BASIC_USERNAME` | `String` |  |  | Optional in jpa mode. JDBC user name. |
+| `invoice-watcher.mail-attachment.dao.jpa.ddl-auto`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DDL_AUTO` | `String` |  |  | Required in jpa mode. Explicit Hibernate schema policy; update is for local development. |
+| `invoice-watcher.mail-attachment.dao.jpa.dialect`<br>`INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_JPA_DIALECT` | `String` |  |  | Required in jpa mode. Explicit Hibernate dialect; H2 is validated locally. |
 
 ## `invoice-watcher.mail-connector.imap` { #invoice-watcher-mail-connector-imap }
 
@@ -110,6 +220,7 @@ Modules: `:apps:mail-producer-app`, `:libs:mail-producer-task`.
 
 | Property | Type | Default | Suggested values | Description |
 |---|---|---|---|---|
+| `invoice-watcher.mail-producer.task.expected-retention`<br>`INVOICE_WATCHER_MAIL_PRODUCER_TASK_EXPECTED_RETENTION` | `Duration` | `7d` |  | Optional. Required effective mail-topic retention for evidence replay. |
 | `invoice-watcher.mail-producer.task.topic`<br>`INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC` | `String` |  |  | Required. Topic every scanned message is published to, e.g. `all-mails`. |
 
 ## `invoice-watcher.oauth.google` { #invoice-watcher-oauth-google }

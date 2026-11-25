@@ -18,6 +18,46 @@ class InstallationTest(unittest.TestCase):
     def setUp(self):
         self.current = json.loads((ROOT / "deployments/installations/dev.json").read_text())
 
+    def test_local_kafka_is_independent_of_deployed_installation_inputs(self):
+        compose = (ROOT / ".run/files/kafka.yml").read_text()
+        bootstrap = ROOT / ".run/files/prepare-kafka-topics.sh"
+        self.assertNotIn("deployments/", compose)
+        self.assertNotIn("env_file:", compose)
+        self.assertIn("./prepare-kafka-topics.sh:/policy/prepare-topics.sh:ro", compose)
+        self.assertIn("KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092", compose)
+        self.assertTrue(bootstrap.is_file())
+        self.assertNotIn("deployments/", bootstrap.read_text())
+        self.assertFalse(any(path.startswith(".run/")
+                             for path in installation.generate(self.current)))
+        deployment_checks = (ROOT / "scripts/check-deployments.sh").read_text()
+        self.assertNotIn(".run/files/kafka.yml", deployment_checks)
+
+    def test_EVENT_014_ATTACHMENT_008_topic_and_blob_windows_are_explicit(self):
+        outputs = installation.generate(self.current)
+        policy = json.loads(installation.EVIDENCE_POLICY.read_text())
+        self.assertEqual(policy["topicRetentionMs"], 7 * 24 * 60 * 60 * 1000)
+        self.assertEqual(policy["evidenceLifetimeDays"], 9)
+        bootstrap = outputs["deployments/k8s-apps/workloads/kafka/base/prepare-topics.sh"]
+        self.assertIn("retention.ms=604800000", bootstrap)
+        self.assertIn("retention.bytes=-1", bootstrap)
+        self.assertIn("message.timestamp.type=LogAppendTime", bootstrap)
+        self.assertIn("--alter --add-config", bootstrap)
+        env = outputs["deployments/k8s-apps/workloads/mail-producer/overlays/dev/config/.env"]
+        self.assertIn("EVIDENCE_LIFETIME=9d", env)
+        self.assertIn("EXPECTED_RETENTION=604800000ms", env)
+
+    def test_DEPLOY_043_DEPLOY_044_attachment_privacy_and_teardown(self):
+        bucket = (ROOT / "deployments/infrastructure/modules/attachment-storage/main.tf").read_text()
+        self.assertIn('public_access_prevention    = "enforced"', bucket)
+        self.assertIn("uniform_bucket_level_access = true", bucket)
+        self.assertIn("force_destroy               = true", bucket)
+        self.assertIn("retention_duration_seconds = 0", bucket)
+        role = (ROOT / "deployments/infrastructure/modules/project-init/attachment-role.tf").read_text()
+        self.assertIn('permissions = ["storage.objects.create", "storage.objects.get", "storage.buckets.get"]', role)
+        self.assertNotIn("storage.objects.delete", bucket)
+        deployment = (ROOT / "deployments/k8s-apps/workloads/mail-producer/base/deployment.yml").read_text()
+        self.assertIn("serviceAccountName: mail-producer-sa", deployment)
+
     def test_DEPLOY_039_current_outputs_match(self):
         for path, expected in installation.generate(self.current).items():
             self.assertEqual((ROOT / path).read_text(), expected, path)

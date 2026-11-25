@@ -1,15 +1,36 @@
 services:
   kafka:
-    image: apache/kafka:4.3.1
+    image: &kafka-image apache/kafka:4.3.1
     hostname: kafka
     ports:
       - '9092:9092'
-    env_file: ../../deployments/k8s-apps/workloads/kafka/overlays/dev/config/.env
     environment:
-      # the app runs on the host, not in the cluster
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_HEAP_OPTS: -Xms512m -Xmx512m
+      CLUSTER_ID: 5L6g3nShT-eMCtK--X86sw
+      KAFKA_LOG_RETENTION_MS: 604800000
+      KAFKA_LOG_RETENTION_BYTES: -1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
     deploy:
       resources:
         limits:
           memory: "500m"
           cpus: "1"
+  kafka-topics:
+    image: *kafka-image
+    profiles: ["setup"]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - ./prepare-kafka-topics.sh:/policy/prepare-topics.sh:ro
+    entrypoint: ["/bin/bash", "/policy/prepare-topics.sh"]

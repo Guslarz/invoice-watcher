@@ -73,7 +73,8 @@ For every message InvoiceWatcher reads the sender, the subject, the date it was 
 message body and its media type. A message without a sender is still published, without one; a
 message without a valid sent date gets the date the server received it instead. HTML is preferred
 over plain text in multipart alternatives and is preserved without conversion or sanitization
-(HTML is untrusted). Related resources, attachments and attached messages are excluded.
+(HTML is untrusted). Related resources, attachments and attached messages are excluded from the body. PDF attachment
+evidence is captured separately.
 Nested multipart bodies are supported. When no supported body exists the body and media type are
 both null; an empty supported body is published as an empty string with its media type. Body
 reading or decoding errors fail the folder scan.
@@ -145,6 +146,7 @@ contains:
 | `date` | date-time | When the message was sent, in UTC; when the server received it if the message has no valid sent date |
 | `content` | string | Decoded selected HTML or plain-text body; `null` when none is supported |
 | `contentType` | string | `text/html`, `text/plain`, or `null` when none is supported |
+| `attachmentManifest` | object | Candidate outcomes, completeness and immutable private PDF references; see [attachment evidence](../setup/mail-attachments.md) |
 
 Other multipart containers select the first supported body in MIME order; alternative bodies are
 not concatenated. Consumers must treat HTML as untrusted and sanitize it before displaying it.

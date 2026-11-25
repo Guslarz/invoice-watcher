@@ -16,7 +16,7 @@ establish that the initiative's goals have been met.
   stable IMAP occurrence identity are defined in [event publishing](../../specs/event-publishing.md).
   Retained legacy flat events have no guaranteed source identity.
 - Message bodies are read according to MAIL-030–032 in the
-  [mail-scanning spec](../../specs/mail-scanning.md); attachments remain out of scope of scanning.
+  [mail-scanning spec](../../specs/mail-scanning.md); PDF attachment evidence is captured separately without parsing.
 - There are no downstream consumers, recognition modules, matching logic or payment-status storage.
 
 ## Selected direction
@@ -107,9 +107,9 @@ included in this roadmap change.
 
 | Prerequisite | Why | Tracking |
 |---|---|---|
-| Read useful message content | Invoice/payment recognition needs evidence beyond sender/title/date | Implemented: MAIL-030–032 in the [mail-scanning spec](../../specs/mail-scanning.md); attachments remain a separate prerequisite |
+| Read useful message content | Invoice/payment recognition needs evidence beyond sender/title/date | Implemented: MAIL-030–032 in the [mail-scanning spec](../../specs/mail-scanning.md); private untrusted PDF evidence is covered by the attachment capability |
 | Stable mail source identity in ingestion input | Source-level dedup/replay for recognition (ADR-0011) | Implemented: EVENT-004–008 in [event publishing](../../specs/event-publishing.md) |
-| Attachment extraction/access strategy | Many invoices and remittance advices are attachments; sensitive-data handling required | [`mail-attachment-extraction.md`](mail-attachment-extraction.md) |
+| Attachment extraction/access strategy | Many invoices and remittance advices are attachments; sensitive-data handling required | Private bounded PDF evidence with finite retention; see [mail attachments](../../specs/mail-attachments.md) |
 | Event schema/compatibility convention for new topics/records | Safe evolution across producers/consumers (ADR-0011) | Stage 0 below |
 | Source authentication, transfer-state mapping, matching rules, currency/FX/tolerance and manual-review ownership | Safely derive paid status from accepted executed-transfer records (ADR-0012) | Specify per stage; bank e-mails are the selected initial source |
 
@@ -230,7 +230,8 @@ tuning. Specific scope requires separate plans/specs.
 - Matching sufficiency rules and manual-resolution workflow for ambiguous or unsupported evidence.
 - Currency conversion, FX source, rounding/tolerance and partial-settlement business rules.
 - Canonical invoice identity when supplier invoice numbers are missing, malformed or reused.
-- Whether attachments must be stored durably for audit/reprocessing or only processed transiently.
+- Future stages must fit their complete recovery path within the retained PDF evidence window;
+  raw capture does not provide malware clearance or document parsing.
 - Rules-based vs AI-assisted extraction per document type, including quality/cost/privacy evaluation.
 - Storage technology per stage and whether one shared projection store is warranted.
 - Whether/when stream processing is justified over plain consumers.

@@ -20,6 +20,12 @@ implementations that plug themselves in through Spring Boot auto-configuration. 
 
 The full list of modules and their dependencies is generated in [Modules](../reference/modules.md).
 
+Local development can explicitly select filesystem attachment storage and independent JPA/H2
+stores for attachment captures and processing state, alongside user configuration JPA. Each
+capability owns its connection settings and transactions. These alternatives need no Google
+credentials; deployed dev continues using private GCS and Firestore. See
+[local attachment setup](../setup/mail-attachments.md#local-operation).
+
 ## Runtime
 
 In the deployed environment everything runs in one Google Cloud project and one GKE cluster:
@@ -115,3 +121,12 @@ The [shared processor foundation](event-processing.md) supplies durable processi
 retry/quarantine handling, recoverable result publication and a replay service. It starts no
 consumer without a declared application stage. Recognition and matching applications remain
 future work; they are not additional deployed services in the diagram above.
+
+## Attachment evidence
+
+The mail producer captures untrusted PDF attachments before handing mail to Kafka. Private GCS
+objects hold decoded bytes; event manifests identify exact object generations and finite deadlines.
+A dedicated capture DAO stores reservations and immutable manifests in Firestore in Datastore mode,
+independently of the user-configuration DAO. Repeated ingestion reuses the same reference. Internal
+retrieval checks the application user who owns the mailbox, not merely the caller's cloud identity.
+See [attachment operation](../setup/mail-attachments.md) for limits, failures and lifecycle.

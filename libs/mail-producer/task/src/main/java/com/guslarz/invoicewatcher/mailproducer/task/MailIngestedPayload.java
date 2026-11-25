@@ -1,5 +1,6 @@
 package com.guslarz.invoicewatcher.mailproducer.task;
 
+import com.guslarz.invoicewatcher.mailattachment.api.model.AttachmentManifest;
 import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
 import java.time.ZonedDateTime;
 
@@ -10,10 +11,22 @@ public record MailIngestedPayload(
     String title,
     ZonedDateTime date,
     String content,
-    String contentType) {
+    String contentType,
+    AttachmentManifest attachmentManifest) {
 
   static MailIngestedPayload from(String sourceId, MailMessage message) {
-    return new MailIngestedPayload(sourceId, message.sender(), message.title(), message.date(),
-        message.content(), message.contentType());
+    return from(sourceId, message, null);
+  }
+
+  static MailIngestedPayload from(
+      String sourceId, MailMessage message, AttachmentManifest manifest) {
+    return new MailIngestedPayload(
+        sourceId,
+        message.sender(),
+        message.title(),
+        message.date(),
+        message.content(),
+        message.contentType(),
+        manifest);
   }
 }

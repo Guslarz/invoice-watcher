@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.Config;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -101,6 +102,7 @@ public final class KafkaProcessorTransport implements ProcessorTransport, AutoCl
               .all()
               .get(10, TimeUnit.SECONDS)
               .get(inputResource);
+      requireRetention(input, properties.inputRetentionMs());
       long inputMax = Long.parseLong(input.get("max.message.bytes").value());
       if (inputMax * 7 / 3 + 8192 > properties.maxPublicationBytes()) {
         throw new IllegalArgumentException(
@@ -113,6 +115,7 @@ public final class KafkaProcessorTransport implements ProcessorTransport, AutoCl
               .all()
               .get(10, TimeUnit.SECONDS)
               .get(replayResource);
+      requireRetention(replay, properties.replayRetentionMs());
       if (Long.parseLong(replay.get("max.message.bytes").value()) < inputMax + 8192) {
         throw new IllegalArgumentException("Processor replay topic capacity is too small");
       }
@@ -123,6 +126,7 @@ public final class KafkaProcessorTransport implements ProcessorTransport, AutoCl
               .all()
               .get(10, TimeUnit.SECONDS)
               .get(resultResource);
+      requireRetention(result, properties.resultRetentionMs());
       if (Long.parseLong(result.get("max.message.bytes").value()) < 524288 + 8192) {
         throw new IllegalArgumentException("Processor result topic capacity is too small");
       }
@@ -133,6 +137,14 @@ public final class KafkaProcessorTransport implements ProcessorTransport, AutoCl
       throw new TransportUnavailableException();
     } catch (ExecutionException | TimeoutException | RuntimeException failure) {
       throw new TransportUnavailableException();
+    }
+  }
+
+  private static void requireRetention(Config config, long expected) {
+    if (!"delete".equals(config.get("cleanup.policy").value())
+        || Long.parseLong(config.get("retention.ms").value()) != expected
+        || !"-1".equals(config.get("retention.bytes").value())) {
+      throw new IllegalArgumentException("Unsuitable application topic retention settings");
     }
   }
 
@@ -147,14 +159,13 @@ public final class KafkaProcessorTransport implements ProcessorTransport, AutoCl
     var record = new ProducerRecord<byte[], byte[]>(publication.topic(), key, value);
     publication
         .headers()
-        .forEach(
-            (name, text) -> {
-              if (!Set.of("iw-replay-request", "iw-replay-partition", "iw-replay-offset")
-                  .contains(name)) {
-                throw new IllegalArgumentException("Unsupported processor publication header");
-              }
-              record.headers().add(name, text.getBytes(StandardCharsets.UTF_8));
-            });
+        .forEach((name, text) -> {
+          if (!Set.of("iw-replay-request", "iw-replay-partition", "iw-replay-offset")
+              .contains(name)) {
+            throw new IllegalArgumentException("Unsupported processor publication header");
+          }
+          record.headers().add(name, text.getBytes(StandardCharsets.UTF_8));
+        });
     try {
       producer.send(record).get(20, TimeUnit.SECONDS);
     } catch (InterruptedException failure) {
@@ -213,13 +224,12 @@ public final class KafkaProcessorTransport implements ProcessorTransport, AutoCl
               .partitionsToOffsetAndMetadata()
               .get(10, TimeUnit.SECONDS);
       Map<Integer, Long> lag = new HashMap<>();
-      end.forEach(
-          (partition, info) ->
-              lag.put(
-                  partition.partition(),
-                  committed.containsKey(partition)
-                      ? Math.max(0, info.offset() - committed.get(partition).offset())
-                      : -1));
+      end.forEach((partition, info) ->
+          lag.put(
+              partition.partition(),
+              committed.containsKey(partition)
+                  ? Math.max(0, info.offset() - committed.get(partition).offset())
+                  : -1));
       return Map.copyOf(lag);
     } catch (InterruptedException failure) {
       Thread.currentThread().interrupt();

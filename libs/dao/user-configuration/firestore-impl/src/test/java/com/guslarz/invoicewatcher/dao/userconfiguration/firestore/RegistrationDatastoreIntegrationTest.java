@@ -20,6 +20,7 @@ import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
 import com.guslarz.invoicewatcher.mailconnector.api.mailcredentials.GmailOauthCredentials;
 import com.guslarz.invoicewatcher.secret.api.Secret;
 import com.guslarz.invoicewatcher.secret.api.SecretFactory;
+import com.guslarz.invoicewatcher.testing.testcontainers.SharedTestcontainers;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -29,16 +30,10 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.testcontainers.gcloud.DatastoreEmulatorContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
 class RegistrationDatastoreIntegrationTest {
-  @Container
-  private static DatastoreEmulatorContainer emulator =
-      new DatastoreEmulatorContainer(
-              DockerImageName.parse(
-                  "gcr.io/google.com/cloudsdktool/google-cloud-cli:578.0.0-emulators"))
-          .withFlags("--consistency=1 --no-store-on-disk --quiet");
+  @Container private static DatastoreEmulatorContainer emulator = SharedTestcontainers.datastore();
 
   @Test
   @DisplayName(
@@ -59,55 +54,54 @@ class RegistrationDatastoreIntegrationTest {
                 "invoice-watcher.user-configuration.dao.mode=firestore",
                 "invoice-watcher.user-configuration.dao.firestore.host=http://"
                     + emulator.getEmulatorEndpoint());
-    uut.run(
-        context -> {
-          assertThat(context).hasNotFailed();
-          assertThat(context.getBean(Datastore.class).getOptions().getProjectId())
-              .isEqualTo(emulator.getProjectId());
-          var registration = context.getBean(RegistrationDao.class);
-          var scanner = context.getBean(UserDaoService.class);
-          var positions = context.getBean(FolderConfigDaoService.class);
-          final var grants = context.getBean(GmailGrantDao.class);
-          String email = UUID.randomUUID() + "@example.com";
-          String owner = "google|" + UUID.randomUUID();
-          var credentials =
-              new GmailOauthCredentials(email, "grant", secret("encrypted-refresh"), 0, false);
-          var source =
-              User.builder()
-                  .name(email)
-                  .ownerSubject(owner)
-                  .configurationVersion(0L)
-                  .scanConfigs(
-                      List.of(
-                          new MailScanConfig(
-                              new MailServer("imap.gmail.com", 993),
-                              credentials,
-                              List.of(FolderConfig.builder().name("INBOX").build()))))
-                  .build();
-          // when
-          var created = registration.create(source);
-          var folder = created.scanConfigs().getFirst().folders().iterator().next();
-          positions.updateScanPosition(folder, new ScanPosition(7, 42));
-          var updated = registration.update(email, owner, 0, user -> user);
-          // then
-          assertThat(updated.scanConfigs().getFirst().folders())
-              .singleElement()
-              .satisfies(f -> assertThat(f.lastUid()).isEqualTo(42));
-          assertThat(scanner.findAll()).anySatisfy(u -> assertThat(u.name()).isEqualTo(email));
-          assertThat(catchThrowable(() -> registration.update(email, owner, 0, user -> user)))
-              .isInstanceOf(ConfigurationConflictException.class);
-          assertThat(
-                  grants.updateGrant(
-                      email, "grant", 0, credentials.toBuilder().reconnectRequired(true).build()))
-              .isTrue();
-          assertThat(grants.updateGrant(email, "grant", 0, credentials)).isFalse();
-          assertThat(catchThrowable(() -> registration.find("changed-" + email, owner)))
-              .isInstanceOf(ConfigurationConflictException.class);
-          registration.delete(email, owner, 1);
-          positions.updateScanPosition(folder, new ScanPosition(7, 43));
-          assertThat(registration.find(email, owner)).isEmpty();
-          assertThat(grants.updateGrant(email, "grant", 1, credentials)).isFalse();
-        });
+    uut.run(context -> {
+      assertThat(context).hasNotFailed();
+      assertThat(context.getBean(Datastore.class).getOptions().getProjectId())
+          .isEqualTo(emulator.getProjectId());
+      var registration = context.getBean(RegistrationDao.class);
+      var scanner = context.getBean(UserDaoService.class);
+      var positions = context.getBean(FolderConfigDaoService.class);
+      final var grants = context.getBean(GmailGrantDao.class);
+      String email = UUID.randomUUID() + "@example.com";
+      String owner = "google|" + UUID.randomUUID();
+      var credentials =
+          new GmailOauthCredentials(email, "grant", secret("encrypted-refresh"), 0, false);
+      var source =
+          User.builder()
+              .name(email)
+              .ownerSubject(owner)
+              .configurationVersion(0L)
+              .scanConfigs(
+                  List.of(
+                      new MailScanConfig(
+                          new MailServer("imap.gmail.com", 993),
+                          credentials,
+                          List.of(FolderConfig.builder().name("INBOX").build()))))
+              .build();
+      // when
+      var created = registration.create(source);
+      var folder = created.scanConfigs().getFirst().folders().iterator().next();
+      positions.updateScanPosition(folder, new ScanPosition(7, 42));
+      var updated = registration.update(email, owner, 0, user -> user);
+      // then
+      assertThat(updated.scanConfigs().getFirst().folders())
+          .singleElement()
+          .satisfies(f -> assertThat(f.lastUid()).isEqualTo(42));
+      assertThat(scanner.findAll()).anySatisfy(u -> assertThat(u.name()).isEqualTo(email));
+      assertThat(catchThrowable(() -> registration.update(email, owner, 0, user -> user)))
+          .isInstanceOf(ConfigurationConflictException.class);
+      assertThat(
+              grants.updateGrant(
+                  email, "grant", 0, credentials.toBuilder().reconnectRequired(true).build()))
+          .isTrue();
+      assertThat(grants.updateGrant(email, "grant", 0, credentials)).isFalse();
+      assertThat(catchThrowable(() -> registration.find("changed-" + email, owner)))
+          .isInstanceOf(ConfigurationConflictException.class);
+      registration.delete(email, owner, 1);
+      positions.updateScanPosition(folder, new ScanPosition(7, 43));
+      assertThat(registration.find(email, owner)).isEmpty();
+      assertThat(grants.updateGrant(email, "grant", 1, credentials)).isFalse();
+    });
   }
 
   private static Secret secret(String encrypted) {

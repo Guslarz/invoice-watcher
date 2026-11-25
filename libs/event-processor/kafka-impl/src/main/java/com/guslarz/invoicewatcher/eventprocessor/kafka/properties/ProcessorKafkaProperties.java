@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
 import lombok.experimental.UtilityClass;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -19,9 +20,13 @@ import org.springframework.validation.annotation.Validated;
  * @param quarantineRetentionMs Optional. Required time-based quarantine recovery window in
  *     milliseconds.
  * @param maxPublicationBytes Optional. Upper bound including Kafka record overhead for publication.
+ * @param inputRetentionMs Optional. Required input-topic time retention in milliseconds.
+ * @param resultRetentionMs Optional. Required result-topic time retention in milliseconds.
+ * @param replayRetentionMs Optional. Required replay-topic time retention in milliseconds.
  * @param concurrency Optional. Consumer threads per stage; retries pause the affected thread's
  *     assignments.
  */
+@Builder(toBuilder = true)
 @Validated
 @ConfigurationProperties(ProcessorKafkaProperties.Constants.PREFIX)
 public record ProcessorKafkaProperties(
@@ -32,7 +37,10 @@ public record ProcessorKafkaProperties(
     @DefaultValue(Defaults.RETENTION_MS) @Min(1) long quarantineRetentionMs,
     @DefaultValue(Defaults.MAX_PUBLICATION_BYTES) @Min(16384) @Max(16777216)
         int maxPublicationBytes,
-    @DefaultValue(Defaults.CONCURRENCY) @Min(1) @Max(64) int concurrency) {
+    @DefaultValue(Defaults.CONCURRENCY) @Min(1) @Max(64) int concurrency,
+    @DefaultValue(Defaults.RETENTION_MS) @Min(1) long inputRetentionMs,
+    @DefaultValue(Defaults.RETENTION_MS) @Min(1) long resultRetentionMs,
+    @DefaultValue(Defaults.RETENTION_MS) @Min(1) long replayRetentionMs) {
   @UtilityClass
   public class Constants {
     public static final String PREFIX = ProcessorProperties.Constants.PREFIX + ".kafka";

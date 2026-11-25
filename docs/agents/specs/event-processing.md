@@ -9,6 +9,7 @@ modules:
   - libs/event-processor/kafka-impl
   - libs/dao/event-processing/api
   - libs/dao/event-processing/firestore-impl
+  - libs/dao/event-processing/jpa-impl
 ---
 
 # Event processor operations
@@ -115,6 +116,26 @@ and replay retained evidence without changing its identity.
   settings are checked before a declared stage begins consuming.
 
 
+- **PROCESSOR-016** Every declared input, result, quarantine and replay topic has an explicit
+  expected finite retention period, delete-only cleanup and no byte-retention cap that shortens
+  its recovery window. Stage startup checks the effective settings against configured expectations
+  before consuming. The installation and local setup document these periods; each defaults to
+  seven days unless the stage explicitly specifies another finite period. These periods are
+  independent windows and do not automatically extend attachment availability. A stage that retains
+  attachment references requires a separately approved evidence lifetime covering its complete
+  recovery path. This capability does not provision or enable a recognition/quarantine stage.
+
+- **PROCESSOR-017** Processing persistence is selected with
+  invoice-watcher.event-processing.dao.mode, supporting firestore and jpa. The JPA implementation
+  retains durable claims, fences, attempt budgets, retry deadlines, accepted outcomes, immutable
+  pending publications, quarantine dispositions and replay authorization/progress in its configured
+  SQL database. It implements PROCESSOR-003–011 and PROCESSOR-014–015 with the same observable
+  semantics as Firestore: outcome and pending outputs commit atomically, stale claims cannot
+  complete and replay authorization cannot grant duplicate budgets. Publication confirmation clears
+  stored sensitive output bytes while preserving identity/disposition. Selected implementations
+  own isolated settings and clients; inactive implementations do not initialize provider clients.
+  Adding the JPA library alone does not start a processor stage or consumer.
+
 ## Acceptance
 
 - **PROCESSOR-001** Given installed libraries without a stage, when starting the application,
@@ -179,6 +200,15 @@ and replay retained evidence without changing its identity.
   uncommitted and diagnostics expose only sizes and a safe reason. Exercise unavailable topic
   metadata and mismatched broker/topic/producer limits.
 
+
+- **PROCESSOR-016** Given an explicitly configured retention for each application topic, when
+  preparing a stage, then effective settings must match. Shortening input retention independently
+  causes preflight to fail before consuming; defaults do not implicitly extend blob evidence.
+
+- **PROCESSOR-017** Given persistent H2 processing state and concurrent transactions, when claiming,
+  accepting outcomes, recovering pending outputs, reopening quarantine or resuming replay after
+  restart, then the Firestore lifecycle contract still holds. Given SQL write failure, no partial
+  outcome is accepted. Confirmed output payloads are cleared; duplicate replay cannot reset budgets.
 
 ## Configuration
 

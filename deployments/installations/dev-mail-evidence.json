@@ -1,0 +1,6 @@
+{
+  "ingestionTopic": "all-mails",
+  "topicRetentionMs": 604800000,
+  "evidenceLifetimeDays": 9,
+  "recoveryMarginDays": 1
+}

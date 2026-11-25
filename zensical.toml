@@ -26,6 +26,7 @@ nav = [
     "setup/registration.md",
     "setup/local.md",
     "setup/event-processing.md",
+    "setup/mail-attachments.md",
   ] },
   { "In action" = [
     "results/index.md",

@@ -5,7 +5,7 @@ area: events
 added: 2026-11-11
 status: later
 size: L
-blocked-by: [event-processing/mail-attachment-extraction]
+blocked-by: []
 ---
 
 Stage 1 in the [initiative roadmap](README.md) (ADR-0010, ADR-0011). Implement a separate
@@ -15,3 +15,7 @@ handle ambiguous/low-confidence results as review states, and fail safely for un
 Evaluate rules-based extraction first; treat AI-assisted extraction as an explicit, approved
 data-handling and quality/cost choice in the implementing plan/spec. Depends on available message
 content, stable source identity and attachment strategy.
+
+Private untrusted PDF evidence access is implemented in the attachment capability. This note
+remains later: its recognition contract, document parsing/safety boundary and complete recovery
+window still need their own plan; malware scanning is a separate much later consideration.

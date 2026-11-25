@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.FolderConfigDaoService;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.UserDaoService;
 import com.guslarz.invoicewatcher.eventproducer.api.EventProducer;
+import com.guslarz.invoicewatcher.mailattachment.api.service.MailAttachmentService;
 import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionFactory;
 import com.guslarz.invoicewatcher.mailproducer.scheduler.api.MailProducerTask;
 import java.util.List;
@@ -27,13 +28,12 @@ class MailProducerTaskConfigurationTest {
     for (String mode : List.of("", "unknown")) {
       runner
           .withPropertyValues("invoice-watcher.event-producer.mode=" + mode)
-          .run(
-              context -> {
-                // then
-                assertThat(context).hasFailed();
-                assertThat(context.getStartupFailure())
-                    .hasStackTraceContaining(EventProducer.class.getName());
-              });
+          .run(context -> {
+            // then
+            assertThat(context).hasFailed();
+            assertThat(context.getStartupFailure())
+                .hasStackTraceContaining(EventProducer.class.getName());
+          });
     }
   }
 
@@ -46,13 +46,12 @@ class MailProducerTaskConfigurationTest {
     for (String mode : List.of("", "unknown")) {
       runner
           .withPropertyValues("invoice-watcher.user-configuration.dao.mode=" + mode)
-          .run(
-              context -> {
-                // then
-                assertThat(context).hasFailed();
-                assertThat(context.getStartupFailure())
-                    .hasStackTraceContaining(UserDaoService.class.getName());
-              });
+          .run(context -> {
+            // then
+            assertThat(context).hasFailed();
+            assertThat(context.getStartupFailure())
+                .hasStackTraceContaining(UserDaoService.class.getName());
+          });
     }
   }
 
@@ -66,14 +65,13 @@ class MailProducerTaskConfigurationTest {
             .withBean("firstPublisher", EventProducer.class, () -> mock(EventProducer.class))
             .withBean("secondPublisher", EventProducer.class, () -> mock(EventProducer.class));
     // when
-    runner.run(
-        context -> {
-          // then
-          assertThat(context).hasFailed();
-          assertThat(context.getStartupFailure())
-              .hasStackTraceContaining("NoUniqueBeanDefinitionException")
-              .hasStackTraceContaining(EventProducer.class.getName());
-        });
+    runner.run(context -> {
+      // then
+      assertThat(context).hasFailed();
+      assertThat(context.getStartupFailure())
+          .hasStackTraceContaining("NoUniqueBeanDefinitionException")
+          .hasStackTraceContaining(EventProducer.class.getName());
+    });
   }
 
   @Test
@@ -86,19 +84,19 @@ class MailProducerTaskConfigurationTest {
             .withBean(UserDaoService.class, () -> mock(UserDaoService.class))
             .withPropertyValues("invoice-watcher.event-producer.mode=future");
     // when
-    runner.run(
-        context -> {
-          // then
-          assertThat(context)
-              .hasNotFailed()
-              .hasSingleBean(EventProducer.class)
-              .hasSingleBean(MailProducerTask.class);
-        });
+    runner.run(context -> {
+      // then
+      assertThat(context)
+          .hasNotFailed()
+          .hasSingleBean(EventProducer.class)
+          .hasSingleBean(MailProducerTask.class);
+    });
   }
 
   private ApplicationContextRunner activeScanner() {
     return new ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(MailProducerTaskAutoConfiguration.class))
+        .withBean(MailAttachmentService.class, () -> mock(MailAttachmentService.class))
         .withBean(FolderConfigDaoService.class, () -> mock(FolderConfigDaoService.class))
         .withBean(MailConnectionFactory.class, () -> mock(MailConnectionFactory.class))
         .withPropertyValues("invoice-watcher.mail-producer.task.topic=fixture");

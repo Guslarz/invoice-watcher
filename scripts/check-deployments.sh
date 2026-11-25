@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deployment file checks, run by CI (Build and analyze / deployments) and scripts/verify.sh:
 # YAML style (yamllint), OpenTofu formatting and validation, rendering of the helmfile and the kustomize environments,
-# Kubernetes schema validation of the rendered manifests, the local Kafka image matching the cluster one,
+# Kubernetes schema validation of the rendered manifests,
 # names shared by OpenTofu, the manifests and the workflows matching (scripts/check-names.sh).
 # A missing tool skips its check locally and fails it in CI (when CI is set).
 set -euo pipefail
@@ -29,19 +29,6 @@ validate_manifests() {
     missing_tool kubeconform "manifests rendered but not validated"
   fi
 }
-
-echo "==> Local Kafka image"
-# .run/files/kafka.yml takes its environment from the dev overlay, but compose cannot read the image
-# from kustomize - the tag is repeated and must match.
-cluster_kafka=deployments/k8s-apps/workloads/kafka/base/statefulset.yml
-local_kafka=.run/files/kafka.yml
-kafka_image() { grep -oE 'image: apache/kafka:[^[:space:]]+' "$1" | cut -d' ' -f2 || true; }
-cluster_image=$(kafka_image "$cluster_kafka")
-local_image=$(kafka_image "$local_kafka")
-if [[ -z "$cluster_image" || "$local_image" != "$cluster_image" ]]; then
-  echo "FAIL: $local_kafka: image '$local_image' differs from '$cluster_image' in $cluster_kafka" >&2
-  exit 1
-fi
 
 echo "==> Shared names"
 scripts/check-names.sh

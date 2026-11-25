@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES = ROOT / "scripts/installation-templates"
+EVIDENCE_POLICY = ROOT / "deployments/installations/dev-mail-evidence.json"
 
 
 def generate(config):
@@ -34,6 +35,7 @@ def generate(config):
         return text
     def tfvars(values):
         return json.dumps(values, indent=2) + "\n"
+    policy = json.loads(EVIDENCE_POLICY.read_text())
     base = "deployments/infrastructure/environments/dev/"
     outputs = {
         base + "persistent/installation.auto.tfvars.json": tfvars({"gcp_region": c["region"], "github_repository": c["repository"]}),
@@ -44,6 +46,30 @@ def generate(config):
         "images/mail-producer-docker/src/Dockerfile": template("Dockerfile"),
     }
 
+    outputs["deployments/k8s-apps/workloads/mail-producer/overlays/dev/config/.env"] = (
+        "INVOICE_WATCHER_USER_CONFIGURATION_DAO_MODE=firestore\n"
+        f"INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC={policy['ingestionTopic']}\n"
+        f"INVOICE_WATCHER_MAIL_PRODUCER_TASK_EXPECTED_RETENTION={policy['topicRetentionMs']}ms\n"
+        "INVOICE_WATCHER_MAIL_PRODUCER_SCHEDULER_RATE=10s\n"
+        "INVOICE_WATCHER_EVENT_PRODUCER_MODE=kafka\n"
+        "INVOICE_WATCHER_EVENT_PRODUCER_KAFKA_BOOTSTRAP_SERVERS=kafka:9092\n"
+        "INVOICE_WATCHER_MAIL_PRODUCER_MOCK_USER_ENABLED=false\n"
+        "INVOICE_WATCHER_ATTACHMENT_STORAGE_MODE=gcs\n"
+        "INVOICE_WATCHER_MAIL_ATTACHMENT_DAO_MODE=firestore\n"
+        f"INVOICE_WATCHER_MAIL_ATTACHMENT_EVIDENCE_LIFETIME={policy['evidenceLifetimeDays']}d\n"
+        f"INVOICE_WATCHER_MAIL_ATTACHMENT_SUPPORTED_REPLAY_HORIZON={policy['topicRetentionMs']}ms\n"
+        f"INVOICE_WATCHER_MAIL_ATTACHMENT_RECOVERY_MARGIN={policy['recoveryMarginDays']}d\n")
+    outputs["deployments/k8s-apps/workloads/kafka/base/prepare-topics.sh"] = (
+        "#!/usr/bin/env bash\nset -euo pipefail\n"
+        "bootstrap=\"${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}\"\n"
+        "for attempt in {1..20}; do\n"
+        "  if /opt/kafka/bin/kafka-topics.sh --bootstrap-server \"$bootstrap\" --list >/dev/null 2>&1; then break; fi\n"
+        "  sleep 3\ndone\n"
+        f"topic='{policy['ingestionTopic']}'\n"
+        f"settings='cleanup.policy=delete,retention.ms={policy['topicRetentionMs']},retention.bytes=-1,message.timestamp.type=LogAppendTime'\n"
+        "/opt/kafka/bin/kafka-topics.sh --bootstrap-server \"$bootstrap\" --create --if-not-exists --topic \"$topic\" --partitions 1 --replication-factor 1\n"
+        "/opt/kafka/bin/kafka-configs.sh --bootstrap-server \"$bootstrap\" --entity-type topics --entity-name \"$topic\" --alter --add-config \"$settings\"\n"
+        "/opt/kafka/bin/kafka-configs.sh --bootstrap-server \"$bootstrap\" --entity-type topics --entity-name \"$topic\" --describe --all\n")
     for role in ("backend", "frontend"):
         app = f"user-registration-{role}"
         content = template("mail-kustomization.yml").replace("mail-producer", app)

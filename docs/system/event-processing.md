@@ -74,3 +74,16 @@ visibly. Completed processing markers have no automatic expiry; they preserve du
 while source history remains replayable. Pending result bodies and quarantine values are sensitive
 data even though ordinary logs contain only safe metadata. See [preparation and recovery](../setup/event-processing.md)
 for the test workflow, settings, capacity/access requirements and alert guidance.
+
+## Attachment evidence windows
+
+Mail events now carry a separate attachment manifest. An absent manifest in older records means
+attachments were not captured; a complete empty manifest means no candidates were found. Stored
+PDF references identify untrusted evidence, not validated or malware-cleared documents. Consumers
+that only need the body can ignore this additive field.
+
+The ingestion topic has seven-day retention; attachment bytes have a nine-day first-capture
+lifetime including publication and recovery margins. No quarantine extension is included. A future
+recognition stage must account for every input/quarantine/replay window before retaining references
+longer. Expired evidence fails visibly instead of producing an empty document. See
+[attachment operation](../setup/mail-attachments.md) for retry and access semantics.

@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "invoice-watcher.event-processing.dao.jpa.data-source.basic.password",
+      "type": "java.lang.String"
+    }
+  ]
+}

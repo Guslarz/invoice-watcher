@@ -65,3 +65,12 @@ module "cloudflare_domain" {
   domain_name        = var.domain_name
   ip_address         = module.gke.gke_gateway_ip
 }
+
+module "attachment_storage" {
+  source                 = "../../../modules/attachment-storage"
+  gcp_project_id         = var.gcp_project_id
+  gcp_region             = var.gcp_region
+  evidence_lifetime_days = jsondecode(file("${path.module}/../../../../installations/dev-mail-evidence.json")).evidenceLifetimeDays
+  capture_principal      = "principal://iam.googleapis.com/projects/${var.gcp_project_number}/locations/global/workloadIdentityPools/${var.gcp_project_id}.svc.id.goog/subject/ns/invoice-watcher-dev/sa/mail-producer-sa"
+  depends_on             = [module.gke]
+}

@@ -79,6 +79,11 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
   An empty supported body remains an empty string with its media type. A body-reading or
   decoding error fails the folder scan under MAIL-041; it is not treated as an absent body.
 
+- **MAIL-033** Message scanning captures attachment evidence according to
+  [mail attachment evidence](mail-attachments.md) independently of selected body content.
+  Attachments never become part of the selected body. A message without a supported body can
+  still have captured attachments.
+
 ### Failures
 
 - **MAIL-040** If connecting to or scanning a mailbox fails outside a single folder, the error is
@@ -147,6 +152,10 @@ it is enough to tell InvoiceWatcher which server, account and folders to watch
 - **MAIL-014** Given invalid_grant, when token refresh fails, then reconnection is reported without
   resetting progress; given a timeout or provider 5xx, then the mailbox remains eligible for retry.
 
+- **MAIL-033** Given a message with body text and a named PDF, when scanning through the
+  open-folder callback, then body selection is unchanged and decoded PDF evidence is captured
+  before the folder closes. A bodyless message can still provide attachment evidence.
+
 ## Configuration
 
 Properties, their types, defaults and meaning are listed in the generated reference:
@@ -159,4 +168,4 @@ Properties, their types, defaults and meaning are listed in the generated refere
 - Recognizing which messages are invoices and extracting data from them — done by consumers of
   the published events.
 - Other protocols (POP3, Gmail / Microsoft Graph APIs) and Microsoft OAuth authentication.
-- Attachments.
+- Document parsing and interpretation of attachment evidence.

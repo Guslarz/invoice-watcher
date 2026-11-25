@@ -114,3 +114,29 @@ replace their credentials or revoke Google permissions. Both have persistent lif
 ephemeral OpenTofu resources; only Secret Manager copies of the settings are destroyed and
 recreated from GitHub secrets. The next
 `up` starts without registered users; the producer mock user is disabled in this deployment.
+
+## Attachment storage
+
+The canonical installation values for mail/evidence retention live in
+`deployments/installations/dev-mail-evidence.json`.
+Installation generation renders the producer settings and topic initialization script from it;
+OpenTofu reads its evidence lifetime for the bucket lifecycle. all-mails has explicit seven-day
+retention, delete-only cleanup, no byte-retention cap and broker append timestamps. The development
+broker default is also seven days, and automatic topic creation is disabled.
+An idempotent initialization Job creates or reconciles the topic; the producer verifies effective
+settings before publishing. Changing retention requires an attachment-window compatibility review.
+
+After the [one-time capture-role setup](one-time.md#attachment-capture-role), environment up
+provisions a dedicated regional GCS attachment bucket with uniform access and
+public access prevention. Soft delete and versioning are disabled. The producer's separate
+mail-producer-sa workload identity has create/get and bucket-policy inspection permission, without
+object deletion or overwrite permission; registration's app-sa does not receive this bucket role.
+Bootstrap metadata supplies the bucket name and capture database project through the existing
+external-secrets path, without service-account credentials.
+
+PDF bytes expire after their nine-day availability window; lifecycle deletion is asynchronous.
+Complete environment down deletes the bucket contents and capture metadata along with the existing
+Kafka and Firestore data. Nothing here is a persistent audit archive. Keep the current bucket's
+retention policy fixed; any future retention change needs a new reviewed policy/bucket so existing
+references are not deleted ahead of their recorded deadlines. See
+[mail attachment evidence](mail-attachments.md) for configuration, duplicates and failure recovery.

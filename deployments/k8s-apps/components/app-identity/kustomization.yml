@@ -6,7 +6,7 @@ resources:
 patches:
   - target:
       kind: Deployment
-      labelSelector: app.kubernetes.io/database-access=true
+      labelSelector: app.kubernetes.io/database-access=true,app.kubernetes.io/attachment-access!=true
     patch: |
       - op: add
         path: /spec/template/spec/serviceAccountName

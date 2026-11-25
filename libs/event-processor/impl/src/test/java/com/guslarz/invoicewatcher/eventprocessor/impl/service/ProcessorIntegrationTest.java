@@ -38,6 +38,7 @@ import com.guslarz.invoicewatcher.eventprocessor.kafka.configuration.ProcessorKa
 import com.guslarz.invoicewatcher.eventprocessor.kafka.properties.ProcessorKafkaProperties;
 import com.guslarz.invoicewatcher.eventprocessor.kafka.service.KafkaProcessorTransport;
 import com.guslarz.invoicewatcher.eventproducer.api.EventEnvelope;
+import com.guslarz.invoicewatcher.testing.testcontainers.SharedTestcontainers;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -55,9 +56,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.AlterConfigOp;
+import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.RecordsToDelete;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.ConfigResource;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,19 +76,13 @@ import org.testcontainers.gcloud.DatastoreEmulatorContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.kafka.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.json.JsonMapper;
 
 @Testcontainers
 class ProcessorIntegrationTest {
-  @Container
-  private static DatastoreEmulatorContainer emulator =
-      new DatastoreEmulatorContainer(
-              DockerImageName.parse(
-                  "gcr.io/google.com/cloudsdktool/google-cloud-cli:578.0.0-emulators"))
-          .withFlags("--consistency=1 --no-store-on-disk --quiet");
+  @Container private static DatastoreEmulatorContainer emulator = SharedTestcontainers.datastore();
 
-  @Container private static KafkaContainer kafka = new KafkaContainer("apache/kafka:4.3.1");
+  @Container private static KafkaContainer kafka = SharedTestcontainers.kafka();
   private static final String SOURCE = "imap-v1:" + "a".repeat(64);
   private final JsonMapper mapper = JsonMapper.builder().build();
   private final MutableClock clock = new MutableClock();
@@ -97,18 +95,26 @@ class ProcessorIntegrationTest {
   private ProcessorProperties properties;
   private DefaultProcessorRuntime uut;
 
+  private ProcessorKafkaProperties kafkaProperties(String groupPrefix) {
+    long retentionMs = Long.parseLong(ProcessorKafkaProperties.Defaults.RETENTION_MS);
+    return ProcessorKafkaProperties.builder()
+        .bootstrapServers(kafka.getBootstrapServers())
+        .groupPrefix(groupPrefix)
+        .offsetReset("earliest")
+        .quarantineRetentionMs(retentionMs)
+        .inputRetentionMs(retentionMs)
+        .resultRetentionMs(retentionMs)
+        .replayRetentionMs(retentionMs)
+        .maxPublicationBytes(
+            Integer.parseInt(ProcessorKafkaProperties.Defaults.MAX_PUBLICATION_BYTES))
+        .concurrency(Integer.parseInt(ProcessorKafkaProperties.Defaults.CONCURRENCY))
+        .build();
+  }
+
   @BeforeEach
   void prepare() throws Exception {
     String name = "s" + UUID.randomUUID().toString().replace("-", "");
-    Datastore datastore =
-        DatastoreOptions.newBuilder()
-            .setProjectId(emulator.getProjectId())
-            .setHost("http://" + emulator.getEmulatorEndpoint())
-            .setNamespace(name)
-            .setCredentials(NoCredentials.getInstance())
-            .build()
-            .getService();
-    dao = spy(new FirestoreProcessingDao(datastore));
+    dao = spy(processingDao(name));
     executor = Executors.newVirtualThreadPerTaskExecutor();
     properties =
         new ProcessorProperties(
@@ -132,10 +138,35 @@ class ProcessorIntegrationTest {
       admin
           .createTopics(
               List.of(
-                  new NewTopic(stage.inputTopic(), 1, (short) 1),
-                  new NewTopic(stage.resultTopic(), 1, (short) 1),
+                  new NewTopic(stage.inputTopic(), 1, (short) 1)
+                      .configs(
+                          Map.of(
+                              "cleanup.policy",
+                              "delete",
+                              "retention.ms",
+                              "604800000",
+                              "retention.bytes",
+                              "-1")),
+                  new NewTopic(stage.resultTopic(), 1, (short) 1)
+                      .configs(
+                          Map.of(
+                              "cleanup.policy",
+                              "delete",
+                              "retention.ms",
+                              "604800000",
+                              "retention.bytes",
+                              "-1")),
                   new NewTopic(stage.replayTopic(), 1, (short) 1)
-                      .configs(Map.of("max.message.bytes", "2097152")),
+                      .configs(
+                          Map.of(
+                              "max.message.bytes",
+                              "2097152",
+                              "cleanup.policy",
+                              "delete",
+                              "retention.ms",
+                              "604800000",
+                              "retention.bytes",
+                              "-1")),
                   new NewTopic(stage.quarantineTopic(), 1, (short) 1)
                       .configs(
                           Map.of(
@@ -150,20 +181,54 @@ class ProcessorIntegrationTest {
           .all()
           .get(20, TimeUnit.SECONDS);
     }
-    transport =
-        spy(
-            new KafkaProcessorTransport(
-                new ProcessorKafkaProperties(
-                    kafka.getBootstrapServers(), "test-", "earliest", 604800000L, 4194304, 1),
-                Map.of()));
+    transport = spy(new KafkaProcessorTransport(kafkaProperties("test-"), Map.of()));
     runtime();
   }
+
+  protected ProcessingDao processingDao(String name) {
+    Datastore datastore =
+        DatastoreOptions.newBuilder()
+            .setProjectId(emulator.getProjectId())
+            .setHost("http://" + emulator.getEmulatorEndpoint())
+            .setNamespace(name)
+            .setCredentials(NoCredentials.getInstance())
+            .build()
+            .getService();
+    return new FirestoreProcessingDao(datastore);
+  }
+
+  protected void closePersistence() {}
 
   @AfterEach
   void close() {
     transport.close();
     executor.shutdownNow();
     registry.close();
+    closePersistence();
+  }
+
+  @Test
+  @DisplayName("PROCESSOR-016: input retention drift fails preflight before consumption")
+  void rejectsInputRetentionDrift() throws Exception {
+    // given
+    var resource = new ConfigResource(ConfigResource.Type.TOPIC, stage.inputTopic());
+    try (Admin admin = Admin.create(Map.of("bootstrap.servers", kafka.getBootstrapServers()))) {
+      admin
+          .incrementalAlterConfigs(
+              Map.of(
+                  resource,
+                  List.of(
+                      new AlterConfigOp(
+                          new ConfigEntry("retention.ms", "3600000"), AlterConfigOp.OpType.SET))))
+          .all()
+          .get(15, TimeUnit.SECONDS);
+    }
+    // when
+    var failure = catchThrowable(() -> transport.preflight(stage));
+    // then
+    assertThat(failure)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Unsuitable application topic retention settings");
   }
 
   @Test
@@ -190,17 +255,15 @@ class ProcessorIntegrationTest {
         .isEqualTo("tenant@example.com");
     assertThat(dao.entries(stage.name()))
         .singleElement()
-        .satisfies(
-            entry -> {
-              assertThat(entry.status()).isEqualTo(ProcessingStatus.COMPLETE);
-              assertThat(entry.outputs())
-                  .singleElement()
-                  .satisfies(
-                      output -> {
-                        assertThat(output.published()).isTrue();
-                        assertThat(output.valueBase64()).isNull();
-                      });
-            });
+        .satisfies(entry -> {
+          assertThat(entry.status()).isEqualTo(ProcessingStatus.COMPLETE);
+          assertThat(entry.outputs())
+              .singleElement()
+              .satisfies(output -> {
+                assertThat(output.published()).isTrue();
+                assertThat(output.valueBase64()).isNull();
+              });
+        });
   }
 
   @Test
@@ -255,11 +318,10 @@ class ProcessorIntegrationTest {
           + " confirmation failure")
   void boundsRetryAndWaitsForQuarantineConfirmation() {
     // given
-    handler(
-        input -> {
-          calls.incrementAndGet();
-          throw new ProcessingFailure(ProcessingFailureReason.HANDLER_FAILURE, true);
-        });
+    handler(input -> {
+      calls.incrementAndGet();
+      throw new ProcessingFailure(ProcessingFailureReason.HANDLER_FAILURE, true);
+    });
     // when
     final var first = uut.process(stage, input(0));
     runtime();
@@ -351,22 +413,20 @@ class ProcessorIntegrationTest {
       "PROCESSOR-009: shared infrastructure pauses work without consuming handler attempts")
   void refundsAdmissionWhenSharedDependencyIsUnavailable() {
     // given
-    handler(
-        input -> {
-          calls.incrementAndGet();
-          throw new ProcessingInfrastructureException();
-        });
+    handler(input -> {
+      calls.incrementAndGet();
+      throw new ProcessingInfrastructureException();
+    });
     // when
     var result = uut.process(stage, input(0));
     // then
     assertThat(result.acknowledge()).isFalse();
     assertThat(dao.entries(stage.name()))
         .singleElement()
-        .satisfies(
-            entry -> {
-              assertThat(entry.attempts()).isZero();
-              assertThat(entry.status()).isEqualTo(ProcessingStatus.RETRY);
-            });
+        .satisfies(entry -> {
+          assertThat(entry.attempts()).isZero();
+          assertThat(entry.status()).isEqualTo(ProcessingStatus.RETRY);
+        });
     assertThat(registry.get("invoice.processor.paused").gauge().value()).isEqualTo(1);
   }
 
@@ -409,10 +469,9 @@ class ProcessorIntegrationTest {
         .isEqualTo(clock.millis() / 1000.0);
     registry
         .getMeters()
-        .forEach(
-            meter ->
-                assertThat(meter.getId().getTags().toString())
-                    .doesNotContain(SOURCE, "tenant@example.com", "financial-data"));
+        .forEach(meter ->
+            assertThat(meter.getId().getTags().toString())
+                .doesNotContain(SOURCE, "tenant@example.com", "financial-data"));
   }
 
   @Test
@@ -420,10 +479,9 @@ class ProcessorIntegrationTest {
       "PROCESSOR-011: bounded replay is audited, resumable and cannot repeatedly reopen a failure")
   void replaysQuarantineThroughDurableAuthorization() {
     // given
-    handler(
-        input -> {
-          throw new ProcessingFailure(ProcessingFailureReason.PERMANENT_FAILURE, false);
-        });
+    handler(input -> {
+      throw new ProcessingFailure(ProcessingFailureReason.PERMANENT_FAILURE, false);
+    });
     uut.process(stage, input(0));
     var request =
         ReplayRequest.builder()
@@ -447,11 +505,10 @@ class ProcessorIntegrationTest {
     replay.execute(request);
     replay.execute(request);
     var delivery = transport.read(stage.replayTopic(), 0, 0);
-    handler(
-        input -> {
-          calls.incrementAndGet();
-          return candidates(ProcessingOutcome.COMPLETED);
-        });
+    handler(input -> {
+      calls.incrementAndGet();
+      return candidates(ProcessingOutcome.COMPLETED);
+    });
     assertThat(uut.process(stage, delivery).acknowledge()).isTrue();
     assertThat(uut.process(stage, delivery).acknowledge()).isTrue();
     // then
@@ -470,10 +527,9 @@ class ProcessorIntegrationTest {
       "PROCESSOR-011 PROCESSOR-014: expired evidence is reported and preview performs no writes")
   void rejectsExpiredReplayEvidence() throws Exception {
     // given
-    handler(
-        input -> {
-          throw new ProcessingFailure(ProcessingFailureReason.PERMANENT_FAILURE, false);
-        });
+    handler(input -> {
+      throw new ProcessingFailure(ProcessingFailureReason.PERMANENT_FAILURE, false);
+    });
     uut.process(stage, input(0));
     var replay =
         new DefaultReplayService(
@@ -510,17 +566,16 @@ class ProcessorIntegrationTest {
   @DisplayName("PROCESSOR-015: oversized results quarantine without a partial successful outcome")
   void rejectsOversizedResultsBeforeCompletion() {
     // given
-    handler(
-        input ->
-            List.of(
-                ProcessingResultCandidate.builder()
-                    .localId("huge")
-                    .contract(new EventContract("fixture.recognized", 1))
-                    .method("fixture")
-                    .outcome(ProcessingOutcome.COMPLETED)
-                    .reasonCodes(List.of())
-                    .evidence(mapper.createObjectNode().put("content", "x".repeat(524288)))
-                    .build()));
+    handler(input ->
+        List.of(
+            ProcessingResultCandidate.builder()
+                .localId("huge")
+                .contract(new EventContract("fixture.recognized", 1))
+                .method("fixture")
+                .outcome(ProcessingOutcome.COMPLETED)
+                .reasonCodes(List.of())
+                .evidence(mapper.createObjectNode().put("content", "x".repeat(524288)))
+                .build()));
     // when
     var result = uut.process(stage, input(0));
     // then
@@ -528,11 +583,10 @@ class ProcessorIntegrationTest {
     assertThat(dao.pending(stage.name(), 10)).isEmpty();
     assertThat(dao.entries(stage.name()))
         .singleElement()
-        .satisfies(
-            entry -> {
-              assertThat(entry.status()).isEqualTo(ProcessingStatus.QUARANTINED);
-              assertThat(entry.reason()).isEqualTo("RESULT_TOO_LARGE");
-            });
+        .satisfies(entry -> {
+          assertThat(entry.status()).isEqualTo(ProcessingStatus.QUARANTINED);
+          assertThat(entry.reason()).isEqualTo("RESULT_TOO_LARGE");
+        });
   }
 
   @Test
@@ -553,13 +607,12 @@ class ProcessorIntegrationTest {
           + " contiguous offsets")
   void runsRegisteredKafkaConsumerAndCommitsAfterRecovery() {
     // given
-    handler(
-        input -> {
-          if (calls.incrementAndGet() == 1) {
-            throw new ProcessingFailure(ProcessingFailureReason.HANDLER_FAILURE, true);
-          }
-          return candidates(ProcessingOutcome.COMPLETED);
-        });
+    handler(input -> {
+      if (calls.incrementAndGet() == 1) {
+        throw new ProcessingFailure(ProcessingFailureReason.HANDLER_FAILURE, true);
+      }
+      return candidates(ProcessingOutcome.COMPLETED);
+    });
     var runner =
         new ApplicationContextRunner()
             .withConfiguration(
@@ -569,41 +622,34 @@ class ProcessorIntegrationTest {
             .withBean(ProcessingStage.class, () -> stage)
             .withBean(ProcessingDao.class, () -> dao)
             .withBean(KafkaProcessorTransport.class, () -> transport)
-            .withBean(
-                ProcessorKafkaProperties.class,
-                () ->
-                    new ProcessorKafkaProperties(
-                        kafka.getBootstrapServers(), "live-", "earliest", 604800000, 4194304, 1))
+            .withBean(ProcessorKafkaProperties.class, () -> kafkaProperties("live-"))
             .withPropertyValues(
                 "invoice-watcher.event-processing.dao.mode=firestore",
                 "invoice-watcher.event-processor.retry-delays=100ms",
                 "invoice-watcher.event-processor.outbox-interval=100ms");
     // when
-    runner.run(
-        context -> {
-          assertThat(context).hasNotFailed();
-          var raw = input(0);
-          transport.publish(
-              EventPublication.builder()
-                  .id("source")
-                  .topic(stage.inputTopic())
-                  .keyBase64(raw.keyBase64())
-                  .valueBase64(raw.valueBase64())
-                  .headers(Map.of())
-                  .build());
-          Awaitility.await()
-              .atMost(Duration.ofSeconds(20))
-              .untilAsserted(
-                  () -> {
-                    // then
-                    assertThat(calls).hasValue(2);
-                    assertThat(transport.lag(stage.inputTopic(), "live-" + stage.name()))
-                        .containsEntry(0, 0L);
-                    assertThat(dao.pending(stage.name(), 10)).isEmpty();
-                    assertThat(transport.read(stage.resultTopic(), 0, 0).valueBase64())
-                        .isNotBlank();
-                  });
-        });
+    runner.run(context -> {
+      assertThat(context).hasNotFailed();
+      var raw = input(0);
+      transport.publish(
+          EventPublication.builder()
+              .id("source")
+              .topic(stage.inputTopic())
+              .keyBase64(raw.keyBase64())
+              .valueBase64(raw.valueBase64())
+              .headers(Map.of())
+              .build());
+      Awaitility.await()
+          .atMost(Duration.ofSeconds(20))
+          .untilAsserted(() -> {
+            // then
+            assertThat(calls).hasValue(2);
+            assertThat(transport.lag(stage.inputTopic(), "live-" + stage.name()))
+                .containsEntry(0, 0L);
+            assertThat(dao.pending(stage.name(), 10)).isEmpty();
+            assertThat(transport.read(stage.resultTopic(), 0, 0).valueBase64()).isNotBlank();
+          });
+    });
   }
 
   @Test
@@ -621,15 +667,14 @@ class ProcessorIntegrationTest {
             Duration.ofMillis(100),
             100,
             524288);
-    handler(
-        input -> {
-          try {
-            new CountDownLatch(1).await(1, TimeUnit.SECONDS);
-          } catch (InterruptedException interrupted) {
-            Thread.currentThread().interrupt();
-          }
-          return candidates(ProcessingOutcome.COMPLETED);
-        });
+    handler(input -> {
+      try {
+        new CountDownLatch(1).await(1, TimeUnit.SECONDS);
+      } catch (InterruptedException interrupted) {
+        Thread.currentThread().interrupt();
+      }
+      return candidates(ProcessingOutcome.COMPLETED);
+    });
     runtime();
     // when
     var outcome = uut.process(stage, input(0));
@@ -637,11 +682,10 @@ class ProcessorIntegrationTest {
     assertThat(outcome.acknowledge()).isTrue();
     assertThat(dao.entries(stage.name()))
         .singleElement()
-        .satisfies(
-            entry -> {
-              assertThat(entry.status()).isEqualTo(ProcessingStatus.QUARANTINED);
-              assertThat(entry.attempts()).isEqualTo(1);
-            });
+        .satisfies(entry -> {
+          assertThat(entry.status()).isEqualTo(ProcessingStatus.QUARANTINED);
+          assertThat(entry.attempts()).isEqualTo(1);
+        });
     assertThat(dao.pending(stage.name(), 10)).isEmpty();
   }
 
@@ -741,11 +785,10 @@ class ProcessorIntegrationTest {
       "PROCESSOR-013: runtime logs do not include input content, tenant keys or exception causes")
   void redactsHandlerExceptionDiagnostics(CapturedOutput output) {
     // given
-    handler(
-        input -> {
-          throw new IllegalStateException(
-              "secret-exception-body", new RuntimeException("secret-cause"));
-        });
+    handler(input -> {
+      throw new IllegalStateException(
+          "secret-exception-body", new RuntimeException("secret-cause"));
+    });
     // when
     uut.process(stage, input(0));
     clock.advance(Duration.ofSeconds(2));

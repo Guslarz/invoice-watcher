@@ -1,8 +1,16 @@
 package com.guslarz.invoicewatcher.eventproducer.kafka;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.guslarz.invoicewatcher.eventproducer.api.Event;
-import com.guslarz.invoicewatcher.eventproducer.api.EventEnvelope;
 import com.guslarz.invoicewatcher.eventproducer.api.EventDeliveryException;
+import com.guslarz.invoicewatcher.eventproducer.api.EventEnvelope;
+import java.util.concurrent.CompletableFuture;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.junit.jupiter.api.DisplayName;
@@ -11,20 +19,13 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
-import java.util.concurrent.CompletableFuture;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-
 class KafkaEventProducerTest {
 
   @SuppressWarnings("unchecked")
   private final KafkaTemplate<String, Object> kafkaTemplate = mock(KafkaTemplate.class);
-  private final KafkaEventProducer uut = new KafkaEventProducer(kafkaTemplate);
+
+  private final KafkaEventProducer uut =
+      new KafkaEventProducer(kafkaTemplate, new KafkaEventProducerProperties("unused:9092"));
 
   @Test
   @DisplayName("EVENT-011: returns once the broker confirms the event")
@@ -41,7 +42,8 @@ class KafkaEventProducerTest {
   }
 
   @Test
-  @DisplayName("EVENT-012: throws EventDeliveryException when the broker does not confirm the event")
+  @DisplayName(
+      "EVENT-012: throws EventDeliveryException when the broker does not confirm the event")
   void throwsWhenNotConfirmed() {
     // given
     TimeoutException cause = new TimeoutException("delivery timed out");
@@ -52,9 +54,7 @@ class KafkaEventProducerTest {
     Throwable thrown = catchThrowable(() -> uut.send("all-mails", event()));
 
     // then
-    assertThat(thrown)
-        .isInstanceOf(EventDeliveryException.class)
-        .hasCause(cause);
+    assertThat(thrown).isInstanceOf(EventDeliveryException.class).hasCause(cause);
   }
 
   @Test

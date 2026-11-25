@@ -118,6 +118,21 @@ while it is not needed. ArgoCD reconciles applications from the revision committ
   user database. No credential values are committed. It exposes liveness and readiness probes
   to Kubernetes, without exposing actuator endpoints through the public gateway.
 
+- **DEPLOY-043** The development environment provisions a dedicated private attachment bucket
+  in its configured region with uniform bucket-level access and public access prevention.
+  The capture permission role is defined by persistent setup and applied before the first attachment
+  rollout; bucket and workload bindings remain ephemeral. Object versioning and soft delete are
+  disabled explicitly. Applications authenticate through
+  workload identity without stored service-account keys. The producer can create objects and
+  reconcile its captures but cannot delete stored evidence; lifecycle cleanup is independent.
+  Reading evidence is restricted to explicitly authorized internal workloads and operators.
+
+- **DEPLOY-044** Attachment objects and capture metadata belong to the development environment
+  and are deleted by environment down. Replay and duplicate suppression do not survive complete
+  teardown. While the environment exists, expired object generations are deleted through a finite
+  time-based lifecycle independent of event publication or processing. Teardown and lifecycle
+  deletion do not claim an audit archive or an exact physical deletion deadline.
+
 ## Acceptance
 
 - **DEPLOY-042** Given an existing Google Auth Platform app and Web application OAuth client,
@@ -180,6 +195,13 @@ while it is not needed. ArgoCD reconciles applications from the revision committ
   then sign-in and API requests use HTTPS on that origin and no producer endpoint is reachable.
 - **DEPLOY-041** Given configured secret references and workload identity, when the registration
   pod starts, then secrets are injected and probes report readiness; public actuator access fails.
+
+- **DEPLOY-043** Given rendered attachment infrastructure, when validating it, then the bucket
+  is private, regional and protected against public access, with versioning and soft delete disabled.
+  The producer uses a separate capture identity with no object deletion permission.
+- **DEPLOY-044** Given an uploaded object with no retained event, when the evidence window ends,
+  then logical access expires and independent lifecycle cleanup applies. Environment down deletes
+  the bucket and capture database, without preserving an audit archive.
 
 ## Configuration
 

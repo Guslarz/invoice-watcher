@@ -33,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -46,6 +47,49 @@ class MailConnectionImplTest {
   private static final long UID_VALIDITY = 7;
   private static final ZonedDateTime START_DATE =
       ZonedDateTime.of(2026, 10, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+
+  @Test
+  @DisplayName(
+      "ATTACHMENT-001 ATTACHMENT-005 MAIL-033: captures decoded PDF bytes inside open folder")
+  void exposesDecodedAttachmentWhileFolderIsOpen() throws Exception {
+    // given
+    String raw =
+        "Content-Type: multipart/mixed; boundary=x\r\n\r\n"
+            + "--x\r\nContent-Type: text/plain\r\n\r\nbody\r\n"
+            + "--x\r\nContent-Type: application/pdf\r\n"
+            + "Content-Disposition: attachment; filename=private.pdf\r\n"
+            + "Content-Transfer-Encoding: base64\r\n\r\ncGRm\r\n--x--\r\n";
+    MimeMessage message =
+        new MimeMessage(
+            Session.getInstance(new Properties()),
+            new ByteArrayInputStream(raw.getBytes(StandardCharsets.US_ASCII)));
+    Store store = storeWithMessages(new TestMessage(1, Date.from(START_DATE.toInstant()), message));
+    Folder folder = store.getFolder(FOLDER);
+    MailConnectionImpl uut = new MailConnectionImpl(store);
+    var captured = new ArrayList<String>();
+    // when
+    long validity =
+        uut.forEachEmailMessage(
+            query(null, null),
+            (uidValidity, item) -> {
+              try {
+                verify(folder, never()).close();
+                var attachment = item.message().attachmentRoot().child(1);
+                assertThat(attachment.candidate()).isTrue();
+                try (var input = attachment.openStream()) {
+                  captured.add(new String(input.readAllBytes(), StandardCharsets.US_ASCII));
+                }
+                assertThat(item.message().content()).isEqualTo("body");
+              } catch (Exception exception) {
+                throw new AssertionError(exception);
+              }
+            });
+    // then
+    assertThat(validity).isEqualTo(UID_VALIDITY);
+    assertThat(captured).containsExactly("pdf");
+    verify(folder).close();
+    verify(folder).open(Folder.READ_ONLY);
+  }
 
   @Test
   @DisplayName("MAIL-020: picks up messages with a higher UID than the position, in UID order")
@@ -356,35 +400,32 @@ class MailConnectionImplTest {
     UIDFolder uidFolder = (UIDFolder) folder;
     when(uidFolder.getUIDValidity()).thenReturn(UID_VALIDITY);
     when(uidFolder.getUID(any(Message.class)))
-        .thenAnswer(
-            invocation ->
-                all.stream()
-                    .filter(message -> message.message() == invocation.getArgument(0))
-                    .findFirst()
-                    .orElseThrow()
-                    .uid());
+        .thenAnswer(invocation ->
+            all.stream()
+                .filter(message -> message.message() == invocation.getArgument(0))
+                .findFirst()
+                .orElseThrow()
+                .uid());
     when(uidFolder.getMessagesByUID(anyLong(), eq(UIDFolder.LASTUID)))
-        .thenAnswer(
-            invocation -> {
-              long start = invocation.getArgument(0);
-              List<TestMessage> range = select(all, message -> message.uid() >= start);
-              return toArray(range.isEmpty() && !all.isEmpty() ? List.of(all.getLast()) : range);
-            });
+        .thenAnswer(invocation -> {
+          long start = invocation.getArgument(0);
+          List<TestMessage> range = select(all, message -> message.uid() >= start);
+          return toArray(range.isEmpty() && !all.isEmpty() ? List.of(all.getLast()) : range);
+        });
     when(folder.getMessages()).thenReturn(toArray(all));
     when(folder.search(any(ReceivedDateTerm.class)))
-        .thenAnswer(
-            invocation -> {
-              ReceivedDateTerm term = invocation.getArgument(0);
-              Date day =
-                  Date.from(
-                      term.getDate()
-                          .toInstant()
-                          .atZone(ZoneId.of("UTC"))
-                          .toLocalDate()
-                          .atStartOfDay(ZoneId.of("UTC"))
-                          .toInstant());
-              return toArray(select(all, message -> !message.receivedDate().before(day)));
-            });
+        .thenAnswer(invocation -> {
+          ReceivedDateTerm term = invocation.getArgument(0);
+          Date day =
+              Date.from(
+                  term.getDate()
+                      .toInstant()
+                      .atZone(ZoneId.of("UTC"))
+                      .toLocalDate()
+                      .atStartOfDay(ZoneId.of("UTC"))
+                      .toInstant());
+          return toArray(select(all, message -> !message.receivedDate().before(day)));
+        });
     Store store = mock(Store.class);
     when(store.getFolder(FOLDER)).thenReturn(folder);
     return store;

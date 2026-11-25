@@ -1,18 +1,17 @@
 package com.guslarz.invoicewatcher.mailproducer.task;
 
-import com.guslarz.invoicewatcher.mailconnector.api.FolderMessage;
-import com.guslarz.invoicewatcher.mailconnector.api.MailConnection;
-import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionFactory;
-import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionProperties;
-import com.guslarz.invoicewatcher.mailconnector.api.MailFolderMessages;
-import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
-import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.FolderConfig;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.MailScanConfig;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.entity.user.User;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.FolderConfigDaoService;
 import com.guslarz.invoicewatcher.dao.userconfiguration.api.service.UserDaoService;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnection;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionFactory;
+import com.guslarz.invoicewatcher.mailconnector.api.MailConnectionProperties;
+import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
+import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
 import com.guslarz.invoicewatcher.mailproducer.scheduler.api.MailProducerTask;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -47,7 +46,8 @@ public class MailProducerTaskImpl implements MailProducerTask {
   private void scan(User user, MailScanConfig scanConfig) {
     try {
       log.info("> Scanning for config: {}", scanConfig.server().host());
-      MailConnection mailConnection = mailConnectionFactory.createConnection(connectionProperties(scanConfig));
+      MailConnection mailConnection =
+          mailConnectionFactory.createConnection(connectionProperties(scanConfig));
       try {
         scanFolders(mailConnection, user, scanConfig);
       } finally {
@@ -59,16 +59,17 @@ public class MailProducerTaskImpl implements MailProducerTask {
     }
   }
 
-  /**
-   * Scans the folders in order; the first failed folder skips the remaining ones.
-   */
+  /** Scans the folders in order; the first failed folder skips the remaining ones. */
   private void scanFolders(MailConnection mailConnection, User user, MailScanConfig scanConfig) {
     for (FolderConfig folderConfig : scanConfig.folders()) {
-      boolean scanned = scanFolder(mailConnection, MailProcessorContext.builder()
-          .user(user)
-          .scanConfig(scanConfig)
-          .folderConfig(folderConfig)
-          .build());
+      boolean scanned =
+          scanFolder(
+              mailConnection,
+              MailProcessorContext.builder()
+                  .user(user)
+                  .scanConfig(scanConfig)
+                  .folderConfig(folderConfig)
+                  .build());
       if (!scanned) {
         return;
       }
@@ -78,12 +79,16 @@ public class MailProducerTaskImpl implements MailProducerTask {
   private boolean scanFolder(MailConnection mailConnection, MailProcessorContext context) {
     try {
       log.info("> Scanning folder: {}", context.folderConfig().name());
-      processEmailMessages(context, mailConnection.getEmailMessages(query(context.folderConfig())));
+      processEmailMessages(context, mailConnection);
       log.info("< Finished scanning folder: {}", context.folderConfig().name());
       return true;
     } catch (Exception e) {
-      log.error("Error scanning folder {} of mailbox {} of user {}", context.folderConfig().name(),
-          host(context.scanConfig()), context.user().name(), e);
+      log.error(
+          "Error scanning folder {} of mailbox {} of user {}",
+          context.folderConfig().name(),
+          host(context.scanConfig()),
+          context.user().name(),
+          e);
       return false;
     }
   }
@@ -92,7 +97,8 @@ public class MailProducerTaskImpl implements MailProducerTask {
     try {
       mailConnection.close();
     } catch (Exception e) {
-      log.warn("Error closing connection to mailbox {} of user {}", host(scanConfig), user.name(), e);
+      log.warn(
+          "Error closing connection to mailbox {} of user {}", host(scanConfig), user.name(), e);
     }
   }
 
@@ -104,38 +110,39 @@ public class MailProducerTaskImpl implements MailProducerTask {
    * Hands over the messages in UID order and saves the folder's position once: at the last message
    * after all of them, or at the last confirmed one when handing over fails.
    */
-  private void processEmailMessages(MailProcessorContext context, MailFolderMessages folderMessages) {
-    MailSourceIdentity.requireImapId(folderMessages.uidValidity());
-    Long lastConfirmedUid = null;
+  private void processEmailMessages(MailProcessorContext context, MailConnection connection) {
+    AtomicReference<ScanPosition> lastConfirmed = new AtomicReference<>();
     try {
-      for (FolderMessage message : folderMessages.messages()) {
-        mailProcessorService.processMail(context, folderMessages.uidValidity(), message);
-        lastConfirmedUid = message.uid();
-      }
+      long validity =
+          connection.forEachEmailMessage(
+              query(context.folderConfig()),
+              (uidValidity, message) -> {
+                MailSourceIdentity.requireImapId(uidValidity);
+                mailProcessorService.processMail(context, uidValidity, message);
+                lastConfirmed.set(new ScanPosition(uidValidity, message.uid()));
+              });
+      MailSourceIdentity.requireImapId(validity);
     } finally {
-      if (lastConfirmedUid != null) {
-        folderConfigDaoService.updateScanPosition(context.folderConfig(), ScanPosition.builder()
-            .uidValidity(folderMessages.uidValidity())
-            .lastUid(lastConfirmedUid)
-            .build());
+      if (lastConfirmed.get() != null) {
+        folderConfigDaoService.updateScanPosition(context.folderConfig(), lastConfirmed.get());
       }
     }
   }
 
   private MailConnectionProperties connectionProperties(MailScanConfig scanConfig) {
     return MailConnectionProperties.builder()
-            .host(scanConfig.server().host())
-            .port(scanConfig.server().port())
-            .mailCredentials(scanConfig.credentials())
-            .build();
+        .host(scanConfig.server().host())
+        .port(scanConfig.server().port())
+        .mailCredentials(scanConfig.credentials())
+        .build();
   }
 
   private MailQuery query(FolderConfig folderConfig) {
     return MailQuery.builder()
-            .folder(folderConfig.name())
-            .startDate(folderConfig.startDate())
-            .position(position(folderConfig))
-            .build();
+        .folder(folderConfig.name())
+        .startDate(folderConfig.startDate())
+        .position(position(folderConfig))
+        .build();
   }
 
   private ScanPosition position(FolderConfig folderConfig) {
@@ -143,8 +150,8 @@ public class MailProducerTaskImpl implements MailProducerTask {
       return null;
     }
     return ScanPosition.builder()
-            .uidValidity(folderConfig.uidValidity())
-            .lastUid(folderConfig.lastUid())
-            .build();
+        .uidValidity(folderConfig.uidValidity())
+        .lastUid(folderConfig.lastUid())
+        .build();
   }
 }

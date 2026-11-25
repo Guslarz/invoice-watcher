@@ -6,6 +6,11 @@ description = "Spring Boot application that scans mailboxes on a schedule and pu
 
 dependencies {
   implementation(projects.libs.mailConnectorImpl)
+  implementation(projects.libs.mailAttachmentImpl)
+  implementation(projects.libs.attachmentStorageGcsImpl)
+  implementation(projects.libs.attachmentStorageFilesystemImpl)
+  implementation(projects.libs.daoMailAttachmentFirestoreImpl)
+  implementation(projects.libs.daoMailAttachmentJpaImpl)
   implementation(projects.libs.mailProducerSchedulerImpl)
   implementation(projects.libs.mailProducerTask)
   implementation(projects.libs.daoUserConfigurationJpaImpl)

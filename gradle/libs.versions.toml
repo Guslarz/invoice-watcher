@@ -65,3 +65,5 @@ postgresql-socket-factory = { group = "com.google.cloud.sql", name = "postgres-s
 gax = { group = "com.google.api", name = "gax" }
 google-auth-oauth2-http = { group = "com.google.auth", name = "google-auth-library-oauth2-http" }
 jakarta-validation-api = { group = "jakarta.validation", name = "jakarta.validation-api" }
+
+google-cloud-storage = { group = "com.google.cloud", name = "google-cloud-storage" }

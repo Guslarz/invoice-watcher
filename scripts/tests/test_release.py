@@ -26,7 +26,7 @@ class ReleaseTest(unittest.TestCase):
         subprocess.check_call(["git", "clone", "-q", str(self.remote), str(self.root)], stderr=subprocess.DEVNULL)
         self.git("config", "user.name", "Test release")
         self.git("config", "user.email", "test@example.org")
-        for name in (*release.FILES, "scripts/generate-installation.py", "scripts/installation-templates/image-pull-secret.yml",
+        for name in (*release.FILES, "scripts/generate-installation.py", "deployments/installations/dev-mail-evidence.json", "scripts/installation-templates/image-pull-secret.yml",
                      "scripts/installation-templates/Dockerfile", "scripts/installation-templates/registration-route.yml", "deployments/installations/dev.json"):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)

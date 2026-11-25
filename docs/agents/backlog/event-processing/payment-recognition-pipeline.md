@@ -5,7 +5,7 @@ area: events
 added: 2026-11-11
 status: later
 size: L
-blocked-by: [event-processing/mail-attachment-extraction]
+blocked-by: []
 ---
 
 Stage 2 in the [initiative roadmap](README.md) (ADR-0010, ADR-0011, ADR-0012). Implement a
@@ -18,3 +18,7 @@ Trusted executed-transfer records may support paid status after matching; generi
 non-executed transfers may not. Deduplicate multiple notifications of the same transfer, including
 pending-to-executed updates. Processing must be idempotent, replay-safe and explicit about
 unknown/partial fields rather than fabricating values.
+
+Private untrusted PDF evidence access is implemented in the attachment capability. This note
+remains later: its recognition contract, document parsing/safety boundary and complete recovery
+window still need their own plan; malware scanning is a separate much later consideration.

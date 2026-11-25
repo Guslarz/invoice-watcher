@@ -68,3 +68,9 @@ The App setup and ruleset exception are documented in the one-time setup instruc
   convention merges classpath contributions into its own metadata; the compiler's runtime-metadata
   classpath is a declared cache input. Shared APIs remain free of runtime selector registration.
   Metadata conflicts fail generation instead of depending on classpath order.
+
+- Shared JVM integration-container image pins and common options live in the test fixtures of
+  `libs/testing/testcontainers`. Consume them through `testImplementation(testFixtures(...))` and
+  keep lifecycle ownership in each test. Factories return fresh unstarted containers; no global
+  running singleton is shared. These pins are independent of local `.run/` and deployed runtime
+  image settings, and fixtures must not enter application runtime dependencies.

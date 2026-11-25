@@ -4,6 +4,7 @@ metadata:
   name: mail-producer
   labels:
     app.kubernetes.io/database-access: "true"
+    app.kubernetes.io/attachment-access: "true"
 spec:
   replicas: 1
   selector:
@@ -14,6 +15,7 @@ spec:
       labels:
         app: mail-producer
     spec:
+      serviceAccountName: mail-producer-sa
       containers:
         - name: mail-producer
           image: invoice-watcher/mail-producer

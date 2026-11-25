@@ -188,3 +188,13 @@ If publication fails after the Git push, rerun that same failed workflow. It reu
 publishes from its original release commit; it never moves the tag. A fresh dispatch makes a new
 release. If another change reached master before preparation, the workflow fails without changing
 remote refs; start a new run from current master. Choose completed GitHub releases for deployment.
+
+## Attachment capture role
+
+Before the first rollout that captures PDF attachments, apply the persistent configuration again
+using the same operator credentials and commands above. It now defines the attachmentCapture
+custom role, allowing object create/get and bucket-policy inspection without object deletion.
+The role definition survives environment down; its binding to the dedicated producer identity and
+the private data bucket belong to the ephemeral configuration. Existing installations need this
+manual update before their next environment up. Keeping the role definition persistent avoids
+having to recreate a deleted custom-role identifier on an immediate down/up cycle.

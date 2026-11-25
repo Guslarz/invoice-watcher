@@ -5,6 +5,8 @@ plugins {
 description = "Shared processing lifecycle, outbox and replay services."
 
 dependencies {
+  testImplementation(projects.libs.daoEventProcessingJpaImpl)
+  testImplementation(testFixtures(projects.libs.testingTestcontainers))
   api(projects.libs.eventProcessorApi)
   api(projects.libs.daoEventProcessingApi)
   implementation(libs.spring.boot.starter.validation)

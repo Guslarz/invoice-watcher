@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "invoice-watcher.mail-attachment.dao.jpa.data-source.basic.password",
+      "type": "java.lang.String"
+    }
+  ]
+}

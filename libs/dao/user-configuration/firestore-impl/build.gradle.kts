@@ -5,6 +5,7 @@ plugins {
 description = "Storage of users in Firestore in Datastore mode."
 
 dependencies {
+  testImplementation(testFixtures(projects.libs.testingTestcontainers))
   api(projects.libs.daoUserConfigurationApi)
 
   implementation(libs.spring.boot.autoconfigure)

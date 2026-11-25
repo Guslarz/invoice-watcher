@@ -6,4 +6,5 @@ description = "Mailbox connection interfaces: connections, queries, messages, cr
 
 dependencies {
   api(projects.libs.secretApi)
+  api(projects.libs.mailAttachmentApi)
 }

@@ -2,7 +2,7 @@
 
 The shared processor runtime is a library foundation. No recognition consumer, standalone helper
 application or replay endpoint is shipped. The integration test suite composes a synthetic stage
-with Kafka and the Datastore emulator and exercises recovery through the public service API.
+with Kafka and both Datastore and H2 persistence and exercises recovery through the public service API.
 
 ## Exercise the foundation locally
 
@@ -30,7 +30,7 @@ an authenticated operational entry point before claiming operators can execute p
 
 ## Configure an adopting application
 
-Applications compose the API-backed runtime, Kafka adapter and Firestore implementation. See the
+Applications compose the API-backed runtime, Kafka adapter and an explicitly selected Firestore or JPA implementation. See the
 [generated module reference](../reference/modules.md) for build dependencies. They register a stage
 with an explicit name/version, allowed input/result contracts, handler and distinct source/result/
 quarantine/replay topics. Stages use separate consumer groups; result and replay keys retain the
@@ -38,7 +38,7 @@ exact input tenant. A handler's declared reason-code allowlist bounds review met
 
 Processing configuration is under `invoice-watcher.event-processor`, with Kafka and replay bounds
 under its `.kafka` and `.replay` groups. Storage selection is
-`invoice-watcher.event-processing.dao.mode=firestore`. Missing or unsupported mode values fail
+`invoice-watcher.event-processing.dao.mode`, selecting `firestore` or `jpa`. Missing or unsupported mode values fail
 startup through required storage dependency wiring when an active stage requires storage; there
 is no implicit local/in-memory store.
 The selector is a string. Each implementation contributes its own expected value through metadata;
@@ -52,6 +52,33 @@ Omit `.host` to use Google credentials discovery. Supply the deployment's applic
 through the existing credentials mechanism; do not put credentials in source or command arguments.
 A local emulator uses an explicit `.host=http://localhost:<emulator-port>` with synthetic data and
 no Google credentials. Processing state has its own namespace and does not reuse mailbox entities.
+
+For local SQL persistence, select JPA independently of user and capture storage:
+
+```yaml
+invoice-watcher:
+  event-processing:
+    dao:
+      mode: jpa
+      jpa:
+        data-source:
+          basic:
+            url: jdbc:h2:file:${user.home}/.local/share/invoice-watcher/processing
+            username: sa
+            driver: org.h2.Driver
+        ddl-auto: update
+        dialect: org.hibernate.dialect.H2Dialect
+```
+
+Prepare that private parent directory as described in [local attachment setup](mail-attachments.md#local-operation).
+The capability owns its datasource, entities and transactions; JPA selection does not initialize
+Firestore clients or cloud credentials. A file-backed H2 database preserves claims, accepted
+outcomes, pending publications and replay progress across restarts. Outcome and pending outputs
+commit together. Uncertain publication retains the output; confirmation clears sensitive stored
+output bytes while keeping its identity. Do not clear the database to retry work: retained
+suppression and replay state enforce duplicate budgets. `update` is a local development schema
+policy, not a production migration strategy. Use an encrypted Secret for any JDBC password.
+Adding this library does not create a stage or start a consumer.
 
 Set `.kafka.bootstrap-servers` and explicitly choose `.kafka.offset-reset` for a new group:
 `earliest`, `latest` or `none`. That choice controls whether retained input is processed, skipped
@@ -71,14 +98,15 @@ The runtime does not create topics or change retention automatically. The follow
 preparation examples for a future stage called `invoice-recognition`, using the existing local
 Kafka container. They do not start such a processor. Start the local broker using the procedure
 in [local development](local.md), and inspect its `all-mails` topic before choosing partitions.
-The example uses the development broker's single replica; a production design must select its own
+The example uses the local broker's single replica; a production design must select its own
 replication, backups and availability settings.
 
 ```shell
 docker compose -f .run/files/kafka.yml exec kafka /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --create --if-not-exists \
   --topic invoice-recognition.results --partitions 1 --replication-factor 1 \
-  --config max.message.bytes=1048588
+  --config cleanup.policy=delete --config retention.ms=604800000 \
+  --config retention.bytes=-1 --config max.message.bytes=1048588
 
 docker compose -f .run/files/kafka.yml exec kafka /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --create --if-not-exists \
@@ -89,7 +117,8 @@ docker compose -f .run/files/kafka.yml exec kafka /opt/kafka/bin/kafka-topics.sh
 docker compose -f .run/files/kafka.yml exec kafka /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --create --if-not-exists \
   --topic invoice-recognition.replay --partitions 1 --replication-factor 1 \
-  --config max.message.bytes=2097152
+  --config cleanup.policy=delete --config retention.ms=604800000 \
+  --config retention.bytes=-1 --config max.message.bytes=2097152
 ```
 
 `--if-not-exists` does not update existing settings. Read back the source and new topic descriptions
@@ -198,3 +227,17 @@ can legitimately have an old last-success timestamp; combine it with incoming wo
 Logs correlate valid source/processing IDs and failure occurrences but omit tenant keys, addresses,
 mail content, financial fields and arbitrary exception causes. Access quarantine/result bodies only
 through authorized tooling; do not paste them into ordinary logs or incident messages.
+
+## Explicit application topic lifetimes
+
+The preparation examples explicitly assign seven-day retention to each result, quarantine and
+replay topic, with delete-only cleanup and no byte-retention cap. The deployed ingestion topic also
+uses seven days, as configured by the checked-in installation policy. Processor configuration
+records the expected retention for each topic role, and startup compares those expectations to the
+effective broker settings. Internal Kafka offset and transaction topics have their own compacted
+broker-managed semantics; this policy concerns application topics.
+
+The example stages are not deployed by these commands. Their separate retention windows do not
+extend attachment deadlines. Current attachment sizing assumes no quarantine; before deploying a
+stage that retains attachment references, approve evidence retention covering its complete recovery
+path. See [attachment evidence](mail-attachments.md).

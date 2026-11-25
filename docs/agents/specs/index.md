@@ -8,6 +8,7 @@ checked against them, and user pages explain the same behavior in their own word
 |------|------------|--------|
 | [SPEC-MAIL](mail-scanning.md) | Mail scanning — which mailboxes and messages are read, and when | implemented, with gaps |
 | [SPEC-PROCESSOR](event-processing.md) | Shared processor operations and recovery | implemented |
+| [SPEC-ATTACHMENT](mail-attachments.md) | Private PDF evidence, duplicate reuse and expiry | implemented |
 | [SPEC-EVENT](event-publishing.md) | Event publishing — what is sent to Kafka for each message | implemented |
 | [SPEC-REG](user-registration.md) | Google sign-in and Gmail self-service registration | implemented |
 | [SPEC-USER](user-configuration.md) | User configuration — users, mailboxes, folders and where they are stored | implemented |

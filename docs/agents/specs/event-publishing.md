@@ -39,6 +39,14 @@ or care who consumes the events.
     | `content` | string | Decoded selected body, or `null` when no supported body exists |
     | `contentType` | string | `text/html`, `text/plain`, or `null` when no supported body exists |
 
+The mail payload also contains `attachmentManifest`. Its `version` is
+  integer 1, `complete` states whether all eligible candidates were enumerated, `limitReason` is
+  null or an allowlisted global-limit reason, and `attachments` is an ordered array. Each entry has
+  `attachmentId`, `partPath`, `declaredContentType`, `outcome`, and nullable `evidence`. Outcomes are
+  `stored`, `unsupported-type`, or `size-limit`. Evidence contains `store`, `objectKey`, `generation`,
+  `sha256`, `byteLength`, `capturedAt` and `availableUntil`; it exists only for `stored` entries.
+  Stored means retained untrusted bytes, not malware-cleared or recognition-ready content.
+
 - **EVENT-005** Each newly published mail event has a deterministic source identity scoped by
   the owning user's name, IMAP server host and port, authenticated account name, folder name,
   UIDVALIDITY and message UID. Repeated delivery and re-ingestion with the same identity inputs
@@ -99,6 +107,21 @@ or care who consumes the events.
   tolerate duplicates.
 - **EVENT-013** A missing required event property fails the startup and names the property.
 
+- **EVENT-009** Mail attachment manifests are additive fields of mail.ingested schemaVersion 1.
+  Readers that do not use attachments ignore them. An absent manifest in retained events means
+  attachments were not captured; a present complete empty manifest means no candidates were found.
+  Retries of a captured message reuse its frozen attachment manifest, identities and references.
+  Kafka confirmation remains the handover boundary and failures retain EVENT-012 cursor semantics.
+
+- **EVENT-014** Each application Kafka topic has an explicitly configured finite time-based
+  retention period and documented cleanup policy and byte-retention limit. The mail ingestion topic
+  uses delete-only cleanup, retention.ms 604800000 (seven days), retention.bytes -1 and broker
+  append timestamps. The producer checks these effective settings before publishing; unsuitable
+  or unavailable settings prevent publication with a visible operational failure. Broker defaults
+  alone are not the retention declaration. Increasing ingestion retention requires an evidence
+  lifetime compatibility check before adoption. Kafka retention is asynchronous segment cleanup,
+  not a promise to keep events indefinitely or to delete each event at an exact instant.
+
 ## Acceptance
 
 - **EVENT-001** Given a folder with three new messages, when it is scanned, then three events
@@ -146,6 +169,13 @@ or care who consumes the events.
   `invoice-watcher.event-producer.kafka.bootstrap-servers`. Given no
   `invoice-watcher.mail-producer.task.topic`, when the application starts, then it fails with an
   error naming that property.
+
+- **EVENT-009** Given old envelopes and new complete, incomplete and empty manifests, when
+  consuming schemaVersion 1, then old readers retain known fields and attachment-aware readers
+  distinguish not-captured history from an empty candidate list. Duplicate capture reuses references.
+- **EVENT-014** Given a topic with explicit seven-day delete-only retention, no byte-retention
+  cap and append timestamps, when publishing, then preflight succeeds; changing effective policy
+  prevents publication with a safe operational failure.
 
 ## Configuration
 

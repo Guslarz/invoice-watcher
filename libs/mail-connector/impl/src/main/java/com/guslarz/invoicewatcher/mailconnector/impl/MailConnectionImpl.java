@@ -7,6 +7,7 @@ import com.guslarz.invoicewatcher.mailconnector.api.MailFolderMessages;
 import com.guslarz.invoicewatcher.mailconnector.api.MailMessage;
 import com.guslarz.invoicewatcher.mailconnector.api.MailQuery;
 import com.guslarz.invoicewatcher.mailconnector.api.ScanPosition;
+import com.guslarz.invoicewatcher.mailconnector.impl.service.JakartaAttachmentPart;
 import com.guslarz.invoicewatcher.mailconnector.impl.util.DateUtil;
 import jakarta.mail.Address;
 import jakarta.mail.FetchProfile;
@@ -19,9 +20,10 @@ import jakarta.mail.search.ComparisonTerm;
 import jakarta.mail.search.ReceivedDateTerm;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +42,15 @@ public class MailConnectionImpl implements MailConnection {
   }
 
   @Override
+  public long forEachEmailMessage(MailQuery query, BiConsumer<Long, FolderMessage> consumer) {
+    try (Folder folder = store.getFolder(query.folder())) {
+      return withMessages(query, folder, consumer, true);
+    } catch (MessagingException exception) {
+      throw new MailConnectionException(exception);
+    }
+  }
+
+  @Override
   public void close() throws MailConnectionException {
     try {
       store.close();
@@ -50,31 +61,44 @@ public class MailConnectionImpl implements MailConnection {
 
   private MailFolderMessages getEmailMessagesFromFolder(MailQuery query, Folder folder)
       throws MessagingException {
+    var messages = new ArrayList<FolderMessage>();
+    long validity = withMessages(query, folder, (ignored, message) -> messages.add(message), false);
+    return new MailFolderMessages(validity, messages);
+  }
+
+  private long withMessages(
+      MailQuery query,
+      Folder folder,
+      BiConsumer<Long, FolderMessage> consumer,
+      boolean liveAttachments)
+      throws MessagingException {
     if (!(folder instanceof UIDFolder uidFolder)) {
-      throw new MessagingException("Folder does not support UIDs: " + query.folder());
+      throw new MessagingException("Folder does not support UIDs");
     }
     folder.open(Folder.READ_ONLY);
-    long uidValidity = uidFolder.getUIDValidity();
+    long validity = uidFolder.getUIDValidity();
     ScanPosition position = query.position();
-    List<FolderMessage> messages =
-        position != null && position.uidValidity() == uidValidity
-            ? messagesAfter(uidFolder, folder, position.lastUid())
-            : messagesReceivedSince(uidFolder, folder, query);
-    return MailFolderMessages.builder().uidValidity(uidValidity).messages(messages).build();
+    Stream<FolderMessage> messages =
+        position != null && position.uidValidity() == validity
+            ? messagesAfter(uidFolder, folder, position.lastUid(), liveAttachments)
+            : messagesReceivedSince(uidFolder, folder, query, liveAttachments);
+    messages.forEach(message -> consumer.accept(validity, message));
+    return validity;
   }
 
   /**
    * Returns the messages with a UID greater than {@code lastUid}. IMAP answers the range {@code
    * lastUid+1:*} with the last message even when it is not newer, so the range is filtered.
    */
-  private List<FolderMessage> messagesAfter(UIDFolder uidFolder, Folder folder, long lastUid)
+  private Stream<FolderMessage> messagesAfter(
+      UIDFolder uidFolder, Folder folder, long lastUid, boolean liveAttachments)
       throws MessagingException {
     Message[] messages = uidFolder.getMessagesByUID(lastUid + 1, UIDFolder.LASTUID);
     Message[] newMessages =
         Stream.of(messages)
             .filter(message -> uid(uidFolder, message) > lastUid)
             .toArray(Message[]::new);
-    return toFolderMessages(uidFolder, folder, newMessages).toList();
+    return toFolderMessages(uidFolder, folder, newMessages, liveAttachments);
   }
 
   /**
@@ -82,38 +106,38 @@ public class MailConnectionImpl implements MailConnection {
    * without a start date. IMAP searches by day only, so the search result is filtered to the
    * second; a message without a received date is kept, as the server's search already selected it.
    */
-  private List<FolderMessage> messagesReceivedSince(
-      UIDFolder uidFolder, Folder folder, MailQuery query) throws MessagingException {
+  private Stream<FolderMessage> messagesReceivedSince(
+      UIDFolder uidFolder, Folder folder, MailQuery query, boolean liveAttachments)
+      throws MessagingException {
     if (query.startDate() == null) {
-      return toFolderMessages(uidFolder, folder, folder.getMessages()).toList();
+      return toFolderMessages(uidFolder, folder, folder.getMessages(), liveAttachments);
     }
     Date startDate = DateUtil.toDate(query.startDate());
     Message[] messages = folder.search(new ReceivedDateTerm(ComparisonTerm.GE, startDate));
     return toFolderMessages(
-            uidFolder,
-            folder,
-            Stream.of(messages)
-                .filter(
-                    message ->
-                        receivedDate(message) == null || !receivedDate(message).before(startDate))
-                .toArray(Message[]::new))
-        .toList();
+        uidFolder,
+        folder,
+        Stream.of(messages)
+            .filter(message ->
+                receivedDate(message) == null || !receivedDate(message).before(startDate))
+            .toArray(Message[]::new),
+        liveAttachments);
   }
 
   private Stream<FolderMessage> toFolderMessages(
-      UIDFolder uidFolder, Folder folder, Message[] messages) throws MessagingException {
+      UIDFolder uidFolder, Folder folder, Message[] messages, boolean liveAttachments)
+      throws MessagingException {
     FetchProfile fetchProfile = new FetchProfile();
     fetchProfile.add(UIDFolder.FetchProfileItem.UID);
     fetchProfile.add(FetchProfile.Item.ENVELOPE);
     folder.fetch(messages, fetchProfile);
     return Stream.of(messages)
-        .map(
-            message ->
-                FolderMessage.builder()
-                    .uid(uid(uidFolder, message))
-                    .message(toMessage(message))
-                    .build())
-        .sorted(Comparator.comparingLong(FolderMessage::uid));
+        .sorted(Comparator.comparingLong(message -> uid(uidFolder, message)))
+        .map(message ->
+            FolderMessage.builder()
+                .uid(uid(uidFolder, message))
+                .message(toMessage(message, liveAttachments))
+                .build());
   }
 
   private long uid(UIDFolder uidFolder, Message message) {
@@ -132,7 +156,7 @@ public class MailConnectionImpl implements MailConnection {
     }
   }
 
-  private MailMessage toMessage(Message message) {
+  private MailMessage toMessage(Message message, boolean liveAttachments) {
     try {
       MimeBodyReader.Body body = new MimeBodyReader().read(message);
       return MailMessage.builder()
@@ -141,6 +165,7 @@ public class MailConnectionImpl implements MailConnection {
           .date(date(message))
           .content(body.content())
           .contentType(body.contentType())
+          .attachmentRoot(liveAttachments ? new JakartaAttachmentPart(message) : null)
           .build();
     } catch (MessagingException | IOException e) {
       throw new MailConnectionException(e);
