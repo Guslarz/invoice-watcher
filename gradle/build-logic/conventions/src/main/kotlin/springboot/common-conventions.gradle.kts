@@ -19,8 +19,13 @@ dependencyManagement {
 
 // The configuration processor reads property descriptions from Javadoc, which a type that was not
 // recompiled no longer has: an incremental compile would write metadata without them.
+val additionalMetadata = objects.newInstance(AdditionalMetadata::class.java)
+additionalMetadata.files.from(sourceSets.main.map { source ->
+  source.resources.matching { include("META-INF/additional-spring-configuration-metadata.json") }
+})
 tasks.named<JavaCompile>("compileJava") {
   options.isIncremental = false
+  options.compilerArgumentProviders.add(additionalMetadata)
   doLast(SecretMetadata())
   doLast(ImplementationMetadata())
 }

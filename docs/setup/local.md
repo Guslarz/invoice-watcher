@@ -362,6 +362,24 @@ using Gradle's managed Node/pnpm toolchain. Open `http://localhost:4200` after b
 Use Debug for backend breakpoints; frontend development continues through the Angular server.
 The backend runner sets the local public URL and disables secure cookies for local HTTP.
 
+The Google client secret is a scalar at `invoice-watcher.oauth.google.client-secret`, alongside
+`client-id`. Source configuration metadata supplies IntelliJ's key resolution while the runtime
+continues to bind the encrypted value. If the key remains unresolved after reloading Gradle,
+check that the YAML file is associated with the registration backend's Spring configuration.
+Building a JAR or invalidating caches alone does not correct that association.
+
+After `scripts/verify.sh`, you can check IntelliJ's YAML inspection with an isolated project and
+placeholder values:
+
+```bash
+python3 scripts/verify-intellij-secret-metadata.py --idea-home /path/to/intellij-idea
+```
+
+The check compares missing metadata, source metadata and linked YAML. It verifies that the
+secret key resolves while an invalid control key stays flagged, and saves its reports under
+`build/intellij-secret-metadata/`. It uses separate IDE state and does not read local YAML or
+change an open project. IntelliJ with Spring support must be installed at the supplied path.
+
 First supply the backend's ignored `application-local.yml` with the DAO, AES and Google client
 settings described above and configure the Google localhost callback URLs. The shared runner
 files contain no credentials. For the shared H2 setup, start **registration-h2** separately and

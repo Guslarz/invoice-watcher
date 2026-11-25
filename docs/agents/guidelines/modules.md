@@ -10,15 +10,15 @@
 - Every `build.gradle.kts` sets a one-line `description`; it is published in the generated module
   reference, and a module without one fails the docs build.
 - A library area has an `api` module and one or more implementations:
-  - `api` — interfaces, records, `@ConfigurationProperties`, exceptions. No Spring beans and no
-    auto-configuration: the configuration processor generates metadata for properties records
-    without registering them, and implementations use only their `Constants`. A module with
-    `@ConfigurationProperties` depends on `implementation(libs.spring.boot)` and, when constraints
-    are used, `jakarta.validation-api`; validator-provider starters belong to active implementations.
-    Mode selectors are strings, not closed API enums. APIs contribute property declarations but
-    register no binding/validation beans. Implementations own their conditional selection values;
-    adding a backend must not require an API change.
-  - `impl` / `<tech>-impl` — implementation and its explicitly guarded `@AutoConfiguration`.
+  - `api` — consumer-facing service interfaces, domain records and exceptions. Expose a
+    configuration abstraction only when consumers need it, with an explicit reason; keep that
+    abstraction independent of Spring Boot binding and wiring. No Spring beans, binding records
+    or auto-configuration.
+  - `impl` / `<tech>-impl` — implementation, Spring Boot configuration binding records and their
+    validation, and explicitly guarded `@AutoConfiguration`. Implementations own their conditional
+    selection values; adding a backend must not require an API change.
+  External property names remain supported configuration contracts regardless of the binding
+  record's Java package. See [ADR-0027](../adr/0027-keep-spring-configuration-binding-in-implementations.md).
 - Consumers depend on `api` (`api(projects.libs.xApi)`); only applications depend on `impl`.
   An `api` module is always declared with `api(...)`, never `implementation`/`compileOnly`; leave
   it out when another declared `api` module already brings it.
@@ -49,10 +49,12 @@
 - Every `impl` registers its auto-configuration in
   `src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
 - Beans are added with `@Import({...})` of `@Component` classes, not component scanning.
-- Alternative implementations are switched by a `mode` property defined in the `api` module, e.g.
+- Alternative implementations are switched by a string `mode` property, e.g.
   `invoice-watcher.user-configuration.dao.mode = jpa | firestore`,
   `invoice-watcher.event-producer.mode = kafka`, guarded with `@ConditionalOnProperty` using the
-  constants from the properties' nested `Constants` class.
+  constants owned by the configuration group. When implementations share a selector key, declare
+  it once as a framework-neutral API constant; sharing the key does not expose a Spring binding
+  record. Do not use closed API enums for implementation selection.
 - Keep every implementation's complete client/provider/helper graph behind its activation
   condition. Use underlying libraries rather than starters that independently activate provider
   infrastructure; do not depend on a sibling implementation's unnamed/default beans. Shared
@@ -74,6 +76,12 @@
 ## Configuration properties
 
 - `@ConfigurationProperties` **records**, prefix `invoice-watcher.<area>[.<sub>]`.
+- Put binding records in the owning implementation's `properties` package, with binding and
+  validation enabled by that implementation's guarded auto-configuration. Declare Spring Boot
+  and constraint dependencies in that module; do not add them to an API for configuration binding.
+  Keep metadata generation in the shared Spring convention. Migrate existing API binding records
+  through scoped refactors, preserving property names, defaults, validation, activation and
+  generated/packaged metadata; moving a Java type does not change the external configuration contract.
 - Derive child configuration prefixes from the owning group's prefix constant plus a suffix,
   and reuse selector property constants in activation conditions.
 - Defaults via `@DefaultValue` with constants in a nested `Defaults` class.
@@ -90,10 +98,13 @@
   with a `@param` per component — it becomes the property description, and a property without
   one fails the docs build (`scripts/gen-reference.py`). Every description starts with
   "Required." or "Optional.", with the condition where it applies (e.g. "Required in `jpa` mode.").
-- After compilation, the Spring convention describes `Secret` properties as `java.lang.String`
-  in configuration metadata, matching their encrypted scalar input. Java property types and
-  runtime converters remain unchanged. Keep this adjustment in the shared convention so new
-  secret properties receive the same IDE assistance and reference representation.
+- Declare each `Secret` property as `java.lang.String` in its module's source resource
+  `META-INF/additional-spring-configuration-metadata.json`, matching its encrypted scalar input.
+  IntelliJ's project-source resolver reads that file; generated JAR metadata alone does not fix
+  source inference. The shared Spring convention tracks these files as compiler inputs and
+  normalizes compiled `Secret` property types, rejecting a missing source scalar declaration.
+  Keep Java property types and runtime converters unchanged. See
+  [ADR-0028](../adr/0028-describe-secret-scalars-in-source-and-packaged-metadata.md).
 - In k8s, properties are set as env vars in `overlays/<env>/config/.env` of the app
   (`invoice-watcher.mail-producer.task.topic` → `INVOICE_WATCHER_MAIL_PRODUCER_TASK_TOPIC`).
 

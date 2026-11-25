@@ -7,7 +7,7 @@ this list is usually enough; open a record to see why.
 |-----|----------|--------|
 | [0001](0001-describe-behavior-in-published-specs.md) | Describe behavior in published specs and build user docs from them | superseded by ADR-0007 |
 | [0002](0002-change-master-only-through-pull-requests.md) | Change master only through pull requests | amended by ADR-0015 |
-| [0003](0003-put-every-library-behind-an-api-module.md) | Put every library behind an api module and wire implementations by auto-configuration | accepted |
+| [0003](0003-put-every-library-behind-an-api-module.md) | Put every library behind an api module and wire implementations by auto-configuration | amended by ADR-0027 |
 | [0004](0004-deploy-applications-with-argocd-from-master.md) | Bootstrap the cluster with helmfile and deploy applications with ArgoCD from master | amended by ADR-0015 |
 | [0005](0005-derive-versions-from-git-tags.md) | Derive versions from git tags | amended by ADR-0015 |
 | [0006](0006-keep-secrets-out-of-the-repository.md) | Keep secrets out of the repository | accepted |
@@ -28,7 +28,8 @@ this list is usually enough; open a record to see why.
 | [0021](0021-publish-database-backed-events-through-a-durable-outbox.md) | Publish database-backed events through a durable outbox | accepted |
 | [0022](0022-use-lombok-for-boilerplate-and-named-builders-for-complex-records.md) | Use Lombok for boilerplate and named builders for complex records | accepted |
 | [0023](0023-isolate-conditionally-activated-modules-and-their-infrastructure.md) | Isolate conditionally activated modules and their infrastructure | accepted |
-| [0024](0024-contribute-mode-values-from-implementations-and-merge-metadata-explicitly.md) | Contribute mode values from implementations and merge metadata explicitly | accepted |
+| [0024](0024-contribute-mode-values-from-implementations-and-merge-metadata-explicitly.md) | Contribute mode values from implementations and merge metadata explicitly | amended by ADR-0027 |
 | [0025](0025-organize-java-library-packages-by-role.md) | Organize Java library packages by role | accepted |
-
 | [0026](0026-transfer-plan-approval-only-with-explicit-authorization-and-verified-ownership.md) | Transfer plan approval only with explicit authorization and verified ownership | accepted |
+| [0027](0027-keep-spring-configuration-binding-in-implementations.md) | Keep Spring configuration binding in implementations | accepted |
+| [0028](0028-describe-secret-scalars-in-source-and-packaged-metadata.md) | Describe Secret scalars in source and packaged metadata | accepted |
