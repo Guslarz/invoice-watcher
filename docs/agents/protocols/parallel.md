@@ -105,19 +105,23 @@ available and sandboxed execution is desired.
 1. Before recommending topics or dispatching a new batch, run `git fetch origin` successfully
    and record `git rev-parse origin/master` as the triage revision. If fetching fails, stop new
    topic selection and launches and report the failure; cached refs are not a freshness check.
-   Fetching does not update checkout files. Read the inbox, initiative roadmaps and workflow
-   instructions from that revision, not a stale local branch. A clean `master` may be advanced
-   with `git merge --ff-only origin/master`; never reset, switch or rebase a dirty checkout or
-   an active worker for triage. Otherwise use a temporary snapshot, for example:
+   Fetching does not update checkout files. Read the backlog, initiative roadmaps and workflow
+   instructions from that revision. A clean `master` may be advanced with
+   `git merge --ff-only origin/master`. For a dirty checkout or an active worker, use a temporary
+   snapshot. Use the collection and reporting script named in that revision's instructions. For
+   a revision with the backlog layout:
 
    ```sh
    triage_revision=$(git rev-parse origin/master)
    triage_dir=$(mktemp -d /tmp/iw-dispatch-triage.XXXXXX)
-   git archive "$triage_revision" docs/agents/inbox scripts/inbox.py | tar -x -C "$triage_dir"
-   python3 "$triage_dir/scripts/inbox.py" ready
+   git archive "$triage_revision" AGENTS.md docs/agents/protocols docs/agents/backlog scripts/backlog.py \
+     | tar -x -C "$triage_dir"
+   python3 "$triage_dir/scripts/backlog.py" ready
    ```
 
    Read candidate notes from the same snapshot (or `git show <triage-revision>:<path>`).
+   For a request in the former `docs/agents/inbox/<note>.md` form, use the relative note ID
+   to find it in the fetched revision's collection.
    Recheck explicitly requested notes there too: a note deleted on `origin/master` is not
    pending just because it remains in the local checkout. Report it as already removed and
    inspect its resolution rather than launching it. Local-only proposals must be identified
@@ -130,7 +134,7 @@ available and sandboxed execution is desired.
 3. Select the session host as above. Create each assigned worktree with `scripts/worktree.sh new <type>/<slug>` and launch:
 
    ```sh
-   python3 scripts/worker.py start --backend "$BACKEND" --agent "$AGENT" --name example --worktree /absolute/path/to/worktree --command '/plan description or inbox path'
+   python3 scripts/worker.py start --backend "$BACKEND" --agent "$AGENT" --name example --worktree /absolute/path/to/worktree --command '/plan description or backlog path'
    ```
 
    Pass the requested agent, or otherwise the dispatcher's current named agent, with `--agent`.
@@ -210,7 +214,7 @@ operations; it is not a second lifecycle authority. An update never grants devel
 Native backend resume must protect status before any work. Managed resume does this automatically.
 The deliberate tradeoff is that a deleted file or stale `done` is trusted: unmanaged sessions
 that ignore this contract can be pruned. There is no background-session polling or age timeout.
-Out-of-scope findings go to the inbox. Before an approved push, fetch/rebase on origin/master and
+Out-of-scope findings go to the backlog. Before an approved push, fetch/rebase on origin/master and
 verify again; regenerate generated reference pages instead of resolving them by hand.
 
 ## Cleanup

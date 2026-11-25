@@ -25,7 +25,7 @@ Output: a pull request to `master` containing spec, code, tests and docs — and
    `results/` pages that describe the changed behavior — in prose for users, without quoting or
    linking specs and ADRs. Add the ADR if planned.
 5. **Verify.** Run `scripts/verify.sh`. Fix failures; do not weaken checks.
-6. **Delete the plan at its actual path** and the source inbox note, if any, before commit
+6. **Delete the plan at its actual path** and the source backlog note, if any, before commit
    review. Git history retains a source note only if it was committed; it does not retain an
    uncommitted plan. Specs preserve lasting behavior; ADRs preserve lasting decisions.
 7. Stop and ask the developer to review the working tree (summarize `git status` / diff stat).

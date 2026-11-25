@@ -7,7 +7,7 @@ description: "Dispatch topics for worker-local discussion, planning and implemen
 
 Resolve repository paths from the worktree root. Read `AGENTS.md` before following the workflow.
 
-Inputs: `<topic | docs/agents/inbox/<note>.md> ...`. Use the inputs supplied with `$iw-dispatch`; ask for missing required inputs before dependent work.
+Inputs: `<topic | docs/agents/backlog/<note>.md> ...`. Use the inputs supplied with `$iw-dispatch`; ask for missing required inputs before dependent work.
 
 Act as the dispatcher from `docs/agents/protocols/parallel.md` exactly, for these topics:
 
@@ -16,7 +16,7 @@ the inputs supplied alongside this skill invocation
 
 Before recommending or launching topics, follow Protocol parallel's freshness check: fetch
 origin successfully and triage the fetched `origin/master` revision. A fetch alone does not
-refresh checkout files; do not use a stale local inbox or redispatch notes removed upstream.
+refresh checkout files; do not use a stale local backlog or redispatch notes removed upstream.
 
 Use the session-host selection in Protocol parallel. In Orca, `worker.py start --host auto`
 launches a visible Orca worker in the shared-script worktree, following Chat/CLI preference.

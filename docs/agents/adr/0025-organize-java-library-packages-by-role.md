@@ -31,7 +31,7 @@ and makes corresponding contracts and implementations harder to locate.
 - Mirror the relevant production packages in tests. Keep internal helpers package-private; make
   implementation types accessible across role packages only where explicit wiring requires it.
 - Apply this layout to the new processor and processing DAO modules in this change. Migrate
-  existing modules through scoped refactors tracked in the naming-conventions inbox note.
+  existing modules through scoped refactors tracked in the naming-conventions backlog note.
 
 ## Consequences
 

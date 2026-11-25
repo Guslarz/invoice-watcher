@@ -243,4 +243,4 @@ tuning. Specific scope requires separate plans/specs.
 - **Partial/unmatched/ambiguous handling:** see "Evidence, matching and status handling" and
   ADR-0012.
 - **Prerequisites, stages and acceptance goals:** see "Prerequisites" and "Stages".
-- **No implementation changes in this change:** this roadmap, ADRs and linked inbox notes only.
+- **No implementation changes in this change:** this roadmap, ADRs and linked backlog notes only.

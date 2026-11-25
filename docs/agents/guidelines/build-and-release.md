@@ -16,7 +16,7 @@
   logic must not read or configure other projects (no `allprojects`/`subprojects`, `rootProject`
   only through `isolated.rootProject`), so the build can move to Isolated Projects. The one
   exception, the version in the root `build.gradle.kts`, and the plugins that still block
-  Isolated Projects are listed in `docs/agents/inbox/isolated-projects.md`.
+  Isolated Projects are listed in `docs/agents/backlog/isolated-projects.md`.
 - `docs.reference-conventions` (applied by `jvm.common-conventions` and `docker.image-conventions`)
   gives every module a `docsReference` task, which writes the module's facts to
   `build/docs-reference/` for `scripts/gen-reference.py`. `./gradlew docsReference` runs it in all modules.

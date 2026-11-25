@@ -195,18 +195,18 @@ class AgentConfigTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'out of sync'):
             uut.synchronize(self.root, check=True)
 
-    def remove_inbox_command(self):
-        (self.root / '.claude/commands/inbox.md').unlink()
+    def remove_backlog_command(self):
+        (self.root / '.claude/commands/backlog.md').unlink()
         self.manifest(lambda m: m.update(integrations=[e for e in m['integrations']
-                                                      if e['id'] != 'command-inbox']))
+                                                      if e['id'] != 'command-backlog']))
 
     def test_obsolete_outputs_are_removed_but_handwritten_files_are_preserved(self):
-        directory = self.root / '.agents/skills/iw-inbox'
+        directory = self.root / '.agents/skills/iw-backlog'
         foreign = directory / 'notes.txt'
         foreign.write_text('handwritten')
         self.manifest(lambda m: m['integrations'][0]['covers'].append(
-            'file:.agents/skills/iw-inbox/notes.txt'))
-        self.remove_inbox_command()
+            'file:.agents/skills/iw-backlog/notes.txt'))
+        self.remove_backlog_command()
         with self.assertRaisesRegex(ValueError, 'out of sync'):
             uut.synchronize(self.root, check=True)
         uut.synchronize(self.root)
@@ -216,9 +216,9 @@ class AgentConfigTest(unittest.TestCase):
         uut.synchronize(self.root, check=True)
 
     def test_edited_obsolete_output_is_not_deleted(self):
-        path = self.root / '.agents/skills/iw-inbox/SKILL.md'
+        path = self.root / '.agents/skills/iw-backlog/SKILL.md'
         path.write_text('handwritten changes')
-        self.remove_inbox_command()
+        self.remove_backlog_command()
         with self.assertRaisesRegex(ValueError, 'Obsolete generated file was edited'):
             uut.synchronize(self.root)
         self.assertEqual(path.read_text(), 'handwritten changes')

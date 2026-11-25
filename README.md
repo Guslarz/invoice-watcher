@@ -23,7 +23,7 @@ Local run configurations for IntelliJ are in `.run/` — see
 
 Development is spec-driven and every change goes through a pull request to `master`.
 The rules — for AI agents and humans alike — are in [AGENTS.md](AGENTS.md). Ideas and TODOs for
-later are collected in [docs/agents/inbox](docs/agents/inbox/README.md).
+later are collected in [docs/agents/backlog](docs/agents/backlog/README.md).
 
 ## License
 

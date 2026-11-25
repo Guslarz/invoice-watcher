@@ -19,8 +19,7 @@ One paragraph: what problem this capability solves and for whom.
 
 - **XXXX-001** The system does X when Y.
 - **XXXX-002** ...
-- **XXXX-003** Intended behavior the code does not meet yet. *(gap:
-  `docs/agents/inbox/<note>.md`)*
+- **XXXX-003** Intended behavior the code does not meet yet. *(gap: `docs/agents/backlog/<note>.md`)*
 
 ## Acceptance
 

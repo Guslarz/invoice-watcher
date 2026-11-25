@@ -7,7 +7,7 @@ description: "Plan a change following docs/agents/protocols/plan.md"
 
 Resolve repository paths from the worktree root. Read `AGENTS.md` before following the workflow.
 
-Inputs: `<change description | docs/agents/inbox/<note>.md>`. Use the inputs supplied with `$iw-plan`; ask for missing required inputs before dependent work.
+Inputs: `<change description | docs/agents/backlog/<note>.md>`. Use the inputs supplied with `$iw-plan`; ask for missing required inputs before dependent work.
 
 Follow `docs/agents/protocols/plan.md` exactly for this change:
 

@@ -3,7 +3,7 @@ slug: <slug>
 branch: <type>/<slug>
 impact: BEHAVIOR         # BEHAVIOR | OPERATIONS | INTERNAL
 specs: [SPEC-XXXX]
-source: none             # or docs/agents/inbox/<slug>.md
+source: none             # or docs/agents/backlog/<slug>.md
 ---
 
 # Plan: <title>

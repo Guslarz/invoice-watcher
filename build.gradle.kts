@@ -10,7 +10,7 @@ tasks.check {
 }
 
 // The only cross-project access left in the build logic; with the plugins listed in
-// docs/agents/inbox/isolated-projects.md it still blocks Isolated Projects.
+// docs/agents/backlog/isolated-projects.md it still blocks Isolated Projects.
 allprojects {
   version = rootProject.scmVersion.version
 }
